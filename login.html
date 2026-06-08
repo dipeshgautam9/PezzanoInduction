@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Pezzano Induction Portal — Sign In</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#0f1117;--surface:#181c25;--surface2:#1e2330;--border:#2a2f3d;
+    --primary:#00b4d8;--primary-d:#0096b4;--success:#4ade80;--error:#f87171;
+    --text:#e8eaf0;--muted:#8b92a5;--font:'Inter',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font);background:var(--bg);color:var(--text);
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background-image:radial-gradient(ellipse at 20% 50%,rgba(0,180,216,.06) 0%,transparent 60%),
+      radial-gradient(ellipse at 80% 20%,rgba(74,222,128,.04) 0%,transparent 50%)}
+  .wrap{width:100%;max-width:420px;padding:24px}
+  .logo-row{text-align:center;margin-bottom:32px}
+  .logo-box{display:inline-flex;align-items:center;justify-content:center;
+    width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#00b4d8,#0077a8);
+    font-size:1.5rem;font-weight:800;color:#fff;letter-spacing:-.03em;margin-bottom:12px}
+  .logo-row h1{font-size:1.3rem;font-weight:600;letter-spacing:-.02em}
+  .logo-row p{font-size:.82rem;color:var(--muted);margin-top:3px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px}
+  .tabs{display:flex;gap:4px;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:24px}
+  .tab{flex:1;padding:8px;border:none;border-radius:7px;background:none;color:var(--muted);
+    font-size:.85rem;font-weight:500;cursor:pointer;transition:.18s}
+  .tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+  .panel{display:none}.panel.active{display:block}
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:.8rem;font-weight:500;color:var(--muted);margin-bottom:6px;letter-spacing:.02em;text-transform:uppercase}
+  .field input{width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);
+    border-radius:9px;color:var(--text);font-size:.95rem;outline:none;transition:.18s}
+  .field input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,180,216,.12)}
+  .btn{width:100%;padding:12px;border:none;border-radius:9px;font-size:.95rem;font-weight:600;
+    cursor:pointer;transition:.18s;margin-top:4px}
+  .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-d));color:#fff}
+  .btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+  .btn-primary:disabled{opacity:.5;transform:none;cursor:not-allowed}
+  .msg{padding:10px 14px;border-radius:8px;font-size:.85rem;margin-top:14px;display:none}
+  .msg.error{background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25);color:var(--error)}
+  .msg.success{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.2);color:var(--success)}
+  .hint{font-size:.78rem;color:var(--muted);text-align:center;margin-top:16px;line-height:1.5}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);
+    border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo-row">
+    <div class="logo-box">PE</div>
+    <h1>Pezzano Induction Portal</h1>
+    <p>Canning Vale — Warehouse Staff System</p>
+  </div>
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('employee')">Employee</button>
+      <button class="tab" onclick="switchTab('manager')">Manager / Admin</button>
+    </div>
+
+    <!-- EMPLOYEE PANEL -->
+    <div class="panel active" id="panel-employee">
+      <div class="field">
+        <label>Employee Code</label>
+        <input id="emp-code" type="text" placeholder="e.g. EMP100421" autocomplete="username"/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input id="emp-pass" type="password" placeholder="Enter your password" autocomplete="current-password"/>
+      </div>
+      <button class="btn btn-primary" id="emp-btn" onclick="loginEmployee()">Sign In</button>
+      <div class="msg" id="emp-msg"></div>
+      <p class="hint">Your Employee Code was given to you by your manager.<br>Contact your manager if you forgot your password.</p>
+    </div>
+
+    <!-- MANAGER PANEL -->
+    <div class="panel" id="panel-manager">
+      <div class="field">
+        <label>Work Email</label>
+        <input id="mgr-email" type="email" placeholder="name@pezzano.com.au" autocomplete="email"/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input id="mgr-pass" type="password" placeholder="Enter your password" autocomplete="current-password"/>
+      </div>
+      <button class="btn btn-primary" id="mgr-btn" onclick="loginManager()">Sign In</button>
+      <div class="msg" id="mgr-msg"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG — replace with your Supabase project values ────────
+const SUPABASE_URL = 'https://jookdsjvbticdgvxagyt.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_1emkeuRvXdsF6S-yyxcUeQ_BdUBJ5PF';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Redirect if already signed in
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) window.location.href = 'dashboard.html';
+})();
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', (i === 0) === (tab === 'employee')));
+  document.getElementById('panel-employee').classList.toggle('active', tab === 'employee');
+  document.getElementById('panel-manager').classList.toggle('active', tab === 'manager');
+}
+
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'msg ' + type;
+  el.style.display = 'block';
+}
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  btn.innerHTML = loading ? '<span class="spinner"></span>Signing in…' : 'Sign In';
+}
+
+// Employee login: look up email stored against employee_code, then sign in
+async function loginEmployee() {
+  const code = document.getElementById('emp-code').value.trim().toUpperCase();
+  const pass = document.getElementById('emp-pass').value;
+  if (!code || !pass) { showMsg('emp-msg', 'Please enter your Employee Code and password.', 'error'); return; }
+  setLoading('emp-btn', true);
+  try {
+    // Fetch the auth email mapped to this employee code (public lookup via RPC)
+    const { data, error } = await sb.rpc('get_email_by_employee_code', { p_code: code });
+    if (error || !data) { showMsg('emp-msg', 'Employee code not found. Check with your manager.', 'error'); return; }
+    const { error: signInErr } = await sb.auth.signInWithPassword({ email: data, password: pass });
+    if (signInErr) { showMsg('emp-msg', 'Incorrect password. Please try again.', 'error'); return; }
+    window.location.href = 'dashboard.html';
+  } catch (e) {
+    showMsg('emp-msg', 'Network error. Please try again.', 'error');
+  } finally { setLoading('emp-btn', false); }
+}
+
+// Manager login: direct email + password
+async function loginManager() {
+  const email = document.getElementById('mgr-email').value.trim();
+  const pass = document.getElementById('mgr-pass').value;
+  if (!email || !pass) { showMsg('mgr-msg', 'Please enter your email and password.', 'error'); return; }
+  setLoading('mgr-btn', true);
+  try {
+    const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) { showMsg('mgr-msg', 'Incorrect email or password.', 'error'); return; }
+    window.location.href = 'dashboard.html';
+  } catch (e) {
+    showMsg('mgr-msg', 'Network error. Please try again.', 'error');
+  } finally { setLoading('mgr-btn', false); }
+}
+
+// Allow Enter key to submit
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (document.getElementById('panel-employee').classList.contains('active')) loginEmployee();
+  else loginManager();
+});
+</script>
+</body>
+</html>

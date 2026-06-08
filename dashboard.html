@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Pezzano Induction Portal</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="session.js"></script>
+<style>
+:root{
+  --bg:#0f1117;--surface:#181c25;--surface2:#1e2330;--surface3:#242938;
+  --border:#2a2f3d;--primary:#00b4d8;--success:#4ade80;--warning:#fbbf24;
+  --error:#f87171;--text:#e8eaf0;--muted:#8b92a5;--faint:#4a5068;
+  --font:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+/* HEADER */
+.app-header{position:sticky;top:0;z-index:40;background:rgba(15,17,23,.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px}
+.header-inner{max-width:1400px;margin:0 auto;height:60px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{display:flex;align-items:center;gap:10px}
+.logo-sm{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#00b4d8,#0077a8);display:grid;place-items:center;font-size:.85rem;font-weight:800;color:#fff}
+.brand-name{font-size:.98rem;font-weight:600;letter-spacing:-.01em}
+.brand-sub{font-size:.72rem;color:var(--muted)}
+.header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.user-chip{display:flex;align-items:center;gap:7px;padding:5px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;font-size:.78rem}
+.user-dot{width:7px;height:7px;border-radius:50%;background:var(--success)}
+/* LAYOUT */
+.page{max-width:1400px;margin:0 auto;padding:24px}
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px}
+.card-title{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:12px}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:none;border-radius:8px;font-size:.82rem;font-weight:500;cursor:pointer;transition:.15s;white-space:nowrap}
+.btn:hover{opacity:.85;transform:translateY(-1px)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-primary{background:var(--primary);color:#111}
+.btn-success{background:rgba(74,222,128,.15);color:var(--success);border:1px solid rgba(74,222,128,.2)}
+.btn-warn{background:rgba(251,191,36,.12);color:var(--warning);border:1px solid rgba(251,191,36,.2)}
+.btn-danger{background:rgba(248,113,113,.12);color:var(--error);border:1px solid rgba(248,113,113,.2)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.metric{padding:18px 20px}
+.metric .val{font-size:1.9rem;font-weight:700;letter-spacing:-.03em;line-height:1}
+.metric .lbl{font-size:.75rem;color:var(--muted);margin-top:4px}
+/* STATUS BADGES */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:.72rem;font-weight:600}
+.badge-pending{background:rgba(139,146,165,.12);color:var(--muted)}
+.badge-progress{background:rgba(251,191,36,.12);color:var(--warning)}
+.badge-completed{background:rgba(74,222,128,.12);color:var(--success)}
+.badge-admin{background:rgba(0,180,216,.12);color:var(--primary)}
+.badge-mgr{background:rgba(167,139,250,.12);color:#a78bfa}
+/* TABLE */
+.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);margin-top:14px}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+thead th{padding:10px 12px;background:var(--surface2);color:var(--muted);font-weight:500;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--surface2)}
+.actions-cell{display:flex;gap:5px;flex-wrap:wrap}
+/* PROGRESS BAR */
+.prog-bar{height:5px;background:var(--surface3);border-radius:999px;overflow:hidden;width:80px;display:inline-block;vertical-align:middle;margin-right:6px}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--success))}
+/* FILTERS */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.filters input,.filters select{padding:7px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.82rem;outline:none}
+.filters input:focus,.filters select:focus{border-color:var(--primary)}
+/* MODAL */
+.modal-back{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto}
+.modal h3{font-size:1.05rem;margin-bottom:16px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid .full{grid-column:1/-1}
+.field label{display:block;font-size:.75rem;font-weight:500;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.03em}
+.field input,.field select{width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.88rem;outline:none}
+.field input:focus,.field select:focus{border-color:var(--primary)}
+.field input[readonly]{opacity:.5;cursor:not-allowed}
+.modal-actions{display:flex;gap:8px;margin-top:20px;justify-content:flex-end}
+/* TOAST */
+#toast{position:fixed;bottom:20px;right:20px;background:#1a2535;border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-size:.83rem;z-index:200;opacity:0;transform:translateY(8px);transition:.3s;pointer-events:none}
+#toast.show{opacity:1;transform:translateY(0)}
+/* INDUCTION SECTION */
+.section-divider{display:flex;align-items:center;gap:10px;margin:24px 0 16px;color:var(--muted);font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.section-divider::before,.section-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+/* KNOWLEDGE GATE */
+.kb-grid{display:grid;grid-template-columns:220px 1fr;gap:16px}
+.kb-nav{display:grid;gap:6px}
+.kb-btn{padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;text-align:left;cursor:pointer;transition:.15s;font-size:.82rem;color:var(--text)}
+.kb-btn:hover{border-color:var(--primary)}
+.kb-btn.active{background:rgba(0,180,216,.1);border-color:var(--primary);color:var(--primary)}
+.kb-btn.done{background:rgba(74,222,128,.07);border-color:rgba(74,222,128,.25);color:var(--success)}
+/* MODULE PROGRESS */
+.module-list{display:grid;gap:6px}
+.mod-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;font-size:.83rem;cursor:pointer;transition:.15s}
+.mod-row:hover{border-color:var(--primary)}
+.mod-row.active{border-color:var(--primary);background:rgba(0,180,216,.07)}
+.mod-row.done{border-color:rgba(74,222,128,.3);background:rgba(74,222,128,.05)}
+.mod-row.locked{opacity:.4;cursor:not-allowed}
+/* QUIZ */
+.question-box{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:20px}
+.q-text{font-size:.95rem;font-weight:500;margin-bottom:16px;line-height:1.5}
+.options{display:grid;gap:8px}
+.opt{padding:11px 14px;background:var(--surface3);border:1px solid var(--border);border-radius:8px;text-align:left;cursor:pointer;font-size:.85rem;transition:.15s;color:var(--text)}
+.opt:hover:not(:disabled){border-color:var(--primary)}
+.opt.correct{border-color:var(--success);background:rgba(74,222,128,.1);color:var(--success);font-weight:600}
+.opt.wrong{border-color:var(--error);background:rgba(248,113,113,.1);color:var(--error)}
+.feedback{margin-top:12px;padding:10px 14px;border-radius:8px;font-size:.83rem;display:none}
+.feedback.show{display:block}
+.feedback.good{background:rgba(74,222,128,.1);color:var(--success)}
+.feedback.bad{background:rgba(248,113,113,.1);color:var(--error)}
+.explain{background:rgba(251,191,36,.08);color:var(--warning);margin-top:8px;padding:10px 14px;border-radius:8px;font-size:.82rem;display:none}
+.explain.show{display:block}
+/* LETTER PRINT */
+@media print{
+  @page{margin:0;size:A4 portrait}
+  html,body{margin:0;padding:0;overflow:hidden}
+  body *{visibility:hidden}
+  #printArea,#printArea *{visibility:visible}
+  #printArea{position:fixed;left:0;top:0;width:210mm;height:297mm;background:#fff;overflow:hidden}
+}
+.letter{background:#fff;color:#222;padding:14mm 18mm;width:210mm;max-height:297mm;box-sizing:border-box}
+.letter h2{font-size:2.2rem;color:#00697a;font-family:Georgia,serif;margin-bottom:6px}
+.letter-header{display:flex;justify-content:space-between;margin-bottom:20px;gap:20px}
+.letter-co{font-size:.88rem;line-height:1.65}
+.letter-ref{text-align:right;font-size:.82rem;line-height:1.8}
+.letter-body p{font-size:.88rem;line-height:1.65;margin-bottom:10px}
+.letter-details{background:#f5f5f2;border-radius:8px;padding:12px 16px;margin:14px 0;font-size:.82rem;line-height:1.9}
+.letter-sigs{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:18px}
+.sig-line{border-top:1px solid #333;padding-top:5px;font-size:.82rem}
+.sig-block p{font-weight:600;margin-bottom:32px;font-size:.85rem}
+/* RESPONSIVE */
+@media(max-width:900px){.metrics{grid-template-columns:1fr 1fr}.kb-grid{grid-template-columns:1fr}}
+@media(max-width:600px){.metrics{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="logo-sm">PE</div>
+      <div><div class="brand-name">Pezzano Induction Portal</div><div class="brand-sub">Warehouse Staff System</div></div>
+    </div>
+    <div class="header-right" id="headerRight">
+      <div class="user-chip"><div class="user-dot"></div><span id="userLabel">Loading…</span></div>
+      <button class="btn btn-ghost" onclick="signOut()">Sign Out</button>
+    </div>
+  </div>
+</header>
+
+<main class="page" id="app">
+  <div style="text-align:center;padding:60px;color:var(--muted)">Loading portal…</div>
+</main>
+
+<div id="printArea" style="display:none"></div>
+<div id="toast"></div>
+<div id="modalRoot"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────
+const DEPARTMENTS = ['Floor Morning','Processing','Meat','Logistics','Admin','Others'];
+const POSITIONS   = ['Employee','Supervisor','Logistics Driver','Location Manager','System Administrator'];
+const COMPANY     = { name:'Pezzano Enterprises Pty Ltd', address:'Unit 12 Purdy Pl, Canning Vale WA 6155', cert:'24/7 HACCP Certified' };
+
+const KNOWLEDGE_TOPICS = [
+  {id:'welcome',title:'Welcome & Business Overview',cat:'About',summary:'Who Pezzano is, what the business handles, and the values that shape expected behaviour.',points:['Pezzano Enterprises was established in 1956 and operates from the Canning Vale facility in Perth, Western Australia.','The company supplies premium fruits, vegetables, seafood, meat, dairy, and specialty items.','Core values: safety, quality, respect, accountability, sustainability, and family.'],facts:['Site speed limit: 10 km/h','Assembly point: front car park','Emergency: 000'],videos:[]},
+  {id:'rules',title:'Site Rules & PPE',cat:'Safety',summary:'Daily rules for entering, moving around, and all mandatory PPE requirements.',points:['Sign in and out every shift, wear hi-vis and ID on the warehouse floor.','Authorised access only in operational and cold storage areas.','Steel-capped boots and hi-vis at all times in warehouse and dock areas.'],facts:['Hi-vis required in all operational areas','Steel-capped boots mandatory','Visitors must be escorted'],videos:[]},
+  {id:'emergency',title:'Emergency & Chemicals',cat:'Safety',summary:'Emergency procedures, evacuation, chemical handling, and first aid protocols.',points:['DRSABCD: Danger, Response, Send for help, Airway, Breathing, CPR, Defibrillator.','On evacuation, stop work and go to the front car park assembly point.','Read the SDS before using any chemical; never mix chemicals.'],facts:['Emergency: 000','Assembly point: front car park','WorkSafe WA: 1300 307 877'],videos:[]},
+  {id:'manual',title:'Manual Handling',cat:'Safety',summary:'Safe lifting techniques, team lifting, and mechanical aids.',points:['Plan the lift, keep the load close to your body, and avoid twisting.','Team lift or use mechanical assistance for loads 16 kg and above.','Report any discomfort early to prevent injury escalation.'],facts:['Mandatory mechanical aid: 25 kg+','Team lift recommended: 16-25 kg'],videos:[{title:'Manual Handling in the Workplace',embed:'https://www.youtube-nocookie.com/embed/LdxJNKO-5DY'}]},
+  {id:'forklift',title:'Forklift Safety',cat:'Operations',summary:'Licensing, pedestrian separation, pre-start checks, and safe travel rules.',points:['Only licensed operators with a current HRWL may operate forklifts.','Pedestrians must stay out of forklift zones and make eye contact before crossing.','Travel with forks low, use horns at intersections, and park safely.'],facts:['Site speed limit: 10 km/h','Pedestrian zones: 5 km/h','Pre-start check mandatory'],videos:[{title:'Forklift Safety in the Workplace',embed:'https://www.youtube-nocookie.com/embed/eWalJ0YhO4Q'}]},
+  {id:'fire',title:'Fire Safety',cat:'Safety',summary:'Fire extinguisher types, PASS method, and evacuation triggers.',points:['Know the extinguisher types and what they are used for.','PASS means Pull, Aim, Squeeze, Sweep.','If in doubt, evacuate and raise the alarm rather than fighting the fire.'],facts:['Dry powder/CO2 for electrical fires','PASS: Pull Aim Squeeze Sweep'],videos:[]},
+  {id:'haccp',title:'Cold Chain & HACCP',cat:'Food Safety',summary:'Temperature control, FIFO rotation, hygiene standards, and cold-room safety.',points:['Pezzano operates under HACCP certification; all perishable goods must remain in safe temperature ranges.','FIFO must always be used and temperature records must be accurate.','Cold-room work requires thermal PPE, communication, and emergency release awareness.'],facts:['HACCP: Hazard Analysis and Critical Control Points','FIFO: First In First Out'],videos:[{title:'HACCP Food Safety Explained',embed:'https://www.youtube-nocookie.com/embed/9BzItAj8kcQ'}]},
+  {id:'ops',title:'Warehouse Operations',cat:'Operations',summary:'Receiving, dispatch, reporting, housekeeping, and WHS rights and responsibilities.',points:['Check deliveries, inspect temperatures, rotate stock with FIFO, and stage dispatch safely.','Clean-as-you-go standards support safety, hygiene, and workflow efficiency.','Workers have the right to refuse unsafe work and the duty to protect themselves and others.'],facts:['WorkSafe WA: 1300 307 877','WorkCover WA: 1300 794 744'],videos:[]}
+];
+
+function q(question,opts,a,why){return{q:question,opts,a,why};}
+const MODULES=[
+  {id:'generalRules',title:'General Rules',icon:'📍',content:['Site speed limit: 10 km/h. Sign in and out every shift.','Use pedestrian walkways, keep exits and aisles clear.','Only authorised persons may enter operational and cold storage areas.'],questions:[q('What must every worker do at the start and end of each shift?',['Sign in and sign out','Only text the supervisor','Nothing if rostered','Sign out only if leaving early'],0,'Workers must sign in and out every shift.'),q('What is the site speed limit?',['5 km/h','8 km/h','10 km/h','15 km/h'],2,'The site speed limit is 10 km/h.'),q('Where must pedestrians walk?',['Anywhere forklifts are not moving','Within marked pedestrian walkways','Across loading docks','Through racking aisles'],1,'Pedestrian walkways must be used.'),q('Where can eating and drinking occur?',['On the warehouse floor','In the cold room','At the dock','In designated break areas only'],3,'Food and drink are restricted to designated break areas.'),q('What should you do if an emergency exit is blocked?',['Ignore it','Move or report the obstruction immediately','Leave it for night shift','Stack boxes beside it'],1,'Emergency exits must stay clear at all times.')]},
+  {id:'ppe',title:'PPE',icon:'🦺',content:['Steel-capped boots and hi-vis are required in all warehouse and dock areas.','Damaged or missing PPE must be reported immediately.','Additional PPE required by task: thermal wear in cold rooms, gloves for wet work.'],questions:[q('Which PPE is required at all times in warehouse areas?',['Safety boots','Safety glasses only','Apron only','Hard hat only'],0,'Safety boots are mandatory at all times.'),q('When is hi-vis required?',['Only at night','In all operational and outdoor areas','Only for visitors','Only in the office'],1,'Hi-vis is required in all operational and outdoor areas.'),q('What should you do with damaged PPE?',['Use it until stock arrives','Tape it and continue','Report it immediately','Leave it in your locker'],2,'Damaged PPE must be reported immediately.'),q('What clothing is required in cold rooms?',['Raincoat only','Thermal or warm clothing','Casual hoodie','No special clothing'],1,'Thermal clothing is required in cold rooms.'),q('What is working without required PPE?',['Allowed for quick tasks','Allowed if supervised','A serious safety breach','Only a warning issue'],2,'Working without PPE is a serious safety breach.')]},
+  {id:'emergency',title:'Emergency & Chemicals',icon:'🚨',content:['DRSABCD — Danger, Response, Send, Airway, Breathing, CPR, Defibrillator.','Read the SDS before using any chemical and never mix chemicals.','Major spills require evacuation and immediate supervisor notification.'],questions:[q('What does D in DRSABCD mean?',['Decision','Danger','Doctor','Defence'],1,'Check for danger first.'),q('Emergency phone number?',['13 11 26','1300 307 877','000','08 9456 3677'],2,'000 is the emergency number.'),q('What to do when the evacuation alarm sounds?',['Finish your task','Stop work and leave by nearest safe exit','Look for your bag','Wait for a text'],1,'Stop work and evacuate immediately.'),q('Where is the assembly point?',['Lunch room','Front car park','Back dock','Manager office'],1,'The front car park is the assembly point.'),q('Can chemicals be poured down drains?',['Yes if diluted','No, never','Only sanitisers','Only at night'],1,'Pouring chemicals down drains is illegal.')]},
+  {id:'manual',title:'Manual Handling',icon:'📦',content:['Plan the lift, keep the load close, and avoid twisting.','Team lift or use mechanical assistance for heavier or awkward loads.','Report discomfort early and rotate repetitive tasks.'],questions:[q('First step before lifting?',['Lift quickly','Plan the lift, path, and destination','Twist and test the weight','Ask someone to guess'],1,'Plan the lift before touching the load.'),q('What should stay straight during lifting?',['Arms','Back','Fingers','Neck only'],1,'Keep back straight and core braced.'),q('What must be used for loads 25 kg or more?',['Back brace only','Mechanical lifting equipment','Faster lifting','One strong person'],1,'Mechanical equipment is mandatory for 25 kg and above.'),q('When should discomfort be reported?',['At year end','Early, as soon as noticed','Only if severe','After sick leave'],1,'Early reporting helps prevent injury.'),q('Where should the load be kept while lifting?',['At arm length','Close to your body','Above shoulder height','On one hip'],1,'Loads should be kept close to reduce strain.')]},
+  {id:'forklift',title:'Forklift Safety',icon:'🚜',content:['Only licensed operators with a current HRWL may operate forklifts.','Pedestrians must stay out of forklift zones and make eye contact before crossing.','Travel with forks low, use horns at intersections, park safely.'],questions:[q('Who may operate a forklift on site?',['Any experienced worker','Only a licensed operator with current HRWL','Any supervisor','Visitors under instruction'],1,'Only licensed operators may operate forklifts.'),q('What should pedestrians do before crossing a forklift path?',['Run across quickly','Make eye contact with the operator','Wave from behind','Assume they are seen'],1,'Eye contact confirms the operator is aware.'),q('What must happen if a forklift is faulty?',['Keep using it slowly','Tag it out and report it','Let another shift use it','Park it without reporting'],1,'Faulty forklifts must not be operated.'),q('How should forks be positioned while travelling?',['At shoulder height','Low, about 150-300 mm','Touching the ground','Raised above the load'],1,'Forks should travel low for stability.'),q('How should a forklift be parked?',['Forks up, engine on','Forks down, brakes on, engine off, keys removed','Anywhere convenient','Blocking an aisle'],1,'Safe parking: forks down, brakes on, engine off, keys removed.')]},
+  {id:'fire',title:'Fire Safety',icon:'🔥',content:['Know the extinguisher types and what they are used for.','PASS: Pull, Aim, Squeeze, Sweep.','If in doubt, evacuate and raise the alarm.'],questions:[q('What does P in PASS stand for?',['Protect','Pull','Push','Pause'],1,'P = Pull the safety pin.'),q('What should you aim at?',['Top of the flames','Base of the fire','The ceiling','Any smoke'],1,'Aim at the base of the fire.'),q('What to do if fire is larger than a waste bin?',['Fight it alone','Evacuate, raise the alarm, call 000','Use water regardless','Wait for lunch'],1,'Large fires require evacuation and emergency response.'),q('Can sprinkler or extinguisher access be blocked?',['Yes if temporary','No, never','Only during deliveries','Outside working hours only'],1,'Fire equipment access must remain clear.'),q('Should you re-enter a burning building?',['Yes for valuables','Only with a friend','No','Only if fire is small'],2,'Never re-enter a burning building.')]},
+  {id:'coldchain',title:'Cold Chain & HACCP',icon:'❄️',content:['HACCP certification — all perishable goods must remain in safe temperature ranges.','FIFO must always be used and temperature records must be accurate.','Cold-room work requires thermal PPE, communication, and emergency release awareness.'],questions:[q('What does HACCP stand for?',['Hazard Analysis and Critical Control Points','Heavy Area Cold Chain Process','Handling and Carrying Cold Produce','Health and Cleaning Control Plan'],0,'HACCP = Hazard Analysis and Critical Control Points.'),q('What stock rotation system must always be applied?',['LIFO','FIFO','Random rotation','Monthly sort only'],1,'FIFO is mandatory for perishable stock.'),q('Should you enter a cold room alone without telling anyone?',['Yes if quick','No','Only on day shift','Only with phone access'],1,'Workers should not enter alone without someone knowing.'),q('What should you know on your first day in a cold room?',['Where tea is stored','The emergency door release','How to play music','Where phones charge'],1,'Emergency release knowledge is essential.'),q('What personal hygiene rule applies before food handling?',['Wash hands thoroughly','Wear jewellery','Taste product for quality','Use bare hands'],0,'Hand washing is required before handling food.')]},
+  {id:'waste',title:'Waste Management',icon:'♻️',content:['Waste hierarchy: Refuse, Reduce, Reuse, Recycle, Recover, Dispose.','Cardboard is the largest waste stream — reuse where possible or flatten for recycling.','Aisle build-up creates trip and fire hazards.'],questions:[q('Which comes before recycling in the waste hierarchy?',['Reuse','Dispose','Burn','Landfill'],0,'Reuse is higher than recycle.'),q('What must be done to cardboard before disposal?',['Wet it down','Flatten it','Break it with a forklift','Mix it with plastic'],1,'Cardboard must be flattened before disposal.'),q('Where should organic food waste go?',['General waste only','Compost or organic waste stream','Cardboard bin','Any outside bin'],1,'Organic waste should go to compost or organics.'),q('What is a hazard caused by cardboard pile-ups in aisles?',['No hazard','Fire and trip hazard','Only noise hazard','Only paperwork delays'],1,'Pile-ups are fire and trip hazards.'),q('What is the most sustainable option for a good-condition box?',['Burn it','Reuse it','Throw it away','Cut it up'],1,'Reusing good boxes is the preferred option.')]},
+  {id:'warehouse',title:'Warehouse Operations',icon:'📋',content:['Inspect incoming stock for temperature compliance, quality, and damage before acceptance.','Accurate labelling and FIFO support traceability and stock integrity.','Safe, accurate, quality-focused work matters more than speed alone.'],questions:[q('What should happen when incoming deliveries arrive?',['Unload without checking','Inspect for temperature compliance and product quality','Sign everything first','Leave it outside'],1,'Incoming deliveries should be checked before acceptance.'),q('What stock system helps prevent spoilage?',['Random pick','FIFO','Last in first out','Top shelf only'],1,'FIFO reduces age-related spoilage.'),q('Why must airflow in cold rooms stay unobstructed?',['For easier walking','To maintain product temperature','To improve phone signal','To dry cardboard'],1,'Blocked airflow can allow temperatures to rise.'),q('What should happen if product damage is found?',['Hide it','Report and segregate it according to procedure','Pack it anyway','Send it first'],1,'Damaged product must be reported and managed correctly.'),q('What defines advanced warehouse performance?',['Speed only','Safe, accurate, quality-focused work','Working alone','Skipping checks'],1,'High performance balances safety, quality, and accuracy.')]},
+  {id:'housekeeping',title:'Housekeeping & Hygiene',icon:'🧼',content:['Clean, tidy, dry, and obstruction-free work areas reduce injury and contamination risk.','Spills and waste must be cleaned or reported immediately.','Food-handling hygiene includes hand washing, illness reporting, and no unnecessary jewellery.'],questions:[q('What is the best housekeeping approach?',['Clean at month end','Clean as you go','Only clean visible areas','Leave it for cleaners'],1,'Clean-as-you-go keeps the workplace safe.'),q('What should happen to spills?',['Leave a sign and walk away','Clean or report them immediately','Ignore small ones','Cover with cardboard'],1,'Spills must be dealt with immediately.'),q('What should you do before handling food?',['Put on jewellery','Wash your hands thoroughly','Taste the product','Use your phone'],1,'Hand washing is essential before food handling.'),q('What should you do if you have vomiting or diarrhoea?',['Work anyway','Report illness before starting work','Only tell a friend','Wait three days'],1,'Workers must report illness before starting work.'),q('Is bare-hand contact with ready-to-eat products allowed?',['Yes always','No, use gloves or tongs','Only for supervisors','Only with clean hands'],1,'Ready-to-eat foods should not be handled with bare hands.')]},
+  {id:'incident',title:'Incident Reporting',icon:'⚠️',content:['All incidents, hazards, and near misses must be reported immediately to a supervisor.','Early reporting supports corrective action and prevents repeat incidents.','Unsafe forklift situations or manual-handling discomfort must also be reported early.'],questions:[q('What must be reported immediately?',['Only serious injuries','Incidents, near misses, and hazards','Only broken pallets','Only customer complaints'],1,'All incidents, near misses, and hazards must be reported.'),q('Why should near misses be reported?',['They do not matter','They help prevent future injuries','Only managers care','Reported yearly only'],1,'Near misses reveal risks before someone is hurt.'),q('When should hazard reporting happen?',['When convenient','Immediately','Only after damage','At monthly meetings only'],1,'Hazards should be reported as soon as identified.'),q('Who is the first point of escalation?',['Any customer','Your supervisor','Social media','Payroll'],1,'Supervisors are the primary reporting point.'),q('What supports better corrective action?',['Delayed reporting','Clear and timely reporting','No documentation','Guessing what happened'],1,'Timely reporting allows hazards to be controlled.')]},
+  {id:'rights',title:'Rights & Responsibilities',icon:'⚖️',content:['The induction is mandatory before any work starts.','Workers have the right and duty to refuse unsafe work.','Non-compliance with safety rules may lead to disciplinary action including termination.'],questions:[q('When must the induction be completed?',['After the first shift','Before commencing any work','Within three months','Only for permanent staff'],1,'The induction is mandatory before any work starts.'),q('What right do workers have regarding unsafe work?',['No rights','The right and duty to refuse unsafe work','Only managers can refuse tasks','Must continue until told otherwise'],1,'Workers may refuse work they believe is unsafe.'),q('What may happen if safety rules are ignored?',['Nothing','Disciplinary action including termination','Only a casual reminder','Automatic promotion'],1,'Non-compliance may lead to termination.'),q('If on-site issues are not addressed, who may workers contact?',['No one','WorkSafe WA','The lunch room committee','Customers'],1,'WorkSafe WA is an escalation option.'),q('Who can refuse unsafe work?',['Only supervisors','Workers who believe the work is unsafe','Visitors only','Only HR'],1,'Workers have both the right and duty to refuse unsafe work.')]}
+];
+
+const DECLARATION_POINTS=[
+  'I confirm I have read and understood the full content of the Pezzano Enterprises Warehouse Staff Induction Manual.',
+  'I understand my rights and obligations under the WHS Act 2020 WA.',
+  'I agree to comply with all safety rules, food safety standards, and waste management procedures.',
+  'I understand that non-compliance may result in disciplinary action including termination.',
+  'I have had the opportunity to ask questions and all my questions have been answered satisfactorily.'
+];
+
+// ── APP STATE ─────────────────────────────────────────────────
+let profile      = null;  // current user's employee row
+let allEmployees = [];    // manager view
+let moduleProgress = {};  // { moduleId: { answers:{}, completed:bool } }
+let knowledgeViewed = []; // topic ids confirmed
+let view         = 'dashboard';
+let activeModule = 0;
+let activeQuestion = 0;
+let activeKbTopic = KNOWLEDGE_TOPICS[0].id;
+let filters      = { search:'', dept:'', status:'', position:'' };
+
+// ── INIT ──────────────────────────────────────────────────────
+(async () => {
+  const session = await requireAuth();
+  if (!session) return;
+  profile = await getProfile();
+  if (!profile) { await signOut(); return; }
+  document.getElementById('userLabel').textContent =
+    `${profile.full_name} · ${profile.employee_code}`;
+
+  // Load module progress from DB
+  const { data: progRows } = await sb
+    .from('module_progress')
+    .select('module_id,answers,completed')
+    .eq('employee_id', profile.id);
+  if (progRows) {
+    progRows.forEach(r => {
+      moduleProgress[r.module_id] = { answers: r.answers || {}, completed: r.completed };
+    });
+  }
+  knowledgeViewed = profile.knowledge_viewed || [];
+
+  if (isManager(profile)) {
+    const { data } = await sb.rpc('get_dashboard_data');
+    allEmployees = data || [];
+  }
+
+  renderView();
+})();
+
+// ── TOAST ─────────────────────────────────────────────────────
+function toast(msg, dur = 2800) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+// ── MAIN RENDER ───────────────────────────────────────────────
+function renderView() {
+  const app = document.getElementById('app');
+  if      (view === 'dashboard')    app.innerHTML = renderDashboard();
+  else if (view === 'knowledgeGate')app.innerHTML = renderKnowledgeGate();
+  else if (view === 'module')       app.innerHTML = renderModule();
+  else if (view === 'declaration')  app.innerHTML = renderDeclaration();
+  else if (view === 'completion')   app.innerHTML = renderCompletion();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────
+function renderDashboard() {
+  if (isManager(profile)) return renderManagerDashboard();
+  return renderEmployeeDashboard();
+}
+
+function renderEmployeeDashboard() {
+  const pct = profile.progress_pct || 0;
+  const done = MODULES.filter(m => moduleProgress[m.id]?.completed).length;
+  return `
+  <div style="max-width:800px">
+    <div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,rgba(0,180,216,.08),transparent)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-size:1.4rem;font-weight:700;letter-spacing:-.02em">Welcome, ${esc(profile.full_name)}</div>
+          <div style="color:var(--muted);font-size:.83rem;margin-top:3px">${esc(profile.employee_code)} · ${esc(profile.department)} · ${esc(profile.position)}</div>
+        </div>
+        <span class="badge ${statusBadge(profile.completion_status)}">${fmtStatus(profile.completion_status)}</span>
+      </div>
+      <div style="margin-top:16px">
+        <div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);margin-bottom:6px"><span>Induction progress</span><strong style="color:var(--text)">${pct}% · ${done}/${MODULES.length} modules</strong></div>
+        <div style="height:8px;background:var(--surface3);border-radius:999px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--primary),var(--success));transition:.4s"></div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">My Details</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;font-size:.83rem">
+        ${[['Start Date',fmtDate(profile.start_date)],['Induction Date',fmtDate(profile.induction_date)],['Work Location',profile.work_location],['Department',profile.department],['Position',profile.position],['Employee Code',profile.employee_code]].map(([l,v])=>`<div><div style="color:var(--muted);font-size:.72rem;margin-bottom:2px">${l}</div><div style="font-weight:500">${esc(String(v||'—'))}</div></div>`).join('')}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Induction</div>
+      ${profile.completion_status === 'completed'
+        ? `<p style="color:var(--success);font-size:.9rem;margin-bottom:12px">&#10003; Induction complete. Your completion letter is ready.</p>
+           <button class="btn btn-success" onclick="printLetter()">Print Completion Letter</button>`
+        : `<div style="display:flex;gap:8px;flex-wrap:wrap">
+             <button class="btn btn-primary" onclick="resumeInduction()">
+               ${pct === 0 ? 'Start Induction' : 'Resume Induction'}
+             </button>
+             <button class="btn btn-ghost" onclick="view='knowledgeGate';renderView()">Review Knowledge Topics</button>
+           </div>`}
+    </div>
+  </div>`;
+}
+
+function renderManagerDashboard() {
+  const rows = filteredEmployees();
+  const total = allEmployees.length;
+  const completed = allEmployees.filter(e => e.completion_status === 'completed').length;
+  const inprog   = allEmployees.filter(e => e.completion_status === 'in_progress').length;
+  const pct = total ? Math.round(completed / total * 100) : 0;
+  return `
+  <div class="metrics">
+    <div class="metric card"><div class="val">${total}</div><div class="lbl">Total Staff</div></div>
+    <div class="metric card"><div class="val" style="color:var(--primary)">${pct}%</div><div class="lbl">Overall Completion</div></div>
+    <div class="metric card"><div class="val" style="color:var(--success)">${completed}</div><div class="lbl">Completed</div></div>
+    <div class="metric card"><div class="val" style="color:var(--warning)">${inprog}</div><div class="lbl">In Progress</div></div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div class="card-title" style="margin:0">Staff Tracking</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-ghost" onclick="exportExcel()">Export Excel</button>
+        <button class="btn btn-warn" onclick="bulkPrintLetters()">Bulk Print Letters</button>
+        ${isSysAdmin(profile) ? `<button class="btn btn-primary" onclick="openCreateEmployee()">+ Add Staff</button>` : ''}
+      </div>
+    </div>
+    <div class="filters">
+      <input placeholder="Search name, code, phone…" value="${esc(filters.search)}" oninput="filters.search=this.value;renderView()">
+      <select onchange="filters.dept=this.value;renderView()"><option value="">All departments</option>${DEPARTMENTS.map(d=>`<option value="${d}" ${filters.dept===d?'selected':''}>${d}</option>`).join('')}</select>
+      <select onchange="filters.status=this.value;renderView()"><option value="">All status</option><option value="pending" ${filters.status==='pending'?'selected':''}>Pending</option><option value="in_progress" ${filters.status==='in_progress'?'selected':''}>In Progress</option><option value="completed" ${filters.status==='completed'?'selected':''}>Completed</option></select>
+      <select onchange="filters.position=this.value;renderView()"><option value="">All positions</option>${POSITIONS.map(p=>`<option value="${p}" ${filters.position===p?'selected':''}>${p}</option>`).join('')}</select>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Code</th><th>Name</th><th>Dept</th><th>Position</th><th>Start Date</th><th>Status</th><th>Progress</th><th>Completion</th><th>Actions</th></tr></thead>
+      <tbody>${rows.length ? rows.map(e=>`<tr>
+        <td style="font-family:monospace;font-size:.78rem">${esc(e.employee_code)}</td>
+        <td><div style="font-weight:500">${esc(e.full_name)}</div><div style="font-size:.72rem;color:var(--muted)">${esc(e.phone||'')}</div></td>
+        <td>${esc(e.department)}</td>
+        <td>${esc(e.position)}</td>
+        <td style="font-size:.78rem">${fmtDate(e.start_date)}</td>
+        <td><span class="badge ${statusBadge(e.completion_status)}">${fmtStatus(e.completion_status)}</span></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="prog-bar"><div class="prog-fill" style="width:${e.progress_pct}%"></div></div>
+            <span style="font-size:.75rem">${e.progress_pct}%</span>
+          </div>
+        </td>
+        <td style="font-size:.78rem">${fmtDate(e.completion_date)}</td>
+        <td>
+          <div class="actions-cell">
+            <button class="btn btn-ghost" onclick="viewEmployeeDetail('${e.id}')">View</button>
+            ${isSysAdmin(profile)?`<button class="btn btn-warn" style="font-size:.75rem" onclick="openEditEmployee('${e.id}')">&#9881;</button>`:''}
+            <button class="btn btn-success" onclick="changeDept('${e.id}')" style="font-size:.75rem">Dept</button>
+            ${e.completion_status==='completed'?`<button class="btn btn-warn" onclick="printLetterFor('${e.id}')">Letter</button>`:''}
+            ${isSysAdmin(profile)?`<button class="btn btn-danger" style="font-size:.75rem" onclick="deleteEmployee('${e.id}')">Del</button>`:''}
+          </div>
+        </td>
+      </tr>`).join('') : `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:32px">No records found.</td></tr>`}
+      </tbody>
+    </table></div>
+  </div>
+  ${isSysAdmin(profile) ? `
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+    <div class="card">
+      <div class="card-title">Audit Log</div>
+      <button class="btn btn-ghost" onclick="openAuditLog()">View Full Audit Log</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Access Control</div>
+      <button class="btn btn-primary" onclick="openCreateEmployee()">Create New Account</button>
+    </div>
+  </div>` : ''}`;
+}
+
+function filteredEmployees() {
+  return allEmployees.filter(e =>
+    (!filters.search || [e.full_name,e.employee_code,e.phone||'',e.department,e.position].join(' ').toLowerCase().includes(filters.search.toLowerCase())) &&
+    (!filters.dept     || e.department === filters.dept) &&
+    (!filters.status   || e.completion_status === filters.status) &&
+    (!filters.position || e.position === filters.position)
+  );
+}
+function statusBadge(s){ return s==='completed'?'badge-completed':s==='in_progress'?'badge-progress':'badge-pending'; }
+function fmtStatus(s){ return s==='completed'?'Completed':s==='in_progress'?'In Progress':'Pending'; }
+
+// ── RESUME INDUCTION ──────────────────────────────────────────
+function resumeInduction() {
+  const allViewed = KNOWLEDGE_TOPICS.every(t => knowledgeViewed.includes(t.id));
+  if (!allViewed) { view = 'knowledgeGate'; renderView(); return; }
+  const firstIncomplete = MODULES.findIndex(m => !moduleProgress[m.id]?.completed);
+  activeModule = firstIncomplete === -1 ? MODULES.length - 1 : firstIncomplete;
+  const saved = moduleProgress[MODULES[activeModule].id];
+  activeQuestion = saved ? Object.keys(saved.answers).length : 0;
+  if (activeQuestion >= MODULES[activeModule].questions.length) activeQuestion = 0;
+  view = 'module'; renderView();
+}
+
+// ── KNOWLEDGE GATE ────────────────────────────────────────────
+function renderKnowledgeGate() {
+  const topic = KNOWLEDGE_TOPICS.find(t => t.id === activeKbTopic) || KNOWLEDGE_TOPICS[0];
+  const totalViewed = knowledgeViewed.length;
+  const allDone = totalViewed === KNOWLEDGE_TOPICS.length;
+  return `
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+    <button class="btn btn-ghost" onclick="view='dashboard';renderView()">&#8592; Back</button>
+    <div style="align-self:center;font-size:.8rem;color:var(--muted)">${totalViewed}/${KNOWLEDGE_TOPICS.length} topics confirmed</div>
+    ${allDone?`<button class="btn btn-success" onclick="startModules()">&#128640; Start Induction Quiz</button>`:''}
+  </div>
+  <div class="kb-grid">
+    <nav class="kb-nav">
+      ${KNOWLEDGE_TOPICS.map(t=>`
+        <button class="kb-btn ${t.id===activeKbTopic?'active':''} ${knowledgeViewed.includes(t.id)?'done':''}" onclick="activeKbTopic='${t.id}';renderView()">
+          ${knowledgeViewed.includes(t.id)?'&#9989; ':''}${esc(t.title)}
+          <div style="font-size:.7rem;opacity:.6;margin-top:2px">${esc(t.cat)}</div>
+        </button>`).join('')}
+    </nav>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:10px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:1.05rem;font-weight:600">${esc(topic.title)}</div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:3px">${esc(topic.cat)} · ${esc(topic.summary)}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div class="card" style="padding:14px">
+          <div style="font-size:.72rem;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase">Key Points</div>
+          <ul style="padding-left:1rem;display:grid;gap:6px;font-size:.83rem;color:var(--muted)">${topic.points.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>
+        </div>
+        <div class="card" style="padding:14px">
+          <div style="font-size:.72rem;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase">Quick Facts</div>
+          <ul style="padding-left:1rem;display:grid;gap:6px;font-size:.83rem;color:var(--muted)">${topic.facts.map(f=>`<li>${esc(f)}</li>`).join('')}</ul>
+        </div>
+      </div>
+      ${topic.videos.length?`<div style="margin-bottom:16px">${topic.videos.map(v=>`<div style="aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#000"><iframe src="${v.embed}" title="${esc(v.title)}" width="100%" height="100%" frameborder="0" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>`).join('')}</div>`:''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${knowledgeViewed.includes(topic.id)
+          ? `<span class="badge badge-completed">&#9989; Confirmed</span>`
+          : `<button class="btn btn-primary" onclick="confirmTopic('${topic.id}')">&#9989; I have read and understood this topic</button>`}
+        ${allDone?`<button class="btn btn-success" onclick="startModules()">Start Induction Quiz &#8594;</button>`:`<span style="font-size:.78rem;color:var(--muted);align-self:center">${KNOWLEDGE_TOPICS.length-totalViewed} remaining</span>`}
+      </div>
+    </div>
+  </div>`;
+}
+
+async function confirmTopic(id) {
+  if (!knowledgeViewed.includes(id)) {
+    knowledgeViewed.push(id);
+    await sb.from('employees').update({ knowledge_viewed: knowledgeViewed }).eq('id', profile.id);
+    await audit(profile.id, 'knowledge_confirmed', `Confirmed topic: ${id}`);
+  }
+  const next = KNOWLEDGE_TOPICS.find(t => !knowledgeViewed.includes(t.id));
+  if (next) activeKbTopic = next.id;
+  renderView();
+}
+function startModules() {
+  if (!KNOWLEDGE_TOPICS.every(t => knowledgeViewed.includes(t.id))) { alert('Please confirm all knowledge topics first.'); return; }
+  const first = MODULES.findIndex(m => !moduleProgress[m.id]?.completed);
+  activeModule = first === -1 ? 0 : first;
+  activeQuestion = 0; view = 'module'; renderView();
+}
+
+// ── MODULE VIEW ───────────────────────────────────────────────
+function renderModule() {
+  const mod = MODULES[activeModule];
+  const mp  = moduleProgress[mod.id] || { answers: {}, completed: false };
+  const q   = mod.questions[activeQuestion];
+  const saved = mp.answers[activeQuestion];
+  const completedModules = new Set(MODULES.filter(m => moduleProgress[m.id]?.completed).map(m => m.id));
+  return `
+  <div style="display:grid;grid-template-columns:200px 1fr;gap:16px;align-items:start">
+    <aside>
+      <div class="card" style="padding:14px">
+        <div class="card-title">Modules</div>
+        <div class="module-list">
+          ${MODULES.map((m,i)=>{
+            const unlocked = i===0 || completedModules.has(MODULES[i-1].id);
+            const done = completedModules.has(m.id);
+            return `<div class="mod-row ${i===activeModule?'active':''} ${done?'done':''} ${!unlocked?'locked':''}" onclick="${unlocked?`switchModule(${i})`:''}">
+              <span>${m.icon}</span><span>${esc(m.title)}</span>
+              ${done?'<span style="margin-left:auto;font-size:.7rem;color:var(--success)">✓</span>':''}
+            </div>`;
+          }).join('')}
+        </div>
+        <button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="view='dashboard';renderView()">&#8592; Dashboard</button>
+      </div>
+    </aside>
+    <div style="display:grid;gap:14px">
+      <div class="card" style="background:linear-gradient(135deg,rgba(0,180,216,.06),transparent)">
+        <div style="font-size:.72rem;color:var(--muted);margin-bottom:4px">Module ${activeModule+1} of ${MODULES.length}</div>
+        <div style="font-size:1.2rem;font-weight:600">${mod.icon} ${esc(mod.title)}</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Learning Points</div>
+        <ul style="padding-left:1rem;display:grid;gap:6px;font-size:.85rem;color:var(--muted)">${mod.content.map(c=>`<li>${esc(c)}</li>`).join('')}</ul>
+      </div>
+      ${mod.videos?.length?`<div class="card" style="padding:0;overflow:hidden;border-radius:14px;aspect-ratio:16/9"><iframe src="${mod.videos[0].embed}" title="${esc(mod.videos[0].title)}" width="100%" height="100%" frameborder="0" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>`:''}
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div class="card-title" style="margin:0">Question ${activeQuestion+1} of ${mod.questions.length}</div>
+          <div style="font-size:.75rem;color:var(--muted)">${profile.progress_pct}% overall</div>
+        </div>
+        <div class="question-box">
+          <div class="q-text">${esc(q.q)}</div>
+          <div class="options">
+            ${q.opts.map((opt,i)=>`<button type="button" class="opt ${saved!==undefined?(i===q.a?'correct':(i===saved?'wrong':'')):''}\" id="opt-${i}" ${saved!==undefined?'disabled':''} onclick="answerQ(${i})">${esc(opt)}</button>`).join('')}
+          </div>
+          <div id="feedback" class="feedback ${saved!==undefined?'show '+(saved===q.a?'good':'bad'):''}">${saved!==undefined?(saved===q.a?'&#10003; Correct.':'Saved. Review the explanation and try again.'):''}</div>
+          <div id="explain" class="explain ${saved!==undefined?'show':''}">${saved!==undefined?esc(q.why):''}</div>
+          <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+            <button id="tryAgainBtn" class="btn btn-danger ${saved!==undefined&&saved!==q.a?'':'hidden'}" onclick="tryAgain()">Try Again</button>
+            <button id="nextBtn" class="btn btn-primary ${saved===q.a?'':'hidden'}" onclick="nextQ()">${activeQuestion===mod.questions.length-1?'Finish Module':'Next Question'}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function switchModule(i) {
+  activeModule = i; activeQuestion = 0;
+  const saved = moduleProgress[MODULES[i].id];
+  if (saved && Object.keys(saved.answers).length) {
+    activeQuestion = Object.keys(saved.answers).length;
+    if (activeQuestion >= MODULES[i].questions.length) activeQuestion = 0;
+  }
+  view = 'module'; renderView();
+}
+
+async function answerQ(idx) {
+  const mod = MODULES[activeModule];
+  const q = mod.questions[activeQuestion];
+  if (!moduleProgress[mod.id]) moduleProgress[mod.id] = { answers: {}, completed: false };
+  moduleProgress[mod.id].answers[activeQuestion] = idx;
+  // Save to Supabase
+  await sb.rpc('save_module_progress', {
+    p_module_id: mod.id, p_answers: moduleProgress[mod.id].answers, p_completed: false
+  });
+  // Re-fetch updated progress_pct
+  const { data: updated } = await sb.from('employees').select('progress_pct').eq('id', profile.id).single();
+  if (updated) profile.progress_pct = updated.progress_pct;
+  // Update UI
+  document.querySelectorAll('.opt').forEach((el, i) => {
+    el.disabled = true;
+    if (i === q.a)   el.classList.add('correct');
+    if (i === idx && idx !== q.a) el.classList.add('wrong');
+  });
+  const fb = document.getElementById('feedback');
+  const ex = document.getElementById('explain');
+  fb.className = 'feedback show ' + (idx === q.a ? 'good' : 'bad');
+  fb.innerHTML = idx === q.a ? '&#10003; Correct.' : 'Saved. Review the explanation and try again.';
+  ex.className = 'explain show'; ex.textContent = q.why;
+  document.getElementById('nextBtn').classList.toggle('hidden', idx !== q.a);
+  document.getElementById('tryAgainBtn').classList.toggle('hidden', idx === q.a);
+}
+
+function tryAgain() {
+  const mod = MODULES[activeModule];
+  if (moduleProgress[mod.id]) delete moduleProgress[mod.id].answers[activeQuestion];
+  renderView();
+}
+
+async function nextQ() {
+  const mod = MODULES[activeModule];
+  if (activeQuestion < mod.questions.length - 1) {
+    activeQuestion++; renderView(); return;
+  }
+  // Check all correct
+  const mp = moduleProgress[mod.id] || { answers: {}, completed: false };
+  const allCorrect = mod.questions.every((q, i) => mp.answers[i] === q.a);
+  if (!allCorrect) {
+    const first = mod.questions.findIndex((q, i) => mp.answers[i] !== q.a);
+    activeQuestion = first >= 0 ? first : 0;
+    alert('Please answer all questions correctly to complete this module. Returning to the first unanswered question.'); renderView(); return;
+  }
+  mp.completed = true;
+  await sb.rpc('save_module_progress', { p_module_id: mod.id, p_answers: mp.answers, p_completed: true });
+  await audit(profile.id, 'module_completed', `Completed module: ${mod.title}`);
+  const { data: updated } = await sb.from('employees').select('progress_pct,completion_status').eq('id', profile.id).single();
+  if (updated) { profile.progress_pct = updated.progress_pct; profile.completion_status = updated.completion_status; }
+  toast(`&#10003; Module "${mod.title}" completed!`);
+  if (activeModule < MODULES.length - 1) {
+    activeModule++; activeQuestion = 0; renderView();
+  } else {
+    view = 'declaration'; renderView();
+  }
+}
+
+// ── DECLARATION ───────────────────────────────────────────────
+function renderDeclaration() {
+  return `
+  <div style="max-width:760px">
+    <button class="btn btn-ghost" style="margin-bottom:16px" onclick="view='module';renderView()">&#8592; Back</button>
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">Declaration Statements</div>
+      <ul style="padding-left:1rem;display:grid;gap:8px;font-size:.85rem;color:var(--muted)">${DECLARATION_POINTS.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>
+    </div>
+    <div class="card">
+      <div class="card-title">Sign-Off Details</div>
+      <div class="form-grid">
+        <div class="field"><label>Employee Name</label><input id="d_name" value="${esc(profile.full_name)}" readonly></div>
+        <div class="field"><label>Department</label><input id="d_dept" value="${esc(profile.department)}" readonly></div>
+        <div class="field"><label>Position</label><input id="d_pos" value="${esc(profile.position)}" readonly></div>
+        <div class="field"><label>Date Completed</label><input id="d_date" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+        <div class="field"><label>Employee Signature <span style="font-size:.7rem;opacity:.6">(type your full name)</span></label><input id="d_esig" placeholder="${esc(profile.full_name)}"></div>
+        <div class="field"><label>Supervisor Name</label><input id="d_sname" placeholder="Supervisor full name"></div>
+        <div class="field full"><label>Supervisor Signature <span style="font-size:.7rem;opacity:.6">(type supervisor's full name)</span></label><input id="d_ssig" placeholder="Supervisor full name"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn btn-primary" onclick="submitDeclaration()">Complete Induction &amp; Generate Letter</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function submitDeclaration() {
+  const esig  = document.getElementById('d_esig').value.trim();
+  const sname = document.getElementById('d_sname').value.trim();
+  const ssig  = document.getElementById('d_ssig').value.trim();
+  const ddate = document.getElementById('d_date').value;
+  if (!esig || !sname || !ssig) { alert('Please fill in all signature fields.'); return; }
+  if (profile.progress_pct !== 100) { alert('All modules must be completed at 100% before submission.'); return; }
+  await sb.from('employees').update({
+    completion_status: 'completed', completion_date: ddate,
+    employee_signature: esig, supervisor_name: sname, supervisor_signature: ssig
+  }).eq('id', profile.id);
+  Object.assign(profile, { completion_status:'completed', completion_date:ddate, employee_signature:esig, supervisor_name:sname, supervisor_signature:ssig });
+  await audit(profile.id, 'induction_completed', `${profile.full_name} signed declaration and completed induction`);
+  view = 'completion'; renderView();
+}
+
+// ── COMPLETION ────────────────────────────────────────────────
+function renderCompletion() {
+  return `
+  <div style="max-width:640px;text-align:center;margin:40px auto">
+    <div class="card">
+      <div style="font-size:3rem;margin-bottom:12px">&#127881;</div>
+      <div style="font-size:1.4rem;font-weight:700;margin-bottom:8px">Induction Complete!</div>
+      <p style="color:var(--muted);margin-bottom:20px">${esc(profile.full_name)} has successfully completed the Pezzano Enterprises Warehouse Staff Induction.</p>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-success" onclick="printLetter()">Print Completion Letter</button>
+        <button class="btn btn-ghost" onclick="view='dashboard';renderView()">Back to Dashboard</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── PRINT LETTER ──────────────────────────────────────────────
+function buildLetter(emp) {
+  return `<div class="letter">
+    <div class="letter-header">
+      <div><h2>Completion Letter</h2><div class="letter-co"><strong>${esc(COMPANY.name)}</strong><br>${esc(COMPANY.address)}<br>Warehouse Staff Induction Program · ${esc(COMPANY.cert)}</div></div>
+      <div class="letter-ref"><strong>Date</strong><br>${fmtDate(emp.completion_date||new Date().toISOString().slice(0,10))}<br><br><strong>Ref</strong><br>${esc(emp.employee_code)}</div>
+    </div>
+    <div class="letter-body">
+      <p>To whom it may concern,</p>
+      <p>This letter confirms that <strong>${esc(emp.full_name)}</strong> from the <strong>${esc(emp.department)}</strong> department, working as <strong>${esc(emp.position)}</strong>, successfully completed the Pezzano Enterprises Warehouse Staff Induction Program on <strong>${fmtDate(emp.completion_date)}</strong>.</p>
+      <p>The induction covered site rules, PPE, emergency procedures, chemical handling, manual handling, forklift safety, fire safety, cold chain and HACCP, waste management, warehouse operations, housekeeping, incident reporting, and WHS rights and responsibilities.</p>
+      <p>The employee completed all required modules at 100% and acknowledged all site safety and food-safety obligations.</p>
+    </div>
+    <div class="letter-details">
+      <strong>Employee Details</strong><br>
+      Name: ${esc(emp.full_name)}&nbsp;&nbsp;|&nbsp;&nbsp;Code: ${esc(emp.employee_code)}&nbsp;&nbsp;|&nbsp;&nbsp;Department: ${esc(emp.department)}<br>
+      Position: ${esc(emp.position)}&nbsp;&nbsp;|&nbsp;&nbsp;Location: ${esc(emp.work_location)}<br>
+      Induction Date: ${fmtDate(emp.induction_date)}&nbsp;&nbsp;|&nbsp;&nbsp;Completion Date: ${fmtDate(emp.completion_date)}
+    </div>
+    <div class="letter-sigs">
+      <div class="letter-sig-block"><p>Employee Signature</p><div class="sig-line">${esc(emp.employee_signature||emp.full_name)}</div></div>
+      <div class="letter-sig-block"><p>Supervisor Signature</p><div class="sig-line">${esc(emp.supervisor_signature||emp.supervisor_name||'Supervisor')}</div></div>
+    </div>
+  </div>`;
+}
+function printLetter() { printLetterFor(profile.id); }
+function printLetterFor(id) {
+  const emp = id === profile.id ? profile : allEmployees.find(e => e.id === id);
+  if (!emp || emp.completion_status !== 'completed') { alert('Completion letter is only available after full completion.'); return; }
+  const area = document.getElementById('printArea');
+  area.style.display = 'block'; area.innerHTML = buildLetter(emp);
+  window.print();
+  area.style.display = 'none';
+}
+function bulkPrintLetters() {
+  const done = filteredEmployees().filter(e => e.completion_status === 'completed');
+  if (!done.length) { alert('No completed staff in current filter.'); return; }
+  const area = document.getElementById('printArea');
+  area.style.display = 'block';
+  area.innerHTML = done.map(buildLetter).join('<div style="page-break-after:always"></div>');
+  window.print(); area.style.display = 'none';
+}
+
+// ── EXCEL EXPORT ──────────────────────────────────────────────
+function exportExcel() {
+  const rows = filteredEmployees().map(e => ({
+    'Employee Code': e.employee_code, 'Full Name': e.full_name, 'Phone': e.phone,
+    'Department': e.department, 'Position': e.position, 'Location': e.work_location,
+    'Start Date': fmtDate(e.start_date), 'Induction Date': fmtDate(e.induction_date),
+    'Status': fmtStatus(e.completion_status), 'Progress %': e.progress_pct,
+    'Completion Date': fmtDate(e.completion_date)
+  }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.length ? rows : [{ Message:'No records'}]), 'Induction');
+  XLSX.writeFile(wb, 'pezzano-induction.xlsx');
+}
+
+// ── MODALS ────────────────────────────────────────────────────
+function closeModal() { document.getElementById('modalRoot').innerHTML = ''; }
+
+// View employee detail (manager)
+function viewEmployeeDetail(id) {
+  const e = allEmployees.find(x => x.id === id); if (!e) return;
+  const done = MODULES.filter(m => moduleProgress[m.id]?.completed).length;
+  document.getElementById('modalRoot').innerHTML = `
+  <div class="modal-back" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <h3>${esc(e.full_name)}</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.83rem;margin-bottom:16px">
+        ${[['Employee Code',e.employee_code],['Phone',e.phone],['Age',e.age],['Department',e.department],['Position',e.position],['Location',e.work_location],['Start Date',fmtDate(e.start_date)],['Induction Date',fmtDate(e.induction_date)],['Status',fmtStatus(e.completion_status)],['Progress',e.progress_pct+'%'],['Completion Date',fmtDate(e.completion_date)]].map(([l,v])=>`<div><div style="color:var(--muted);font-size:.7rem">${l}</div><div style="font-weight:500">${esc(String(v||'—'))}</div></div>`).join('')}
+      </div>
+      <div class="modal-actions">
+        ${e.completion_status==='completed'?`<button class="btn btn-success" onclick="printLetterFor('${e.id}');closeModal()">Print Letter</button>`:''}
+        <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// Change department (manager)
+function changeDept(id) {
+  const e = allEmployees.find(x => x.id === id); if (!e) return;
+  document.getElementById('modalRoot').innerHTML = `
+  <div class="modal-back" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <h3>Change Department</h3>
+      <p style="color:var(--muted);font-size:.83rem;margin-bottom:14px">Staff: <strong>${esc(e.full_name)}</strong> · Current: <strong>${esc(e.department)}</strong></p>
+      <div class="field"><label>New Department</label>
+        <select id="newDept" class="control">${DEPARTMENTS.map(d=>`<option value="${d}" ${e.department===d?'selected':''}>${d}</option>`).join('')}</select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="saveDept('${id}')">Save</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>`;
+}
+async function saveDept(id) {
+  const newDept = document.getElementById('newDept').value;
+  const e = allEmployees.find(x => x.id === id);
+  const old = e.department;
+  await sb.from('employees').update({ department: newDept }).eq('id', id);
+  await audit(id, 'department_changed', `Changed from "${old}" to "${newDept}"`);
+  e.department = newDept;
+  closeModal(); renderView(); toast('Department updated.');
+}
+
+// SysAdmin edit employee
+function openEditEmployee(id) {
+  if (!isSysAdmin(profile)) return;
+  const e = allEmployees.find(x => x.id === id); if (!e) return;
+  document.getElementById('modalRoot').innerHTML = `
+  <div class="modal-back" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <h3>&#9881; Edit Staff Details</h3>
+      <p style="color:var(--muted);font-size:.78rem;margin-bottom:14px">System Administrator edit. Start date and induction date are locked and cannot be changed.</p>
+      <div class="form-grid">
+        <div class="field"><label>Full Name</label><input id="e_name" value="${esc(e.full_name)}"></div>
+        <div class="field"><label>Phone</label><input id="e_phone" value="${esc(e.phone||'')}"></div>
+        <div class="field"><label>Age</label><input id="e_age" type="number" min="15" max="100" value="${esc(String(e.age||''))}"></div>
+        <div class="field"><label>Position</label><select id="e_pos">${POSITIONS.map(p=>`<option value="${p}" ${e.position===p?'selected':''}>${p}</option>`).join('')}</select></div>
+        <div class="field full"><label>Department</label><select id="e_dept">${DEPARTMENTS.map(d=>`<option value="${d}" ${e.department===d?'selected':''}>${d}</option>`).join('')}</select></div>
+        <div class="field"><label>Start Date <span style="opacity:.5">(locked)</span></label><input value="${fmtDate(e.start_date)}" readonly></div>
+        <div class="field"><label>Induction Date <span style="opacity:.5">(locked)</span></label><input value="${fmtDate(e.induction_date)}" readonly></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="saveEditEmployee('${id}')">Save Changes</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>`;
+}
+async function saveEditEmployee(id) {
+  const name  = document.getElementById('e_name').value.trim();
+  const phone = document.getElementById('e_phone').value.trim();
+  const age   = parseInt(document.getElementById('e_age').value) || null;
+  const pos   = document.getElementById('e_pos').value;
+  const dept  = document.getElementById('e_dept').value;
+  await sb.rpc('admin_edit_employee', { p_emp_id:id, p_full_name:name, p_phone:phone, p_age:age, p_position:pos, p_department:dept });
+  const e = allEmployees.find(x => x.id === id);
+  if (e) Object.assign(e, { full_name:name, phone, age, position:pos, department:dept });
+  closeModal(); renderView(); toast('Staff record updated.');
+}
+
+// Create employee (sysAdmin)
+function openCreateEmployee() {
+  if (!isSysAdmin(profile)) return;
+  document.getElementById('modalRoot').innerHTML = `
+  <div class="modal-back" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <h3>Create New Employee Account</h3>
+      <p style="color:var(--muted);font-size:.78rem;margin-bottom:14px">A unique Employee Code will be auto-generated. Give the code and password to the employee on their first day.</p>
+      <div class="form-grid">
+        <div class="field"><label>Full Name</label><input id="c_name" placeholder="Full legal name"></div>
+        <div class="field"><label>Phone</label><input id="c_phone" placeholder="04xx xxx xxx"></div>
+        <div class="field"><label>Age</label><input id="c_age" type="number" min="15" max="100" placeholder="Age"></div>
+        <div class="field"><label>Work Email <span style="opacity:.5">(for login)</span></label><input id="c_email" type="email" placeholder="employee@pezzano.com.au"></div>
+        <div class="field"><label>Temporary Password</label><input id="c_pass" type="password" placeholder="Min 8 characters"></div>
+        <div class="field"><label>Position</label><select id="c_pos">${POSITIONS.map(p=>`<option value="${p}">${p}</option>`).join('')}</select></div>
+        <div class="field"><label>Department</label><select id="c_dept">${DEPARTMENTS.map(d=>`<option value="${d}">${d}</option>`).join('')}</select></div>
+        <div class="field"><label>Role</label><select id="c_role"><option value="employee">Employee</option><option value="locationManager">Location Manager</option><option value="sysAdmin">System Administrator</option></select></div>
+      </div>
+      <div id="c_msg" style="display:none;margin-top:10px;padding:10px;border-radius:8px;font-size:.82rem"></div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="c_btn" onclick="createEmployee()">Create Account</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>`;
+}
+async function createEmployee() {
+  const btn = document.getElementById('c_btn');
+  btn.disabled = true; btn.textContent = 'Creating…';
+  const { data, error } = await sb.rpc('create_employee', {
+    p_email:         document.getElementById('c_email').value.trim(),
+    p_password:      document.getElementById('c_pass').value,
+    p_full_name:     document.getElementById('c_name').value.trim(),
+    p_phone:         document.getElementById('c_phone').value.trim(),
+    p_age:           parseInt(document.getElementById('c_age').value) || null,
+    p_department:    document.getElementById('c_dept').value,
+    p_position:      document.getElementById('c_pos').value,
+    p_role:          document.getElementById('c_role').value
+  });
+  const msg = document.getElementById('c_msg');
+  if (error) {
+    msg.style.display = 'block'; msg.style.background = 'rgba(248,113,113,.1)'; msg.style.color = 'var(--error)';
+    msg.textContent = error.message; btn.disabled = false; btn.textContent = 'Create Account'; return;
+  }
+  msg.style.display = 'block'; msg.style.background = 'rgba(74,222,128,.1)'; msg.style.color = 'var(--success)';
+  msg.innerHTML = `&#10003; Account created! Employee Code: <strong>${data.employee_code}</strong> — give this to the employee.`;
+  // Refresh employee list
+  const { data: fresh } = await sb.rpc('get_dashboard_data');
+  allEmployees = fresh || [];
+  await audit(null,'employee_created',`Created account for ${document.getElementById('c_name').value.trim()} · ${data.employee_code}`);
+  renderView();
+}
+
+// Delete employee (sysAdmin)
+async function deleteEmployee(id) {
+  const e = allEmployees.find(x => x.id === id); if (!e) return;
+  if (!confirm(`Delete ${e.full_name}? This cannot be undone.`)) return;
+  await sb.rpc('admin_delete_employee', { p_emp_id: id });
+  allEmployees = allEmployees.filter(x => x.id !== id);
+  renderView(); toast('Record deleted.');
+}
+
+// Audit log (sysAdmin)
+async function openAuditLog() {
+  const { data, error } = await sb.from('audit_logs').select('*').order('created_at',{ascending:false}).limit(200);
+  if (error) { alert('Could not load audit log.'); return; }
+  document.getElementById('modalRoot').innerHTML = `
+  <div class="modal-back" onclick="if(event.target===this)closeModal()">
+    <div class="modal" style="max-width:720px;max-height:85vh;overflow-y:auto">
+      <h3>Audit Log</h3>
+      <p style="color:var(--muted);font-size:.78rem;margin-bottom:14px">Last 200 entries. System Administrator view only.</p>
+      ${(data||[]).length === 0 ? '<p style="color:var(--muted)">No entries yet.</p>' :
+        (data||[]).map(e=>`<div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:.82rem">
+          <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px">
+            <span style="color:var(--primary);font-weight:600">${esc(e.actor_name||'System')}</span>
+            <span style="color:var(--faint);font-size:.72rem">${new Date(e.created_at).toLocaleString('en-AU')}</span>
+          </div>
+          <div style="color:var(--text);margin-top:2px">${esc(e.action)}</div>
+          <div style="color:var(--muted);font-size:.78rem;margin-top:1px">${esc(e.detail||'')}</div>
+        </div>`).join('')}
+      <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Close</button></div>
+    </div>
+  </div>`;
+}
+
+// Reset password (sysAdmin — called from edit modal)
+async function resetPassword(id) {
+  const newPass = prompt('Enter new temporary password for this employee:');
+  if (!newPass || newPass.length < 6) { alert('Password must be at least 6 characters.'); return; }
+  await sb.rpc('admin_reset_password', { p_emp_id: id, p_new_password: newPass });
+  toast('Password reset successfully.'); closeModal();
+}
+</script>
+</body>
+</html>
