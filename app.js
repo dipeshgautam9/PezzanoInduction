@@ -185,7 +185,7 @@ async function initLoginPage() {
     return;
   }
 
-  showMessage('#auth-message', 'Password reset email sent. Check your inbox and use the link to set a new password.', 'success');
+  showMessage('#auth-message', 'Password reset email sent. Check your inbox and open the recovery link.', 'success');
 });
 
 async function loadProfile() {
