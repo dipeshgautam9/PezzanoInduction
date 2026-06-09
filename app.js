@@ -170,23 +170,24 @@ async function initLoginPage() {
   });
 
   $('#reset-password').addEventListener('click', async () => {
-  const email = $('#login-email').value.trim();
-  if (!email) {
-    showMessage('#auth-message', 'Enter your email first, then click reset password.', 'error');
-    return;
-  }
+    const email = $('#login-email').value.trim();
+    if (!email) {
+      showMessage('#auth-message', 'Enter your email first, then click reset password.', 'error');
+      return;
+    }
 
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/reset-password.html`
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password.html`
+    });
+
+    if (error) {
+      showMessage('#auth-message', error.message, 'error');
+      return;
+    }
+
+    showMessage('#auth-message', 'Password reset email sent.', 'success');
   });
-
-  if (error) {
-    showMessage('#auth-message', error.message, 'error');
-    return;
-  }
-
-  showMessage('#auth-message', 'Password reset email sent. Check your inbox and open the recovery link.', 'success');
-});
+}
 
 async function loadProfile() {
   const { data, error } = await supabase
