@@ -384,7 +384,7 @@ async function createEmployee(event) {
 async function loadEmployeesTable() {
   const { data, error } = await supabase
     .from('employees')
-    .select('id, employee_id, full_name, email, department, role, status, auth_user_id')
+    .select('id, employee_id, full_name, email, department, role, status, auth_id')
     .order('employee_id', { ascending: true });
 
   if (error) throw error;
@@ -393,7 +393,7 @@ async function loadEmployeesTable() {
     <tr>
       <td><strong>${escapeHtml(employee.employee_id)}</strong></td>
       <td>${escapeHtml(employee.full_name)}</td>
-      <td>${escapeHtml(employee.email)}${employee.auth_user_id ? '' : '<br><span class="muted">Auth not linked</span>'}</td>
+      <td>${escapeHtml(employee.email)}${employee.auth_id ? '' : '<br><span class="muted">Auth not linked</span>'}</td>
       <td>${escapeHtml(employee.department)}</td>
       <td>${friendlyRole(employee.role)}</td>
       <td><span class="status ${escapeHtml(employee.status)}">${friendlyStatus(employee.status)}</span></td>
