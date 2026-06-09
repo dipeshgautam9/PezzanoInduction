@@ -1,14 +1,16 @@
-# Netlify deployment config for Pezzano Induction Portal
-
 [build]
   publish = "."
 
-# Redirect all unknown paths to login (SPA guard)
+# Send all traffic to the single portal file
+[[redirects]]
+  from = "/"
+  to = "/pezzano-portal-COMPLETE.html"
+  status = 200
+
 [[redirects]]
   from = "/*"
-  to = "/login.html"
+  to = "/pezzano-portal-COMPLETE.html"
   status = 200
-  conditions = {Role = ["unauthenticated"]}
 
 # Security headers
 [[headers]]
@@ -18,5 +20,4 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com; font-src https://fonts.gstatic.com https://api.fontshare.com; frame-src https://www.youtube-nocookie.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data:"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; frame-src https://www.youtube-nocookie.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data:"
