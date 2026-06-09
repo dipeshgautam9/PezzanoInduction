@@ -193,7 +193,7 @@ async function loadProfile() {
   const { data, error } = await supabase
     .from('employees')
     .select('*')
-    .eq('auth_user_id', currentUser.id)
+    .eq('auth_id', currentUser.id)
     .maybeSingle();
 
   if (error) throw error;
@@ -241,7 +241,7 @@ function renderProfile() {
     return;
   }
 
-  $('#session-label').textContent = `${currentProfile.full_name} · ${friendlyRole(currentProfile.role)}`;
+  $('#session-label').textContent = `${currentProfile.full_name} Â· ${friendlyRole(currentProfile.role)}`;
   card.innerHTML = `
     <div class="profile-row"><span>Employee ID</span><strong>${escapeHtml(currentProfile.employee_id)}</strong></div>
     <div class="profile-row"><span>Name</span><strong>${escapeHtml(currentProfile.full_name)}</strong></div>
@@ -448,7 +448,7 @@ async function loadAuditLogs() {
     ? data.map((item) => `
         <article class="audit-item">
           <strong>${escapeHtml(item.action)}</strong>
-          <span>${escapeHtml(item.table_name)} · ${escapeHtml(item.record_id || 'no record id')}</span>
+          <span>${escapeHtml(item.table_name)} Â· ${escapeHtml(item.record_id || 'no record id')}</span>
           <time datetime="${escapeHtml(item.created_at)}">${formatDate(item.created_at)}</time>
         </article>
       `).join('')
