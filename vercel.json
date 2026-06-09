@@ -1,22 +1,9 @@
-﻿{
+{
   "version": 2,
-  "cleanUrls": true,
-  "trailingSlash": false,
-  "rewrites": [
-    { "source": "/", "destination": "/login.html" },
-    { "source": "/dashboard", "destination": "/dashboard.html" }
-  ],
-  "headers": [
+  "routes": [
     {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com; font-src https://fonts.gstatic.com https://api.fontshare.com; frame-src https://www.youtube-nocookie.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data:" }
-      ]
+      "src": "/(.*)",
+      "dest": "/pezzano-portal-COMPLETE.html"
     }
   ]
 }
