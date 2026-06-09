@@ -168,7 +168,7 @@ tbody tr:hover{background:var(--surface2)}
       </div>
       <!-- EMPLOYEE -->
       <div class="panel active" id="panel-employee">
-        <div class="field"><label>Employee Code</label><input id="emp-code" type="text" placeholder="e.g. EMP100421" autocomplete="username"/></div>
+        <div class="field"><label>Employee Code</label><input id="emp-code" type="text" placeholder="e.g. EMP100421" autocomplete="username" oninput="this.value=this.value.toUpperCase()"/></div>
         <div class="field"><label>Password</label><input id="emp-pass" type="password" placeholder="Enter your password" autocomplete="current-password"/></div>
         <button class="login-btn" id="emp-btn" onclick="loginEmployee()">Sign In</button>
         <div class="msg" id="emp-msg"></div>
@@ -289,25 +289,44 @@ async function loginEmployee(){
   if(!code||!pass){showMsg('emp-msg','Please enter your Employee Code and password.','error');return;}
   setLoading('emp-btn',true);
   try{
-    // Step 1: Look up email from employee code
-    const{data:emailData,error:rpcError}=await sb.rpc('get_email_by_employee_code',{p_code:code});
-    if(rpcError){
-      console.error('RPC error:',rpcError);
-      showMsg('emp-msg','Could not look up employee code. Error: '+rpcError.message,'error');
+    // Step 1: look up email via direct REST fetch
+    let emailFound = null;
+    try{
+      const rpcRes = await fetch(
+        SUPABASE_URL + '/rest/v1/rpc/get_email_by_employee_code',
+        {
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization':'Bearer ' + SUPABASE_ANON_KEY,
+            'Prefer':'return=representation'
+          },
+          body: JSON.stringify({p_code: code})
+        }
+      );
+      const raw = await rpcRes.text();
+      console.log('RPC raw response:', raw);
+      // response is a quoted JSON string like "email@example.com"
+      emailFound = JSON.parse(raw);
+      console.log('Email found:', emailFound);
+    }catch(fetchErr){
+      console.error('Fetch error:', fetchErr);
+    }
+
+    if(!emailFound || typeof emailFound !== 'string'){
+      showMsg('emp-msg','Employee code "'+code+'" not found. Please check your code or contact your manager.','error');
       return;
     }
-    if(!emailData){
-      showMsg('emp-msg','Employee code not found. Please check your code or contact your manager.','error');
-      return;
-    }
-    // Step 2: Sign in with the email and password
-    const{data:signInData,error:signInErr}=await sb.auth.signInWithPassword({
-      email:emailData,
-      password:pass
+
+    // Step 2: sign in with Supabase Auth
+    const{error:signInErr}=await sb.auth.signInWithPassword({
+      email: emailFound.trim(),
+      password: pass
     });
     if(signInErr){
-      console.error('Sign in error:',signInErr);
-      showMsg('emp-msg','Incorrect password. Please try again or ask your manager to reset it.','error');
+      console.error('Sign in error:', signInErr);
+      showMsg('emp-msg','Incorrect password for '+code+'. Please try again or ask your manager to reset it.','error');
       return;
     }
     await initApp();
