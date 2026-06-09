@@ -826,6 +826,24 @@ async function openAudit(){
   <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Close</button></div>
   </div></div>`;
 }
+
+document.getElementById('reset-password')?.addEventListener('click', async () => {
+  const email = document.getElementById('mgr-email').value.trim();
+  const msg = document.getElementById('mgr-msg');
+
+  if (!email) {
+    msg.textContent = 'Enter your work email first, then click Reset password.';
+    return;
+  }
+
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/reset-password.html`
+  });
+
+  msg.textContent = error
+    ? error.message
+    : 'Password reset email sent. Check your inbox and open the recovery link.';
+});
 </script>
 </body>
 </html>
