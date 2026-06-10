@@ -162,27 +162,38 @@ tbody tr:hover{background:var(--surface2)}
       <p>Canning Vale &mdash; Warehouse Staff System</p>
     </div>
     <div class="login-card">
-      <div class="tabs">
-        <button class="tab active" onclick="switchTab('employee')">Employee</button>
-        <button class="tab" onclick="switchTab('manager')">Manager / Admin</button>
+      <!-- Single login form - email + password for everyone -->
+      <div id="panel-signin">
+        <div class="field"><label>Email Address</label><input id="signin-email" type="email" placeholder="your@email.com" autocomplete="email"/></div>
+        <div class="field"><label>Password</label><input id="signin-pass" type="password" placeholder="Enter your password" autocomplete="current-password"/></div>
+        <button class="login-btn" id="signin-btn" onclick="doSignIn()">Sign In</button>
+        <div class="msg" id="signin-msg"></div>
+        <p style="text-align:center;margin-top:14px;font-size:.82rem">
+          <a href="#" onclick="showForgot();return false;" style="color:var(--primary)">Forgot your password?</a>
+        </p>
       </div>
-      <!-- EMPLOYEE -->
-      <div class="panel active" id="panel-employee">
-        <div class="field"><label>Employee Code</label><input id="emp-code" type="text" placeholder="e.g. EMP100421" autocomplete="username" oninput="this.value=this.value.toUpperCase()"/></div>
-        <div class="field"><label>Password</label><input id="emp-pass" type="password" placeholder="Enter your password" autocomplete="current-password"/></div>
-        <button class="login-btn" id="emp-btn" onclick="loginEmployee()">Sign In</button>
-        <div class="msg" id="emp-msg"></div>
-        <p class="hint">Your Employee Code was given to you by your manager.<br>Contact your manager if you forgot your password.</p>
+      <!-- Forgot password panel -->
+      <div id="panel-forgot" style="display:none">
+        <p style="color:var(--muted);font-size:.85rem;margin-bottom:16px">Enter your email address and we will send you a password reset link.</p>
+        <div class="field"><label>Email Address</label><input id="forgot-email" type="email" placeholder="your@email.com"/></div>
+        <button class="login-btn" id="forgot-btn" onclick="doForgotPassword()">Send Reset Link</button>
+        <div class="msg" id="forgot-msg"></div>
+        <p style="text-align:center;margin-top:14px;font-size:.82rem">
+          <a href="#" onclick="showSignIn();return false;" style="color:var(--primary)">&larr; Back to Sign In</a>
+        </p>
       </div>
-      <!-- MANAGER -->
-      <div class="panel" id="panel-manager">
-  <div class="field"><label>Work Email</label><input id="mgr-email" type="email" placeholder="your@email.com" autocomplete="email"/></div>
-  <div class="field"><label>Password</label><input id="mgr-pass" type="password" placeholder="Enter your password" autocomplete="current-password"/></div>
-  <button class="login-btn" id="mgr-btn" onclick="loginManager()">Sign In</button>
-  <button type="button" class="login-btn" id="reset-password">Reset password</button>
-  <div class="msg" id="mgr-msg"></div>
-</div>
+      <!-- Reset password panel (shown after clicking email link) -->
+      <div id="panel-reset" style="display:none">
+        <p style="color:var(--muted);font-size:.85rem;margin-bottom:16px">Enter your new password below.</p>
+        <div class="field"><label>New Password</label><input id="reset-pass" type="password" placeholder="Min 8 characters"/></div>
+        <div class="field"><label>Confirm Password</label><input id="reset-confirm" type="password" placeholder="Confirm new password"/></div>
+        <button class="login-btn" id="reset-btn" onclick="doResetPassword()">Update Password</button>
+        <div class="msg" id="reset-msg"></div>
+      </div>
     </div>
+    <p style="text-align:center;margin-top:16px;font-size:.75rem;color:var(--muted)">
+      Contact your System Administrator if you need help signing in.
+    </p>
   </div>
 </div>
 
@@ -278,87 +289,110 @@ function showMsg(id,text,type){const el=document.getElementById(id);el.textConte
 function setLoading(btnId,loading,label='Sign In'){const btn=document.getElementById(btnId);btn.disabled=loading;btn.innerHTML=loading?'<span class="spinner"></span>Signing in\u2026':label;}
 
 // ── LOGIN ─────────────────────────────────────────────────────
-function switchTab(tab){
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',(i===0)===(tab==='employee')));
-  document.getElementById('panel-employee').classList.toggle('active',tab==='employee');
-  document.getElementById('panel-manager').classList.toggle('active',tab==='manager');
+// ── LOGIN FUNCTIONS ───────────────────────────────────────────
+function showSignIn(){
+  document.getElementById('panel-signin').style.display='block';
+  document.getElementById('panel-forgot').style.display='none';
+  document.getElementById('panel-reset').style.display='none';
+}
+function showForgot(){
+  document.getElementById('panel-signin').style.display='none';
+  document.getElementById('panel-forgot').style.display='block';
+  document.getElementById('panel-reset').style.display='none';
+  // Pre-fill email if already typed
+  const email=document.getElementById('signin-email').value;
+  if(email)document.getElementById('forgot-email').value=email;
+}
+function showReset(){
+  document.getElementById('panel-signin').style.display='none';
+  document.getElementById('panel-forgot').style.display='none';
+  document.getElementById('panel-reset').style.display='block';
 }
 
-async function loginEmployee(){
-  const code=document.getElementById('emp-code').value.trim().toUpperCase();
-  const pass=document.getElementById('emp-pass').value;
-  if(!code||!pass){showMsg('emp-msg','Please enter your Employee Code and password.','error');return;}
-  setLoading('emp-btn',true);
+async function doSignIn(){
+  const email=document.getElementById('signin-email').value.trim();
+  const pass=document.getElementById('signin-pass').value;
+  if(!email||!pass){showMsg('signin-msg','Please enter your email and password.','error');return;}
+  setLoading('signin-btn',true);
   try{
-    // Step 1: look up email via direct REST fetch
-    let emailFound = null;
-    try{
-      const rpcRes = await fetch(
-        SUPABASE_URL + '/rest/v1/rpc/get_email_by_employee_code',
-        {
-          method:'POST',
-          headers:{
-            'Content-Type':'application/json',
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization':'Bearer ' + SUPABASE_ANON_KEY,
-            'Prefer':'return=representation'
-          },
-          body: JSON.stringify({p_code: code})
-        }
-      );
-      const raw = await rpcRes.text();
-      console.log('RPC raw response:', raw);
-      // response is a quoted JSON string like "email@example.com"
-      emailFound = JSON.parse(raw);
-      console.log('Email found:', emailFound);
-    }catch(fetchErr){
-      console.error('Fetch error:', fetchErr);
-    }
-
-    if(!emailFound || typeof emailFound !== 'string'){
-      showMsg('emp-msg','Employee code "'+code+'" not found. Please check your code or contact your manager.','error');
-      return;
-    }
-
-    // Step 2: sign in with Supabase Auth
-    const{error:signInErr}=await sb.auth.signInWithPassword({
-      email: emailFound.trim(),
-      password: pass
-    });
-    if(signInErr){
-      console.error('Sign in error:', signInErr);
-      showMsg('emp-msg','Incorrect password for '+code+'. Please try again or ask your manager to reset it.','error');
+    const{error}=await sb.auth.signInWithPassword({email,password:pass});
+    if(error){
+      console.error('Sign in error:',error);
+      showMsg('signin-msg','Incorrect email or password. Please try again or click Forgot Password.','error');
       return;
     }
     await initApp();
   }catch(e){
     console.error('Login exception:',e);
-    showMsg('emp-msg','Connection error. Please check your internet and try again.','error');
+    showMsg('signin-msg','Connection error. Please check your internet and try again.','error');
   }finally{
-    setLoading('emp-btn',false);
+    setLoading('signin-btn',false);
   }
 }
 
-async function loginManager(){
-  const email=document.getElementById('mgr-email').value.trim();
-  const pass=document.getElementById('mgr-pass').value;
-  if(!email||!pass){showMsg('mgr-msg','Please enter your email and password.','error');return;}
-  setLoading('mgr-btn',true);
+async function doForgotPassword(){
+  const email=document.getElementById('forgot-email').value.trim();
+  if(!email){showMsg('forgot-msg','Please enter your email address.','error');return;}
+  setLoading('forgot-btn',true);
   try{
-    const{error}=await sb.auth.signInWithPassword({email,password:pass});
-    if(error){showMsg('mgr-msg','Incorrect email or password. Please try again.','error');return;}
-    await initApp();
-  }catch(e){showMsg('mgr-msg','Connection error. Please try again.','error');}
-  finally{setLoading('mgr-btn',false);}
+    const{error}=await sb.auth.resetPasswordForEmail(email,{
+      redirectTo: window.location.origin + window.location.pathname + '?reset=true'
+    });
+    if(error){showMsg('forgot-msg','Error: '+error.message,'error');return;}
+    showMsg('forgot-msg','Reset link sent! Check your email inbox (and spam folder).','success');
+    document.getElementById('forgot-btn').textContent='Email Sent ✓';
+    document.getElementById('forgot-btn').disabled=true;
+  }catch(e){
+    showMsg('forgot-msg','Connection error. Please try again.','error');
+  }finally{
+    setLoading('forgot-btn',false,'Send Reset Link');
+  }
 }
 
+async function doResetPassword(){
+  const pass=document.getElementById('reset-pass').value;
+  const confirm=document.getElementById('reset-confirm').value;
+  if(!pass||pass.length<8){showMsg('reset-msg','Password must be at least 8 characters.','error');return;}
+  if(pass!==confirm){showMsg('reset-msg','Passwords do not match.','error');return;}
+  setLoading('reset-btn',true);
+  try{
+    const{error}=await sb.auth.updateUser({password:pass});
+    if(error){showMsg('reset-msg','Error: '+error.message,'error');return;}
+    showMsg('reset-msg','Password updated successfully! Signing you in...','success');
+    setTimeout(()=>initApp(),1500);
+  }catch(e){
+    showMsg('reset-msg','Connection error. Please try again.','error');
+  }finally{
+    setLoading('reset-btn',false,'Update Password');
+  }
+}
+
+// Check URL for password reset token on page load
+(async()=>{
+  const url=new URL(window.location.href);
+  // Supabase puts the token in the URL hash after redirect
+  const hashParams=new URLSearchParams(window.location.hash.replace('#',''));
+  const type=hashParams.get('type');
+  if(type==='recovery'||url.searchParams.get('reset')==='true'){
+    // Get session from the recovery link
+    const{data:{session}}=await sb.auth.getSession();
+    if(session){showReset();return;}
+  }
+  // Check if already signed in
+  const{data:{session}}=await sb.auth.getSession();
+  if(session){await initApp();return;}
+  showSignIn();
+})();
+
+// Allow Enter key
 document.addEventListener('keydown',e=>{
-  if(e.key!=='Enter')return;
-  if(document.getElementById('panel-employee').classList.contains('active'))loginEmployee();
-  else loginManager();
+  if(e.key!=='Enter'){
+    if(document.getElementById('panel-signin').style.display!=='none')doSignIn();
+    else if(document.getElementById('panel-forgot').style.display!=='none')doForgotPassword();
+    else if(document.getElementById('panel-reset').style.display!=='none')doResetPassword();
+  }
 });
 
-// ── INIT APP ──────────────────────────────────────────────────
 async function initApp(){
   const{data:{session}}=await sb.auth.getSession();
   if(!session){showLogin();return;}
@@ -772,27 +806,31 @@ async function saveEdit(id){
 function openCreate(){
   if(!isSysAdmin(profile))return;
   document.getElementById('modalRoot').innerHTML=`<div class="modal-back" onclick="if(event.target===this)closeModal()"><div class="modal">
-  <h3>Create New Employee Account</h3>
-  <p style="color:var(--muted);font-size:.78rem;margin-bottom:14px">A unique Employee Code will be auto-generated. Give the code and password to the employee on their first day.</p>
+  <h3>Add New Staff Member</h3>
+  <div style="background:rgba(0,180,216,.08);border:1px solid rgba(0,180,216,.2);border-radius:8px;padding:12px;margin-bottom:16px;font-size:.82rem;color:var(--primary)">
+    <strong>How this works:</strong><br>
+    1. Go to <a href="https://supabase.com/dashboard/project/jookdsjvbticdgvxagyt/auth/users" target="_blank" style="color:var(--primary);font-weight:700">Supabase Dashboard &rarr; Authentication &rarr; Users &rarr; Add user</a><br>
+    2. Enter the employee email and a temporary password &rarr; tick Auto Confirm &rarr; Create<br>
+    3. Come back here and fill in this form with the same email<br>
+    4. Give the employee their email and temporary password to sign in
+  </div>
   <div class="form-grid">
     <div class="field"><label>Full Name</label><input id="c_name" placeholder="Full legal name"></div>
     <div class="field"><label>Phone</label><input id="c_phone" placeholder="04xx xxx xxx"></div>
     <div class="field"><label>Age</label><input id="c_age" type="number" min="15" max="100" placeholder="Age"></div>
-    <div class="field"><label>Work Email (for login)</label><input id="c_email" type="email" placeholder="employee@email.com"></div>
-    <div class="field"><label>Temporary Password</label><input id="c_pass" type="password" placeholder="Min 8 characters"></div>
+    <div class="field full"><label>Work Email (same as created in Supabase Dashboard)</label><input id="c_email" type="email" placeholder="employee@email.com"></div>
     <div class="field"><label>Position</label><select id="c_pos">${POSITIONS.map(p=>`<option>${p}</option>`).join('')}</select></div>
     <div class="field"><label>Department</label><select id="c_dept">${DEPARTMENTS.map(d=>`<option>${d}</option>`).join('')}</select></div>
     <div class="field"><label>Role</label><select id="c_role"><option value="employee">Employee</option><option value="locationManager">Location Manager</option><option value="sysAdmin">System Administrator</option></select></div>
   </div>
   <div id="c_msg" style="display:none;margin-top:10px;padding:10px;border-radius:8px;font-size:.82rem"></div>
-  <div class="modal-actions"><button class="btn btn-primary" id="c_btn" onclick="createEmployee()">Create Account</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button></div>
+  <div class="modal-actions"><button class="btn btn-primary" id="c_btn" onclick="createEmployee()">Add Staff Record</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button></div>
   </div></div>`;
 }
 async function createEmployee(){
   const btn=document.getElementById('c_btn');btn.disabled=true;btn.textContent='Creating…';
   const{data,error}=await sb.rpc('create_employee',{
-    p_email:document.getElementById('c_email').value.trim(),
-    p_password:document.getElementById('c_pass').value,
+    p_email:document.getElementById('c_email').value.trim().toLowerCase(),
     p_full_name:document.getElementById('c_name').value.trim(),
     p_phone:document.getElementById('c_phone').value.trim(),
     p_age:parseInt(document.getElementById('c_age').value)||null,
@@ -801,9 +839,13 @@ async function createEmployee(){
     p_role:document.getElementById('c_role').value
   });
   const msg=document.getElementById('c_msg');
-  if(error){msg.style.display='block';msg.style.background='rgba(248,113,113,.1)';msg.style.color='var(--error)';msg.textContent=error.message;btn.disabled=false;btn.textContent='Create Account';return;}
+  if(error){
+    msg.style.display='block';msg.style.background='rgba(248,113,113,.1)';msg.style.color='var(--error)';
+    msg.innerHTML='<strong>Error:</strong> '+error.message+(error.message.includes('No auth user')?'<br><br>Go to Supabase Dashboard &rarr; Authentication &rarr; Users &rarr; Add user first.':'');
+    btn.disabled=false;btn.textContent='Add Staff Record';return;
+  }
   msg.style.display='block';msg.style.background='rgba(74,222,128,.1)';msg.style.color='var(--success)';
-  msg.innerHTML=`&#10003; Account created! Employee Code: <strong>${data.employee_code}</strong> — give this to the employee.`;
+  msg.innerHTML=`&#10003; Staff record created!<br>Employee Code: <strong>${data.employee_code}</strong><br><br>The employee can now sign in at this portal with their email and temporary password. They can reset their own password using the Forgot Password link.`;
   const{data:fresh}=await sb.rpc('get_dashboard_data');allEmployees=fresh||[];renderView();
 }
 
@@ -826,24 +868,6 @@ async function openAudit(){
   <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Close</button></div>
   </div></div>`;
 }
-
-document.getElementById('reset-password')?.addEventListener('click', async () => {
-  const email = document.getElementById('mgr-email').value.trim();
-  const msg = document.getElementById('mgr-msg');
-
-  if (!email) {
-    msg.textContent = 'Enter your work email first, then click Reset password.';
-    return;
-  }
-
-  const { error } = await sb.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/reset-password.html`
-  });
-
-  msg.textContent = error
-    ? error.message
-    : 'Password reset email sent. Check your inbox and open the recovery link.';
-});
 </script>
 </body>
 </html>
