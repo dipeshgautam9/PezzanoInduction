@@ -836,12 +836,9 @@ function openCreate(){
   if(!isSysAdmin(profile))return;
   document.getElementById('modalRoot').innerHTML=`<div class="modal-back" onclick="if(event.target===this)closeModal()"><div class="modal">
   <h3>Add New Staff Member</h3>
-  <div style="background:rgba(0,180,216,.08);border:1px solid rgba(0,180,216,.2);border-radius:8px;padding:12px;margin-bottom:16px;font-size:.82rem;color:var(--primary)">
-    <strong>How this works:</strong><br>
-    1. Go to <a href="https://supabase.com/dashboard/project/jookdsjvbticdgvxagyt/auth/users" target="_blank" style="color:var(--primary);font-weight:700">Supabase Dashboard &rarr; Authentication &rarr; Users &rarr; Add user</a><br>
-    2. Enter the employee email and a temporary password &rarr; tick Auto Confirm &rarr; Create<br>
-    3. Come back here and fill in this form with the same email<br>
-    4. Give the employee their email and temporary password to sign in
+  <div style="background:rgba(74,222,128,.07);border:1px solid rgba(74,222,128,.2);border-radius:8px;padding:12px;margin-bottom:16px;font-size:.82rem;color:var(--success)">
+    Fill in the form below. The system will automatically create a login account.<br>
+    The employee logs in with their <strong>email</strong> and their <strong>Employee Code</strong> as the password.
   </div>
   <div class="form-grid">
     <div class="field"><label>Full Name</label><input id="c_name" placeholder="Full legal name"></div>
