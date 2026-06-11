@@ -336,10 +336,10 @@ async function doForgotPassword(){
   setLoading('forgot-btn',true);
   try{
     const{error}=await sb.auth.resetPasswordForEmail(email,{
-      redirectTo: window.location.origin + window.location.pathname + '?reset=true'
+      redirectTo:'https://pezzano-portal.vercel.app'
     });
     if(error){showMsg('forgot-msg','Error: '+error.message,'error');return;}
-    showMsg('forgot-msg','Reset link sent! Check your email inbox (and spam folder).','success');
+    showMsg('forgot-msg','&#10003; Reset link sent to '+email+'! Check your inbox and spam folder. Click the link in the email to set a new password.','success');
     document.getElementById('forgot-btn').textContent='Email Sent ✓';
     document.getElementById('forgot-btn').disabled=true;
   }catch(e){
@@ -369,18 +369,42 @@ async function doResetPassword(){
 
 // Check URL for password reset token on page load
 (async()=>{
-  const url=new URL(window.location.href);
-  // Supabase puts the token in the URL hash after redirect
+  // Listen for auth state changes - catches the recovery event from email link
+  sb.auth.onAuthStateChange(async(event, session)=>{
+    console.log('Auth event:', event, session?.user?.email);
+    if(event==='PASSWORD_RECOVERY'){
+      // User clicked reset link in email - show reset password form
+      showReset();
+      return;
+    }
+    if(event==='SIGNED_IN' && session){
+      // Check if we are on reset panel - if so stay there
+      const resetPanel=document.getElementById('panel-reset');
+      if(resetPanel && resetPanel.style.display!=='none') return;
+      await initApp();
+    }
+  });
+
+  // Also check hash params (Supabase v2 puts token in hash)
   const hashParams=new URLSearchParams(window.location.hash.replace('#',''));
   const type=hashParams.get('type');
-  if(type==='recovery'||url.searchParams.get('reset')==='true'){
-    // Get session from the recovery link
-    const{data:{session}}=await sb.auth.getSession();
-    if(session){showReset();return;}
+  const accessToken=hashParams.get('access_token');
+
+  if(type==='recovery' && accessToken){
+    // Set session from the hash tokens
+    const{error}=await sb.auth.setSession({
+      access_token: accessToken,
+      refresh_token: hashParams.get('refresh_token')||''
+    });
+    if(!error){ showReset(); return; }
   }
+
   // Check if already signed in
   const{data:{session}}=await sb.auth.getSession();
-  if(session){await initApp();return;}
+  if(session){
+    await initApp();
+    return;
+  }
   showSignIn();
 })();
 
@@ -845,7 +869,13 @@ async function createEmployee(){
     btn.disabled=false;btn.textContent='Add Staff Record';return;
   }
   msg.style.display='block';msg.style.background='rgba(74,222,128,.1)';msg.style.color='var(--success)';
-  msg.innerHTML=`&#10003; Staff record created!<br>Employee Code: <strong>${data.employee_code}</strong><br><br>The employee can now sign in at this portal with their email and temporary password. They can reset their own password using the Forgot Password link.`;
+  msg.innerHTML=`&#10003; Staff record created!<br><br>
+    <strong>Give these details to the employee:</strong><br>
+    &#128279; Portal: <strong>https://pezzano-portal.vercel.app</strong><br>
+    &#128231; Email: <strong>${document.getElementById('c_email').value.trim()}</strong><br>
+    &#128274; Password: <strong>${data.employee_code}</strong> (their Employee Code)<br>
+    &#128194; Employee Code: <strong>${data.employee_code}</strong><br><br>
+    <small>The employee logs in with their email and uses their Employee Code as the password. They can use Forgot Password to set a new one.</small>`;
   const{data:fresh}=await sb.rpc('get_dashboard_data');allEmployees=fresh||[];renderView();
 }
 
