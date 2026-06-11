@@ -239,14 +239,45 @@ const DECLARATION_POINTS = [
 ];
 
 const KNOWLEDGE_TOPICS = [
-  {id:'welcome',title:'Welcome & Business Overview',cat:'About',summary:'Who Pezzano is and the values that shape expected behaviour.',points:['Pezzano Enterprises was established in 1956 and operates from Canning Vale, Perth WA.','The company supplies premium fruits, vegetables, seafood, meat, dairy, and specialty items.','Core values: safety, quality, respect, accountability, sustainability, and family.'],facts:['Site speed limit: 10 km/h','Assembly point: front car park','Emergency: 000'],videos:[]},
-  {id:'rules',title:'Site Rules & PPE',cat:'Safety',summary:'Daily rules for entering, moving around, and all mandatory PPE.',points:['Sign in and out every shift, wear hi-vis and ID on the warehouse floor.','Authorised access only in operational and cold storage areas.','Steel-capped boots and hi-vis mandatory in warehouse and dock areas.'],facts:['Hi-vis required in all operational areas','Steel-capped boots mandatory','Visitors must be escorted'],videos:[]},
-  {id:'emergency',title:'Emergency & Chemicals',cat:'Safety',summary:'Emergency procedures, evacuation, and chemical handling.',points:['DRSABCD: Danger, Response, Send for help, Airway, Breathing, CPR, Defibrillator.','On evacuation, go to the front car park assembly point.','Read the SDS before using any chemical; never mix chemicals.'],facts:['Emergency: 000','Assembly point: front car park','WorkSafe WA: 1300 307 877'],videos:[]},
-  {id:'manual',title:'Manual Handling',cat:'Safety',summary:'Safe lifting techniques, team lifting, and mechanical aids.',points:['Plan the lift, keep the load close, and avoid twisting.','Team lift or use mechanical assistance for loads 16 kg and above.','Report any discomfort early to prevent injury escalation.'],facts:['Mandatory mechanical aid: 25 kg+','Team lift recommended: 16-25 kg'],videos:[{title:'Manual Handling in the Workplace',embed:'https://www.youtube-nocookie.com/embed/LdxJNKO-5DY'}]},
-  {id:'forklift',title:'Forklift Safety',cat:'Operations',summary:'Licensing, pedestrian separation, pre-start checks, and travel rules.',points:['Only licensed operators with a current HRWL may operate forklifts.','Pedestrians must make eye contact with the operator before crossing.','Travel with forks low, use horns at intersections, and park safely.'],facts:['Site speed limit: 10 km/h','Pedestrian zones: 5 km/h','Pre-start check mandatory'],videos:[{title:'Forklift Safety in the Workplace',embed:'https://www.youtube-nocookie.com/embed/eWalJ0YhO4Q'}]},
-  {id:'fire',title:'Fire Safety',cat:'Safety',summary:'Fire extinguisher types, PASS method, and evacuation triggers.',points:['Know the extinguisher types and what they are used for.','PASS means Pull, Aim, Squeeze, Sweep.','If in doubt, evacuate and raise the alarm rather than fighting the fire.'],facts:['Dry powder/CO2 for electrical fires','PASS: Pull Aim Squeeze Sweep'],videos:[]},
-  {id:'haccp',title:'Cold Chain & HACCP',cat:'Food Safety',summary:'Temperature control, FIFO rotation, hygiene, and cold-room safety.',points:['HACCP certification — all perishable goods must remain in safe temperature ranges.','FIFO must always be used and temperature records must be accurate.','Cold-room work requires thermal PPE and emergency release awareness.'],facts:['HACCP: Hazard Analysis and Critical Control Points','FIFO: First In First Out'],videos:[{title:'HACCP Food Safety Explained',embed:'https://www.youtube-nocookie.com/embed/9BzItAj8kcQ'}]},
-  {id:'ops',title:'Warehouse Operations',cat:'Operations',summary:'Receiving, dispatch, housekeeping, and WHS rights.',points:['Check deliveries, inspect temperatures, rotate stock with FIFO.','Clean-as-you-go standards support safety, hygiene, and efficiency.','Workers have the right to refuse unsafe work.'],facts:['WorkSafe WA: 1300 307 877','WorkCover WA: 1300 794 744'],videos:[]}
+  {id:'welcome',title:'Welcome & Business Overview',cat:'About',summary:'Who Pezzano is and the values that shape expected behaviour.',
+   points:['Pezzano Enterprises was established in 1956 and operates from Canning Vale, Perth WA.','The company supplies premium fruits, vegetables, seafood, meat, dairy, and specialty items.','Core values: safety, quality, respect, accountability, sustainability, and family.'],
+   facts:['Site speed limit: 10 km/h','Assembly point: front car park','Emergency: 000'],
+   videos:[{title:'Australian Workplace Introduction',embed:'https://www.youtube-nocookie.com/embed/mOwLnPkwLrY'}]},
+
+  {id:'rules',title:'Site Rules & PPE',cat:'Safety',summary:'Daily rules for entering, moving around, and all mandatory PPE.',
+   points:['Sign in and out every shift, wear hi-vis and ID on the warehouse floor.','Authorised access only in operational and cold storage areas.','Steel-capped boots and hi-vis mandatory in warehouse and dock areas.'],
+   facts:['Hi-vis required in all operational areas','Steel-capped boots mandatory','Visitors must be escorted'],
+   videos:[{title:'Workplace Safety Rules Overview',embed:'https://www.youtube-nocookie.com/embed/kV7yMrNXZSE'}]},
+
+  {id:'emergency',title:'Emergency & Chemicals',cat:'Safety',summary:'Emergency procedures, evacuation, and chemical handling.',
+   points:['DRSABCD: Danger, Response, Send for help, Airway, Breathing, CPR, Defibrillator.','On evacuation, go to the front car park assembly point.','Read the SDS before using any chemical; never mix chemicals.'],
+   facts:['Emergency: 000','Assembly point: front car park','WorkSafe WA: 1300 307 877'],
+   videos:[{title:'Emergency Evacuation Procedures',embed:'https://www.youtube-nocookie.com/embed/TD1K4n1Pc8I'}]},
+
+  {id:'manual',title:'Manual Handling',cat:'Safety',summary:'Safe lifting techniques, team lifting, and mechanical aids.',
+   points:['Plan the lift, keep the load close, and avoid twisting.','Team lift or use mechanical assistance for loads 16 kg and above.','Report any discomfort early to prevent injury escalation.'],
+   facts:['Mandatory mechanical aid: 25 kg+','Team lift recommended: 16-25 kg'],
+   videos:[{title:'Manual Handling in the Workplace',embed:'https://www.youtube-nocookie.com/embed/LdxJNKO-5DY'}]},
+
+  {id:'forklift',title:'Forklift Safety',cat:'Operations',summary:'Licensing, pedestrian separation, pre-start checks, and travel rules.',
+   points:['Only licensed operators with a current HRWL may operate forklifts.','Pedestrians must make eye contact with the operator before crossing.','Travel with forks low, use horns at intersections, and park safely.'],
+   facts:['Site speed limit: 10 km/h','Pedestrian zones: 5 km/h','Pre-start check mandatory'],
+   videos:[{title:'Forklift Safety in the Workplace',embed:'https://www.youtube-nocookie.com/embed/eWalJ0YhO4Q'}]},
+
+  {id:'fire',title:'Fire Safety',cat:'Safety',summary:'Fire extinguisher types, PASS method, and evacuation triggers.',
+   points:['Know the extinguisher types and what they are used for.','PASS means Pull, Aim, Squeeze, Sweep.','If in doubt, evacuate and raise the alarm rather than fighting the fire.'],
+   facts:['Dry powder/CO2 for electrical fires','PASS: Pull Aim Squeeze Sweep'],
+   videos:[{title:'Fire Extinguisher Safety Training',embed:'https://www.youtube-nocookie.com/embed/b4TQXI2OUQY'}]},
+
+  {id:'haccp',title:'Cold Chain & HACCP',cat:'Food Safety',summary:'Temperature control, FIFO rotation, hygiene, and cold-room safety.',
+   points:['HACCP certification — all perishable goods must remain in safe temperature ranges.','FIFO must always be used and temperature records must be accurate.','Cold-room work requires thermal PPE and emergency release awareness.'],
+   facts:['HACCP: Hazard Analysis and Critical Control Points','FIFO: First In First Out'],
+   videos:[{title:'HACCP Food Safety Explained',embed:'https://www.youtube-nocookie.com/embed/9BzItAj8kcQ'}]},
+
+  {id:'ops',title:'Warehouse Operations',cat:'Operations',summary:'Receiving, dispatch, housekeeping, and WHS rights.',
+   points:['Check deliveries, inspect temperatures, rotate stock with FIFO.','Clean-as-you-go standards support safety, hygiene, and efficiency.','Workers have the right to refuse unsafe work.'],
+   facts:['WorkSafe WA: 1300 307 877','WorkCover WA: 1300 794 744'],
+   videos:[{title:'Warehouse Safety and Operations',embed:'https://www.youtube-nocookie.com/embed/8g5LIgfhFbw'}]}
 ];
 
 function q(question,opts,a,why){return{q:question,opts,a,why};}
@@ -599,7 +630,7 @@ function renderKnowledgeGate(){
         <div class="card" style="padding:14px"><div style="font-size:.7rem;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase">Key Points</div><ul style="padding-left:1rem;display:grid;gap:6px;font-size:.83rem;color:var(--muted)">${topic.points.map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div>
         <div class="card" style="padding:14px"><div style="font-size:.7rem;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase">Quick Facts</div><ul style="padding-left:1rem;display:grid;gap:6px;font-size:.83rem;color:var(--muted)">${topic.facts.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></div>
       </div>
-      ${topic.videos.length?`<div style="aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#000;margin-bottom:14px"><iframe src="${topic.videos[0].embed}" title="${esc(topic.videos[0].title)}" width="100%" height="100%" frameborder="0" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>`:''}
+      ${topic.videos.length?`<div style="position:relative;padding-bottom:56.25%;height:0;border-radius:10px;overflow:hidden;background:#000;margin-bottom:14px"><iframe src="${topic.videos[0].embed}?rel=0&modestbranding=1&autoplay=0" title="${esc(topic.videos[0].title)}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`:''}
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${knowledgeViewed.includes(topic.id)?`<span class="badge badge-completed">&#9989; Confirmed</span>`:`<button class="btn btn-primary" onclick="confirmTopic('${topic.id}')">&#9989; I have read and understood this topic</button>`}
         ${allDone?`<button class="btn btn-success" onclick="startModules()">Start Quiz &#8594;</button>`:`<span style="font-size:.78rem;color:var(--muted);align-self:center">${KNOWLEDGE_TOPICS.length-knowledgeViewed.length} remaining</span>`}
