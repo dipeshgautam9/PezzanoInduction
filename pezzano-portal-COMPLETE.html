@@ -17,7 +17,6 @@
 html{scroll-behavior:smooth}
 body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
 .hidden{display:none!important}
-/* HEADER */
 .app-header{position:sticky;top:0;z-index:40;background:rgba(15,17,23,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px}
 .header-inner{max-width:1400px;margin:0 auto;height:60px;display:flex;align-items:center;justify-content:space-between;gap:16px}
 .brand{display:flex;align-items:center;gap:10px}
@@ -27,12 +26,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .user-chip{display:flex;align-items:center;gap:7px;padding:5px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;font-size:.78rem}
 .user-dot{width:7px;height:7px;border-radius:50%;background:var(--success)}
-/* PAGE */
 .page{max-width:1400px;margin:0 auto;padding:24px}
-/* CARDS */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px}
 .card-title{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:12px}
-/* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:none;border-radius:8px;font-size:.82rem;font-weight:500;cursor:pointer;transition:.15s;white-space:nowrap}
 .btn:hover{opacity:.85;transform:translateY(-1px)}
 .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
@@ -41,7 +37,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .btn-warn{background:rgba(251,191,36,.12);color:var(--warning);border:1px solid rgba(251,191,36,.2)}
 .btn-danger{background:rgba(248,113,113,.12);color:var(--error);border:1px solid rgba(248,113,113,.2)}
 .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
-/* LOGIN */
 .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at 20% 50%,rgba(0,180,216,.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(74,222,128,.04) 0%,transparent 50%)}
 .login-box{width:100%;max-width:420px}
 .logo-row{text-align:center;margin-bottom:28px}
@@ -49,10 +44,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .logo-row h1{font-size:1.3rem;font-weight:600}
 .logo-row p{font-size:.82rem;color:var(--muted);margin-top:3px}
 .login-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px}
-.tabs{display:flex;gap:4px;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:24px}
-.tab{flex:1;padding:8px;border:none;border-radius:7px;background:none;color:var(--muted);font-size:.85rem;font-weight:500;cursor:pointer;transition:.18s}
-.tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.3)}
-.panel{display:none}.panel.active{display:block}
 .field{margin-bottom:16px}
 .field label{display:block;font-size:.75rem;font-weight:500;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em}
 .field input,.field select{width:100%;padding:10px 13px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--text);font-size:.92rem;outline:none;transition:.18s;font-family:var(--font)}
@@ -64,20 +55,16 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .msg{padding:10px 14px;border-radius:8px;font-size:.83rem;margin-top:12px;display:none}
 .msg.error{background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25);color:var(--error)}
 .msg.success{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.2);color:var(--success)}
-.hint{font-size:.75rem;color:var(--muted);text-align:center;margin-top:14px;line-height:1.5}
 .spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle}
 @keyframes spin{to{transform:rotate(360deg)}}
-/* METRICS */
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
 .metric{padding:18px 20px}
 .metric .val{font-size:1.9rem;font-weight:700;letter-spacing:-.03em;line-height:1}
 .metric .lbl{font-size:.75rem;color:var(--muted);margin-top:4px}
-/* BADGES */
 .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:.72rem;font-weight:600}
 .badge-pending{background:rgba(139,146,165,.12);color:var(--muted)}
 .badge-progress{background:rgba(251,191,36,.12);color:var(--warning)}
 .badge-completed{background:rgba(74,222,128,.12);color:var(--success)}
-/* TABLE */
 .table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);margin-top:14px}
 table{width:100%;border-collapse:collapse;font-size:.82rem}
 thead th{padding:10px 12px;background:var(--surface2);color:var(--muted);font-weight:500;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
@@ -85,24 +72,19 @@ tbody td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:
 tbody tr:last-child td{border-bottom:none}
 tbody tr:hover{background:var(--surface2)}
 .actions-cell{display:flex;gap:5px;flex-wrap:wrap}
-/* PROGRESS */
 .prog-bar{height:5px;background:var(--surface3);border-radius:999px;overflow:hidden;width:80px;display:inline-block;vertical-align:middle;margin-right:6px}
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--success))}
-/* FILTERS */
 .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
 .filters input,.filters select{padding:7px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.82rem;outline:none;font-family:var(--font)}
 .filters input:focus,.filters select:focus{border-color:var(--primary)}
-/* MODAL */
 .modal-back{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto}
 .modal h3{font-size:1.05rem;margin-bottom:16px}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .form-grid .full{grid-column:1/-1}
 .modal-actions{display:flex;gap:8px;margin-top:20px;justify-content:flex-end}
-/* TOAST */
 #toast{position:fixed;bottom:20px;right:20px;background:#1a2535;border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-size:.83rem;z-index:200;opacity:0;transform:translateY(8px);transition:.3s;pointer-events:none}
 #toast.show{opacity:1;transform:translateY(0)}
-/* KNOWLEDGE & MODULES */
 .kb-grid{display:grid;grid-template-columns:220px 1fr;gap:16px}
 .kb-nav{display:grid;gap:6px}
 .kb-btn{padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;text-align:left;cursor:pointer;transition:.15s;font-size:.82rem;color:var(--text);font-family:var(--font)}
@@ -115,7 +97,6 @@ tbody tr:hover{background:var(--surface2)}
 .mod-row.active{border-color:var(--primary);background:rgba(0,180,216,.07)}
 .mod-row.done{border-color:rgba(74,222,128,.3);background:rgba(74,222,128,.05)}
 .mod-row.locked{opacity:.4;cursor:not-allowed}
-/* QUIZ */
 .q-text{font-size:.95rem;font-weight:500;margin-bottom:16px;line-height:1.5}
 .options{display:grid;gap:8px}
 .opt{padding:11px 14px;background:var(--surface3);border:1px solid var(--border);border-radius:8px;text-align:left;cursor:pointer;font-size:.85rem;transition:.15s;color:var(--text);font-family:var(--font)}
@@ -128,7 +109,8 @@ tbody tr:hover{background:var(--surface2)}
 .feedback.bad{background:rgba(248,113,113,.1);color:var(--error)}
 .explain{background:rgba(251,191,36,.08);color:var(--warning);margin-top:8px;padding:10px 14px;border-radius:8px;font-size:.82rem;display:none}
 .explain.show{display:block}
-/* LETTER PRINT */
+.video-wrap{position:relative;padding-bottom:56.25%;height:0;border-radius:10px;overflow:hidden;background:#000;margin-bottom:14px}
+.video-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
 @media print{
   @page{margin:0;size:A4 portrait}
   html,body{margin:0;padding:0;overflow:hidden}
@@ -146,14 +128,13 @@ tbody tr:hover{background:var(--surface2)}
 .letter-sigs{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:18px}
 .sig-line{border-top:1px solid #333;padding-top:5px;font-size:.82rem}
 .sig-block p{font-weight:600;margin-bottom:32px;font-size:.85rem}
-/* RESPONSIVE */
 @media(max-width:900px){.metrics{grid-template-columns:1fr 1fr}.kb-grid{grid-template-columns:1fr}}
 @media(max-width:600px){.metrics{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
+<!-- LOGIN -->
 <div id="loginScreen" class="login-wrap">
   <div class="login-box">
     <div class="logo-row">
@@ -162,27 +143,20 @@ tbody tr:hover{background:var(--surface2)}
       <p>Canning Vale &mdash; Warehouse Staff System</p>
     </div>
     <div class="login-card">
-      <!-- Single login form - email + password for everyone -->
       <div id="panel-signin">
         <div class="field"><label>Email Address</label><input id="signin-email" type="email" placeholder="your@email.com" autocomplete="email"/></div>
         <div class="field"><label>Password</label><input id="signin-pass" type="password" placeholder="Enter your password" autocomplete="current-password"/></div>
         <button class="login-btn" id="signin-btn" onclick="doSignIn()">Sign In</button>
         <div class="msg" id="signin-msg"></div>
-        <p style="text-align:center;margin-top:14px;font-size:.82rem">
-          <a href="#" onclick="showForgot();return false;" style="color:var(--primary)">Forgot your password?</a>
-        </p>
+        <p style="text-align:center;margin-top:14px;font-size:.82rem"><a href="#" onclick="showForgot();return false;" style="color:var(--primary)">Forgot your password?</a></p>
       </div>
-      <!-- Forgot password panel -->
       <div id="panel-forgot" style="display:none">
-        <p style="color:var(--muted);font-size:.85rem;margin-bottom:16px">Enter your email address and we will send you a password reset link.</p>
+        <p style="color:var(--muted);font-size:.85rem;margin-bottom:16px">Enter your email and we will send a reset link.</p>
         <div class="field"><label>Email Address</label><input id="forgot-email" type="email" placeholder="your@email.com"/></div>
         <button class="login-btn" id="forgot-btn" onclick="doForgotPassword()">Send Reset Link</button>
         <div class="msg" id="forgot-msg"></div>
-        <p style="text-align:center;margin-top:14px;font-size:.82rem">
-          <a href="#" onclick="showSignIn();return false;" style="color:var(--primary)">&larr; Back to Sign In</a>
-        </p>
+        <p style="text-align:center;margin-top:14px;font-size:.82rem"><a href="#" onclick="showSignIn();return false;" style="color:var(--primary)">&larr; Back to Sign In</a></p>
       </div>
-      <!-- Reset password panel (shown after clicking email link) -->
       <div id="panel-reset" style="display:none">
         <p style="color:var(--muted);font-size:.85rem;margin-bottom:16px">Enter your new password below.</p>
         <div class="field"><label>New Password</label><input id="reset-pass" type="password" placeholder="Min 8 characters"/></div>
@@ -191,13 +165,11 @@ tbody tr:hover{background:var(--surface2)}
         <div class="msg" id="reset-msg"></div>
       </div>
     </div>
-    <p style="text-align:center;margin-top:16px;font-size:.75rem;color:var(--muted)">
-      Contact your System Administrator if you need help signing in.
-    </p>
+    <p style="text-align:center;margin-top:16px;font-size:.75rem;color:var(--muted)">Contact your System Administrator if you need help signing in.</p>
   </div>
 </div>
 
-<!-- APP SCREEN -->
+<!-- APP -->
 <div id="appScreen" class="hidden">
   <header class="app-header">
     <div class="header-inner">
@@ -218,18 +190,17 @@ tbody tr:hover{background:var(--surface2)}
 </div>
 
 <script>
-// ── SUPABASE CONFIG ───────────────────────────────────────────
+// ── SUPABASE ──────────────────────────────────────────────────
 const SUPABASE_URL      = 'https://jookdsjvbticdgvxagyt.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_1emkeuRvXdsF6S-yyxcUeQ_BdUBJ5PF';
-const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { autoRefreshToken:true, persistSession:true, detectSessionInUrl:true }
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}
 });
 
-// ── DATA ──────────────────────────────────────────────────────
+// ── CONSTANTS ─────────────────────────────────────────────────
 const DEPARTMENTS = ['Floor Morning','Processing','Meat','Logistics','Admin','Others'];
-const POSITIONS   = ['Employee','Supervisor','Logistics Driver','Location Manager','System Administrator'];
-const COMPANY     = { name:'Pezzano Enterprises Pty Ltd', address:'Unit 12 Purdy Pl, Canning Vale WA 6155', cert:'24/7 HACCP Certified' };
+const POSITIONS   = ['Employee','Supervisor (Location Manager)','System Administrator'];
+const COMPANY     = {name:'Pezzano Enterprises Pty Ltd',address:'Unit 12 Purdy Pl, Canning Vale WA 6155',cert:'24/7 HACCP Certified'};
 const DECLARATION_POINTS = [
   'I confirm I have read and understood the full content of the Pezzano Enterprises Warehouse Staff Induction Manual.',
   'I understand my rights and obligations under the WHS Act 2020 WA.',
@@ -239,42 +210,92 @@ const DECLARATION_POINTS = [
 ];
 
 const KNOWLEDGE_TOPICS = [
-  {id:'welcome',title:'Welcome & Business Overview',cat:'About',summary:'Who Pezzano is and the values that shape expected behaviour.',points:['Pezzano Enterprises was established in 1956 and operates from Canning Vale, Perth WA.','The company supplies premium fruits, vegetables, seafood, meat, dairy, and specialty items.','Core values: safety, quality, respect, accountability, sustainability, and family.'],facts:['Site speed limit: 10 km/h','Assembly point: front car park','Emergency: 000'],videos:[]},
-  {id:'rules',title:'Site Rules & PPE',cat:'Safety',summary:'Daily rules for entering, moving around, and all mandatory PPE.',points:['Sign in and out every shift, wear hi-vis and ID on the warehouse floor.','Authorised access only in operational and cold storage areas.','Steel-capped boots and hi-vis mandatory in warehouse and dock areas.'],facts:['Hi-vis required in all operational areas','Steel-capped boots mandatory','Visitors must be escorted'],videos:[]},
-  {id:'emergency',title:'Emergency & Chemicals',cat:'Safety',summary:'Emergency procedures, evacuation, and chemical handling.',points:['DRSABCD: Danger, Response, Send for help, Airway, Breathing, CPR, Defibrillator.','On evacuation, go to the front car park assembly point.','Read the SDS before using any chemical; never mix chemicals.'],facts:['Emergency: 000','Assembly point: front car park','WorkSafe WA: 1300 307 877'],videos:[]},
-  {id:'manual',title:'Manual Handling',cat:'Safety',summary:'Safe lifting techniques, team lifting, and mechanical aids.',points:['Plan the lift, keep the load close, and avoid twisting.','Team lift or use mechanical assistance for loads 16 kg and above.','Report any discomfort early to prevent injury escalation.'],facts:['Mandatory mechanical aid: 25 kg+','Team lift recommended: 16-25 kg'],videos:[{title:'Manual Handling in the Workplace',embed:'https://www.youtube-nocookie.com/embed/LdxJNKO-5DY'}]},
-  {id:'forklift',title:'Forklift Safety',cat:'Operations',summary:'Licensing, pedestrian separation, pre-start checks, and travel rules.',points:['Only licensed operators with a current HRWL may operate forklifts.','Pedestrians must make eye contact with the operator before crossing.','Travel with forks low, use horns at intersections, and park safely.'],facts:['Site speed limit: 10 km/h','Pedestrian zones: 5 km/h','Pre-start check mandatory'],videos:[{title:'Forklift Safety in the Workplace',embed:'https://www.youtube-nocookie.com/embed/eWalJ0YhO4Q'}]},
-  {id:'fire',title:'Fire Safety',cat:'Safety',summary:'Fire extinguisher types, PASS method, and evacuation triggers.',points:['Know the extinguisher types and what they are used for.','PASS means Pull, Aim, Squeeze, Sweep.','If in doubt, evacuate and raise the alarm rather than fighting the fire.'],facts:['Dry powder/CO2 for electrical fires','PASS: Pull Aim Squeeze Sweep'],videos:[]},
-  {id:'haccp',title:'Cold Chain & HACCP',cat:'Food Safety',summary:'Temperature control, FIFO rotation, hygiene, and cold-room safety.',points:['HACCP certification — all perishable goods must remain in safe temperature ranges.','FIFO must always be used and temperature records must be accurate.','Cold-room work requires thermal PPE and emergency release awareness.'],facts:['HACCP: Hazard Analysis and Critical Control Points','FIFO: First In First Out'],videos:[{title:'HACCP Food Safety Explained',embed:'https://www.youtube-nocookie.com/embed/9BzItAj8kcQ'}]},
-  {id:'ops',title:'Warehouse Operations',cat:'Operations',summary:'Receiving, dispatch, housekeeping, and WHS rights.',points:['Check deliveries, inspect temperatures, rotate stock with FIFO.','Clean-as-you-go standards support safety, hygiene, and efficiency.','Workers have the right to refuse unsafe work.'],facts:['WorkSafe WA: 1300 307 877','WorkCover WA: 1300 794 744'],videos:[]}
+  {id:'welcome',title:'Welcome & Business Overview',cat:'About',
+   summary:'Who Pezzano is and the values that shape expected behaviour.',
+   points:['Pezzano Enterprises was established in 1956 and operates from Canning Vale, Perth WA.','The company supplies premium fruits, vegetables, seafood, meat, dairy, and specialty items.','Core values: safety, quality, respect, accountability, sustainability, and family.'],
+   facts:['Site speed limit: 10 km/h','Assembly point: front car park','Emergency: 000'],
+   videos:[{title:'Australian Workplace Introduction',embed:'https://www.youtube-nocookie.com/embed/mOwLnPkwLrY'}]},
+  {id:'rules',title:'Site Rules & PPE',cat:'Safety',
+   summary:'Daily rules for entering, moving around, and all mandatory PPE.',
+   points:['Sign in and out every shift, wear hi-vis and ID on the warehouse floor.','Authorised access only in operational and cold storage areas.','Steel-capped boots and hi-vis mandatory in warehouse and dock areas.'],
+   facts:['Hi-vis required in all operational areas','Steel-capped boots mandatory','Visitors must be escorted'],
+   videos:[{title:'Workplace Safety Rules Overview',embed:'https://www.youtube-nocookie.com/embed/kV7yMrNXZSE'}]},
+  {id:'emergency',title:'Emergency & Chemicals',cat:'Safety',
+   summary:'Emergency procedures, evacuation, and chemical handling.',
+   points:['DRSABCD: Danger, Response, Send for help, Airway, Breathing, CPR, Defibrillator.','On evacuation, go to the front car park assembly point.','Read the SDS before using any chemical; never mix chemicals.'],
+   facts:['Emergency: 000','Assembly point: front car park','WorkSafe WA: 1300 307 877'],
+   videos:[{title:'Emergency Evacuation Procedures',embed:'https://www.youtube-nocookie.com/embed/TD1K4n1Pc8I'}]},
+  {id:'manual',title:'Manual Handling',cat:'Safety',
+   summary:'Safe lifting techniques, team lifting, and mechanical aids.',
+   points:['Plan the lift, keep the load close, and avoid twisting.','Team lift or use mechanical assistance for loads 16 kg and above.','Report any discomfort early to prevent injury escalation.'],
+   facts:['Mandatory mechanical aid: 25 kg+','Team lift recommended: 16-25 kg'],
+   videos:[{title:'Manual Handling in the Workplace',embed:'https://www.youtube-nocookie.com/embed/LdxJNKO-5DY'}]},
+  {id:'forklift',title:'Forklift Safety',cat:'Operations',
+   summary:'Licensing, pedestrian separation, pre-start checks, and travel rules.',
+   points:['Only licensed operators with a current HRWL may operate forklifts.','Pedestrians must make eye contact with the operator before crossing.','Travel with forks low, use horns at intersections, and park safely.'],
+   facts:['Site speed limit: 10 km/h','Pedestrian zones: 5 km/h','Pre-start check mandatory'],
+   videos:[{title:'Forklift Safety in the Workplace',embed:'https://www.youtube-nocookie.com/embed/eWalJ0YhO4Q'}]},
+  {id:'fire',title:'Fire Safety',cat:'Safety',
+   summary:'Fire extinguisher types, PASS method, and evacuation triggers.',
+   points:['Know the extinguisher types and what they are used for.','PASS means Pull, Aim, Squeeze, Sweep.','If in doubt, evacuate and raise the alarm rather than fighting the fire.'],
+   facts:['Dry powder/CO2 for electrical fires','PASS: Pull Aim Squeeze Sweep'],
+   videos:[{title:'Fire Extinguisher Safety Training',embed:'https://www.youtube-nocookie.com/embed/b4TQXI2OUQY'}]},
+  {id:'haccp',title:'Cold Chain & HACCP',cat:'Food Safety',
+   summary:'Temperature control, FIFO rotation, hygiene, and cold-room safety.',
+   points:['HACCP certification — all perishable goods must remain in safe temperature ranges.','FIFO must always be used and temperature records must be accurate.','Cold-room work requires thermal PPE and emergency release awareness.'],
+   facts:['HACCP: Hazard Analysis and Critical Control Points','FIFO: First In First Out'],
+   videos:[{title:'HACCP Food Safety Explained',embed:'https://www.youtube-nocookie.com/embed/9BzItAj8kcQ'}]},
+  {id:'ops',title:'Warehouse Operations',cat:'Operations',
+   summary:'Receiving, dispatch, housekeeping, and WHS rights.',
+   points:['Check deliveries, inspect temperatures, rotate stock with FIFO.','Clean-as-you-go standards support safety, hygiene, and efficiency.','Workers have the right to refuse unsafe work.'],
+   facts:['WorkSafe WA: 1300 307 877','WorkCover WA: 1300 794 744'],
+   videos:[{title:'Warehouse Safety and Operations',embed:'https://www.youtube-nocookie.com/embed/8g5LIgfhFbw'}]}
 ];
 
 function q(question,opts,a,why){return{q:question,opts,a,why};}
 const MODULES=[
-  {id:'generalRules',title:'General Rules',icon:'📍',content:['Site speed limit 10 km/h. Sign in and out every shift.','Use pedestrian walkways, keep exits and aisles clear.','Only authorised persons may enter operational and cold storage areas.'],questions:[q('What must every worker do at the start and end of each shift?',['Sign in and sign out','Only text the supervisor','Nothing if rostered','Sign out only if leaving early'],0,'Workers must sign in and out every shift.'),q('What is the site speed limit?',['5 km/h','8 km/h','10 km/h','15 km/h'],2,'The site speed limit is 10 km/h.'),q('Where must pedestrians walk?',['Anywhere forklifts are not moving','Within marked pedestrian walkways','Across loading docks','Through racking aisles'],1,'Pedestrian walkways must be used.'),q('Where can eating and drinking occur?',['On the warehouse floor','In the cold room','At the dock','In designated break areas only'],3,'Food and drink are restricted to designated break areas.'),q('What should you do if an emergency exit is blocked?',['Ignore it','Move or report the obstruction immediately','Leave it for night shift','Stack boxes beside it'],1,'Emergency exits must stay clear at all times.')]},
-  {id:'ppe',title:'PPE',icon:'🦺',content:['Steel-capped boots and hi-vis required in all warehouse and dock areas.','Damaged or missing PPE must be reported immediately.','Additional PPE required by task: thermal wear in cold rooms, gloves for wet work.'],questions:[q('Which PPE is required at all times in warehouse areas?',['Safety boots','Safety glasses only','Apron only','Hard hat only'],0,'Safety boots are mandatory at all times.'),q('When is hi-vis required?',['Only at night','In all operational and outdoor areas','Only for visitors','Only in the office'],1,'Hi-vis is required in all operational and outdoor areas.'),q('What should you do with damaged PPE?',['Use it until stock arrives','Tape it and continue','Report it immediately','Leave it in your locker'],2,'Damaged PPE must be reported immediately.'),q('What clothing is required in cold rooms?',['Raincoat only','Thermal or warm clothing','Casual hoodie','No special clothing'],1,'Thermal clothing is required in cold rooms.'),q('What is working without required PPE?',['Allowed for quick tasks','Allowed if supervised','A serious safety breach','Only a warning issue'],2,'Working without PPE is a serious safety breach.')]},
-  {id:'emergency',title:'Emergency & Chemicals',icon:'🚨',content:['DRSABCD: Danger, Response, Send, Airway, Breathing, CPR, Defibrillator.','Read the SDS before using any chemical and never mix chemicals.','Major spills require evacuation and immediate supervisor notification.'],questions:[q('What does D in DRSABCD mean?',['Decision','Danger','Doctor','Defence'],1,'Check for danger first.'),q('Emergency phone number?',['13 11 26','1300 307 877','000','08 9456 3677'],2,'000 is the emergency number.'),q('What to do when the evacuation alarm sounds?',['Finish your task','Stop work and leave by nearest safe exit','Look for your bag','Wait for a text'],1,'Stop work and evacuate immediately.'),q('Where is the assembly point?',['Lunch room','Front car park','Back dock','Manager office'],1,'The front car park is the assembly point.'),q('Can chemicals be poured down drains?',['Yes if diluted','No, never','Only sanitisers','Only at night'],1,'Pouring chemicals down drains is illegal.')]},
-  {id:'manual',title:'Manual Handling',icon:'📦',content:['Plan the lift, keep the load close, and avoid twisting.','Team lift or use mechanical assistance for heavier or awkward loads.','Report discomfort early and rotate repetitive tasks.'],questions:[q('First step before lifting?',['Lift quickly','Plan the lift, path, and destination','Twist and test the weight','Ask someone to guess'],1,'Plan the lift before touching the load.'),q('What should stay straight during lifting?',['Arms','Back','Fingers','Neck only'],1,'Keep back straight and core braced.'),q('What must be used for loads 25 kg or more?',['Back brace only','Mechanical lifting equipment','Faster lifting','One strong person'],1,'Mechanical equipment is mandatory for 25 kg and above.'),q('When should discomfort be reported?',['At year end','Early, as soon as noticed','Only if severe','After sick leave'],1,'Early reporting helps prevent injury.'),q('Where should the load be kept while lifting?',['At arm length','Close to your body','Above shoulder height','On one hip'],1,'Loads should be kept close to reduce strain.')]},
-  {id:'forklift',title:'Forklift Safety',icon:'🚜',content:['Only licensed operators with a current HRWL may operate forklifts.','Pedestrians must stay out of forklift zones and make eye contact before crossing.','Travel with forks low, use horns at intersections, park safely.'],questions:[q('Who may operate a forklift on site?',['Any experienced worker','Only a licensed operator with current HRWL','Any supervisor','Visitors under instruction'],1,'Only licensed operators may operate forklifts.'),q('What should pedestrians do before crossing a forklift path?',['Run across quickly','Make eye contact with the operator','Wave from behind','Assume they are seen'],1,'Eye contact confirms the operator is aware.'),q('What must happen if a forklift is faulty?',['Keep using it slowly','Tag it out and report it','Let another shift use it','Park it without reporting'],1,'Faulty forklifts must not be operated.'),q('How should forks be positioned while travelling?',['At shoulder height','Low, about 150-300 mm','Touching the ground','Raised above the load'],1,'Forks should travel low for stability.'),q('How should a forklift be parked?',['Forks up, engine on','Forks down, brakes on, engine off, keys removed','Anywhere convenient','Blocking an aisle'],1,'Safe parking: forks down, brakes on, engine off, keys removed.')]},
-  {id:'fire',title:'Fire Safety',icon:'🔥',content:['Know the extinguisher types and what they are used for.','PASS: Pull, Aim, Squeeze, Sweep.','If in doubt, evacuate and raise the alarm.'],questions:[q('What does P in PASS stand for?',['Protect','Pull','Push','Pause'],1,'P = Pull the safety pin.'),q('What should you aim at?',['Top of the flames','Base of the fire','The ceiling','Any smoke'],1,'Aim at the base of the fire.'),q('What to do if fire is larger than a waste bin?',['Fight it alone','Evacuate, raise the alarm, call 000','Use water regardless','Wait for lunch'],1,'Large fires require evacuation and emergency response.'),q('Can sprinkler or extinguisher access be blocked?',['Yes if temporary','No, never','Only during deliveries','Outside working hours only'],1,'Fire equipment access must remain clear.'),q('Should you re-enter a burning building?',['Yes for valuables','Only with a friend','No','Only if fire is small'],2,'Never re-enter a burning building.')]},
-  {id:'coldchain',title:'Cold Chain & HACCP',icon:'❄️',content:['HACCP: all perishable goods must remain in safe temperature ranges.','FIFO must always be used and temperature records must be accurate.','Cold-room: thermal PPE, tell someone before entering alone.'],questions:[q('What does HACCP stand for?',['Hazard Analysis and Critical Control Points','Heavy Area Cold Chain Process','Handling and Carrying Cold Produce','Health and Cleaning Control Plan'],0,'HACCP = Hazard Analysis and Critical Control Points.'),q('What stock rotation system must always be applied?',['LIFO','FIFO','Random rotation','Monthly sort only'],1,'FIFO is mandatory for perishable stock.'),q('Should you enter a cold room alone without telling anyone?',['Yes if quick','No','Only on day shift','Only with phone access'],1,'Workers should not enter alone without someone knowing.'),q('What should you know on your first day in a cold room?',['Where tea is stored','The emergency door release','How to play music','Where phones charge'],1,'Emergency release knowledge is essential.'),q('What personal hygiene rule applies before food handling?',['Wash hands thoroughly','Wear jewellery','Taste product for quality','Use bare hands'],0,'Hand washing is required before handling food.')]},
-  {id:'waste',title:'Waste Management',icon:'♻️',content:['Waste hierarchy: Refuse, Reduce, Reuse, Recycle, Recover, Dispose.','Cardboard is the largest waste stream — flatten for recycling.','Aisle build-up creates trip and fire hazards.'],questions:[q('Which comes before recycling in the waste hierarchy?',['Reuse','Dispose','Burn','Landfill'],0,'Reuse is higher than recycle.'),q('What must be done to cardboard before disposal?',['Wet it down','Flatten it','Break it with a forklift','Mix it with plastic'],1,'Cardboard must be flattened before disposal.'),q('Where should organic food waste go?',['General waste only','Compost or organic waste stream','Cardboard bin','Any outside bin'],1,'Organic waste should go to compost or organics.'),q('What is a hazard caused by cardboard pile-ups?',['No hazard','Fire and trip hazard','Only noise hazard','Only paperwork delays'],1,'Pile-ups are fire and trip hazards.'),q('Most sustainable option for a good-condition box?',['Burn it','Reuse it','Throw it away','Cut it up'],1,'Reusing good boxes is the preferred option.')]},
-  {id:'warehouse',title:'Warehouse Operations',icon:'📋',content:['Inspect incoming stock for temperature compliance and damage before acceptance.','Accurate labelling and FIFO support traceability and stock integrity.','Safe, accurate, quality-focused work matters more than speed alone.'],questions:[q('What should happen when incoming deliveries arrive?',['Unload without checking','Inspect for temperature compliance and product quality','Sign everything first','Leave it outside'],1,'Incoming deliveries should be checked before acceptance.'),q('What stock system helps prevent spoilage?',['Random pick','FIFO','Last in first out','Top shelf only'],1,'FIFO reduces age-related spoilage.'),q('Why must airflow in cold rooms stay unobstructed?',['For easier walking','To maintain product temperature','To improve phone signal','To dry cardboard'],1,'Blocked airflow can allow temperatures to rise.'),q('What should happen if product damage is found?',['Hide it','Report and segregate it according to procedure','Pack it anyway','Send it first'],1,'Damaged product must be reported and managed correctly.'),q('What defines advanced warehouse performance?',['Speed only','Safe, accurate, quality-focused work','Working alone','Skipping checks'],1,'High performance balances safety, quality, and accuracy.')]},
-  {id:'housekeeping',title:'Housekeeping & Hygiene',icon:'🧼',content:['Clean, tidy, dry, obstruction-free work areas reduce injury and contamination risk.','Spills and waste must be cleaned or reported immediately.','Food-handling: hand washing, illness reporting, no unnecessary jewellery.'],questions:[q('Best housekeeping approach?',['Clean at month end','Clean as you go','Only clean visible areas','Leave it for cleaners'],1,'Clean-as-you-go keeps the workplace safe.'),q('What should happen to spills?',['Leave a sign and walk away','Clean or report them immediately','Ignore small ones','Cover with cardboard'],1,'Spills must be dealt with immediately.'),q('What before handling food?',['Put on jewellery','Wash your hands thoroughly','Taste the product','Use your phone'],1,'Hand washing is essential before food handling.'),q('What if you have vomiting or diarrhoea?',['Work anyway','Report illness before starting work','Only tell a friend','Wait three days'],1,'Workers must report illness before starting work.'),q('Is bare-hand contact with ready-to-eat products allowed?',['Yes always','No, use gloves or tongs','Only for supervisors','Only with clean hands'],1,'Ready-to-eat foods should not be handled with bare hands.')]},
-  {id:'incident',title:'Incident Reporting',icon:'⚠️',content:['All incidents, hazards, and near misses must be reported immediately to a supervisor.','Early reporting supports corrective action and prevents repeat incidents.'],questions:[q('What must be reported immediately?',['Only serious injuries','Incidents, near misses, and hazards','Only broken pallets','Only customer complaints'],1,'All incidents, near misses, and hazards must be reported.'),q('Why report near misses?',['They do not matter','They help prevent future injuries','Only managers care','Reported yearly only'],1,'Near misses reveal risks before someone is hurt.'),q('When should hazard reporting happen?',['When convenient','Immediately','Only after damage','At monthly meetings only'],1,'Hazards should be reported as soon as identified.'),q('Who is the first point of escalation?',['Any customer','Your supervisor','Social media','Payroll'],1,'Supervisors are the primary reporting point.'),q('What supports better corrective action?',['Delayed reporting','Clear and timely reporting','No documentation','Guessing what happened'],1,'Timely reporting allows hazards to be controlled.')]},
-  {id:'rights',title:'Rights & Responsibilities',icon:'⚖️',content:['The induction is mandatory before any work starts.','Workers have the right and duty to refuse unsafe work.','Non-compliance may lead to disciplinary action including termination.'],questions:[q('When must the induction be completed?',['After the first shift','Before commencing any work','Within three months','Only for permanent staff'],1,'The induction is mandatory before any work starts.'),q('What right do workers have regarding unsafe work?',['No rights','The right and duty to refuse unsafe work','Only managers can refuse tasks','Must continue until told otherwise'],1,'Workers may refuse work they believe is unsafe.'),q('What may happen if safety rules are ignored?',['Nothing','Disciplinary action including termination','Only a casual reminder','Automatic promotion'],1,'Non-compliance may lead to termination.'),q('If on-site issues are not addressed, who may workers contact?',['No one','WorkSafe WA','The lunch room committee','Customers'],1,'WorkSafe WA is an escalation option.'),q('Who can refuse unsafe work?',['Only supervisors','Workers who believe the work is unsafe','Visitors only','Only HR'],1,'Workers have both the right and duty to refuse unsafe work.')]}
+  {id:'generalRules',title:'General Rules',icon:'📍',
+   content:['Site speed limit 10 km/h. Sign in and out every shift.','Use pedestrian walkways, keep exits and aisles clear.','Only authorised persons may enter operational and cold storage areas.'],
+   questions:[q('What must every worker do at the start and end of each shift?',['Sign in and sign out','Only text the supervisor','Nothing if rostered','Sign out only if leaving early'],0,'Workers must sign in and out every shift.'),q('What is the site speed limit?',['5 km/h','8 km/h','10 km/h','15 km/h'],2,'The site speed limit is 10 km/h.'),q('Where must pedestrians walk?',['Anywhere forklifts are not moving','Within marked pedestrian walkways','Across loading docks','Through racking aisles'],1,'Pedestrian walkways must be used.'),q('Where can eating and drinking occur?',['On the warehouse floor','In the cold room','At the dock','In designated break areas only'],3,'Food and drink are restricted to designated break areas.'),q('What should you do if an emergency exit is blocked?',['Ignore it','Move or report the obstruction immediately','Leave it for night shift','Stack boxes beside it'],1,'Emergency exits must stay clear at all times.')]},
+  {id:'ppe',title:'PPE',icon:'🦺',
+   content:['Steel-capped boots and hi-vis required in all warehouse and dock areas.','Damaged or missing PPE must be reported immediately.','Additional PPE required by task: thermal wear in cold rooms, gloves for wet work.'],
+   questions:[q('Which PPE is required at all times in warehouse areas?',['Safety boots','Safety glasses only','Apron only','Hard hat only'],0,'Safety boots are mandatory at all times.'),q('When is hi-vis required?',['Only at night','In all operational and outdoor areas','Only for visitors','Only in the office'],1,'Hi-vis is required in all operational and outdoor areas.'),q('What should you do with damaged PPE?',['Use it until stock arrives','Tape it and continue','Report it immediately','Leave it in your locker'],2,'Damaged PPE must be reported immediately.'),q('What clothing is required in cold rooms?',['Raincoat only','Thermal or warm clothing','Casual hoodie','No special clothing'],1,'Thermal clothing is required in cold rooms.'),q('What is working without required PPE?',['Allowed for quick tasks','Allowed if supervised','A serious safety breach','Only a warning issue'],2,'Working without PPE is a serious safety breach.')]},
+  {id:'emergency',title:'Emergency & Chemicals',icon:'🚨',
+   content:['DRSABCD: Danger, Response, Send, Airway, Breathing, CPR, Defibrillator.','Read the SDS before using any chemical and never mix chemicals.','Major spills require evacuation and immediate supervisor notification.'],
+   questions:[q('What does D in DRSABCD mean?',['Decision','Danger','Doctor','Defence'],1,'Check for danger first.'),q('Emergency phone number?',['13 11 26','1300 307 877','000','08 9456 3677'],2,'000 is the emergency number.'),q('What to do when the evacuation alarm sounds?',['Finish your task','Stop work and leave by nearest safe exit','Look for your bag','Wait for a text'],1,'Stop work and evacuate immediately.'),q('Where is the assembly point?',['Lunch room','Front car park','Back dock','Manager office'],1,'The front car park is the assembly point.'),q('Can chemicals be poured down drains?',['Yes if diluted','No, never','Only sanitisers','Only at night'],1,'Pouring chemicals down drains is illegal.')]},
+  {id:'manual',title:'Manual Handling',icon:'📦',
+   content:['Plan the lift, keep the load close, and avoid twisting.','Team lift or use mechanical assistance for heavier or awkward loads.','Report discomfort early and rotate repetitive tasks.'],
+   questions:[q('First step before lifting?',['Lift quickly','Plan the lift, path, and destination','Twist and test the weight','Ask someone to guess'],1,'Plan the lift before touching the load.'),q('What should stay straight during lifting?',['Arms','Back','Fingers','Neck only'],1,'Keep back straight and core braced.'),q('What must be used for loads 25 kg or more?',['Back brace only','Mechanical lifting equipment','Faster lifting','One strong person'],1,'Mechanical equipment is mandatory for 25 kg and above.'),q('When should discomfort be reported?',['At year end','Early, as soon as noticed','Only if severe','After sick leave'],1,'Early reporting helps prevent injury.'),q('Where should the load be kept while lifting?',['At arm length','Close to your body','Above shoulder height','On one hip'],1,'Loads should be kept close to reduce strain.')]},
+  {id:'forklift',title:'Forklift Safety',icon:'🚜',
+   content:['Only licensed operators with a current HRWL may operate forklifts.','Pedestrians must stay out of forklift zones and make eye contact before crossing.','Travel with forks low, use horns at intersections, park safely.'],
+   questions:[q('Who may operate a forklift on site?',['Any experienced worker','Only a licensed operator with current HRWL','Any supervisor','Visitors under instruction'],1,'Only licensed operators may operate forklifts.'),q('What should pedestrians do before crossing a forklift path?',['Run across quickly','Make eye contact with the operator','Wave from behind','Assume they are seen'],1,'Eye contact confirms the operator is aware.'),q('What must happen if a forklift is faulty?',['Keep using it slowly','Tag it out and report it','Let another shift use it','Park it without reporting'],1,'Faulty forklifts must not be operated.'),q('How should forks be positioned while travelling?',['At shoulder height','Low, about 150-300 mm','Touching the ground','Raised above the load'],1,'Forks should travel low for stability.'),q('How should a forklift be parked?',['Forks up, engine on','Forks down, brakes on, engine off, keys removed','Anywhere convenient','Blocking an aisle'],1,'Safe parking: forks down, brakes on, engine off, keys removed.')]},
+  {id:'fire',title:'Fire Safety',icon:'🔥',
+   content:['Know the extinguisher types and what they are used for.','PASS: Pull, Aim, Squeeze, Sweep.','If in doubt, evacuate and raise the alarm.'],
+   questions:[q('What does P in PASS stand for?',['Protect','Pull','Push','Pause'],1,'P = Pull the safety pin.'),q('What should you aim at?',['Top of the flames','Base of the fire','The ceiling','Any smoke'],1,'Aim at the base of the fire.'),q('What to do if fire is larger than a waste bin?',['Fight it alone','Evacuate, raise the alarm, call 000','Use water regardless','Wait for lunch'],1,'Large fires require evacuation and emergency response.'),q('Can sprinkler or extinguisher access be blocked?',['Yes if temporary','No, never','Only during deliveries','Outside working hours only'],1,'Fire equipment access must remain clear.'),q('Should you re-enter a burning building?',['Yes for valuables','Only with a friend','No','Only if fire is small'],2,'Never re-enter a burning building.')]},
+  {id:'coldchain',title:'Cold Chain & HACCP',icon:'❄️',
+   content:['HACCP: all perishable goods must remain in safe temperature ranges.','FIFO must always be used and temperature records must be accurate.','Cold-room: thermal PPE, tell someone before entering alone.'],
+   questions:[q('What does HACCP stand for?',['Hazard Analysis and Critical Control Points','Heavy Area Cold Chain Process','Handling and Carrying Cold Produce','Health and Cleaning Control Plan'],0,'HACCP = Hazard Analysis and Critical Control Points.'),q('What stock rotation system must always be applied?',['LIFO','FIFO','Random rotation','Monthly sort only'],1,'FIFO is mandatory for perishable stock.'),q('Should you enter a cold room alone without telling anyone?',['Yes if quick','No','Only on day shift','Only with phone access'],1,'Workers should not enter alone without someone knowing.'),q('What should you know on your first day in a cold room?',['Where tea is stored','The emergency door release','How to play music','Where phones charge'],1,'Emergency release knowledge is essential.'),q('What personal hygiene rule applies before food handling?',['Wash hands thoroughly','Wear jewellery','Taste product for quality','Use bare hands'],0,'Hand washing is required before handling food.')]},
+  {id:'waste',title:'Waste Management',icon:'♻️',
+   content:['Waste hierarchy: Refuse, Reduce, Reuse, Recycle, Recover, Dispose.','Cardboard is the largest waste stream — flatten for recycling.','Aisle build-up creates trip and fire hazards.'],
+   questions:[q('Which comes before recycling in the waste hierarchy?',['Reuse','Dispose','Burn','Landfill'],0,'Reuse is higher than recycle.'),q('What must be done to cardboard before disposal?',['Wet it down','Flatten it','Break it with a forklift','Mix it with plastic'],1,'Cardboard must be flattened before disposal.'),q('Where should organic food waste go?',['General waste only','Compost or organic waste stream','Cardboard bin','Any outside bin'],1,'Organic waste should go to compost or organics.'),q('What is a hazard caused by cardboard pile-ups?',['No hazard','Fire and trip hazard','Only noise hazard','Only paperwork delays'],1,'Pile-ups are fire and trip hazards.'),q('Most sustainable option for a good-condition box?',['Burn it','Reuse it','Throw it away','Cut it up'],1,'Reusing good boxes is the preferred option.')]},
+  {id:'warehouse',title:'Warehouse Operations',icon:'📋',
+   content:['Inspect incoming stock for temperature compliance and damage before acceptance.','Accurate labelling and FIFO support traceability and stock integrity.','Safe, accurate, quality-focused work matters more than speed alone.'],
+   questions:[q('What should happen when incoming deliveries arrive?',['Unload without checking','Inspect for temperature compliance and product quality','Sign everything first','Leave it outside'],1,'Incoming deliveries should be checked before acceptance.'),q('What stock system helps prevent spoilage?',['Random pick','FIFO','Last in first out','Top shelf only'],1,'FIFO reduces age-related spoilage.'),q('Why must airflow in cold rooms stay unobstructed?',['For easier walking','To maintain product temperature','To improve phone signal','To dry cardboard'],1,'Blocked airflow can allow temperatures to rise.'),q('What should happen if product damage is found?',['Hide it','Report and segregate it according to procedure','Pack it anyway','Send it first'],1,'Damaged product must be reported and managed correctly.'),q('What defines advanced warehouse performance?',['Speed only','Safe, accurate, quality-focused work','Working alone','Skipping checks'],1,'High performance balances safety, quality, and accuracy.')]},
+  {id:'housekeeping',title:'Housekeeping & Hygiene',icon:'🧼',
+   content:['Clean, tidy, dry, obstruction-free work areas reduce injury and contamination risk.','Spills and waste must be cleaned or reported immediately.','Food-handling: hand washing, illness reporting, no unnecessary jewellery.'],
+   questions:[q('Best housekeeping approach?',['Clean at month end','Clean as you go','Only clean visible areas','Leave it for cleaners'],1,'Clean-as-you-go keeps the workplace safe.'),q('What should happen to spills?',['Leave a sign and walk away','Clean or report them immediately','Ignore small ones','Cover with cardboard'],1,'Spills must be dealt with immediately.'),q('What before handling food?',['Put on jewellery','Wash your hands thoroughly','Taste the product','Use your phone'],1,'Hand washing is essential before food handling.'),q('What if you have vomiting or diarrhoea?',['Work anyway','Report illness before starting work','Only tell a friend','Wait three days'],1,'Workers must report illness before starting work.'),q('Is bare-hand contact with ready-to-eat products allowed?',['Yes always','No, use gloves or tongs','Only for supervisors','Only with clean hands'],1,'Ready-to-eat foods should not be handled with bare hands.')]},
+  {id:'incident',title:'Incident Reporting',icon:'⚠️',
+   content:['All incidents, hazards, and near misses must be reported immediately to a supervisor.','Early reporting supports corrective action and prevents repeat incidents.'],
+   questions:[q('What must be reported immediately?',['Only serious injuries','Incidents, near misses, and hazards','Only broken pallets','Only customer complaints'],1,'All incidents, near misses, and hazards must be reported.'),q('Why report near misses?',['They do not matter','They help prevent future injuries','Only managers care','Reported yearly only'],1,'Near misses reveal risks before someone is hurt.'),q('When should hazard reporting happen?',['When convenient','Immediately','Only after damage','At monthly meetings only'],1,'Hazards should be reported as soon as identified.'),q('Who is the first point of escalation?',['Any customer','Your supervisor','Social media','Payroll'],1,'Supervisors are the primary reporting point.'),q('What supports better corrective action?',['Delayed reporting','Clear and timely reporting','No documentation','Guessing what happened'],1,'Timely reporting allows hazards to be controlled.')]},
+  {id:'rights',title:'Rights & Responsibilities',icon:'⚖️',
+   content:['The induction is mandatory before any work starts.','Workers have the right and duty to refuse unsafe work.','Non-compliance may lead to disciplinary action including termination.'],
+   questions:[q('When must the induction be completed?',['After the first shift','Before commencing any work','Within three months','Only for permanent staff'],1,'The induction is mandatory before any work starts.'),q('What right do workers have regarding unsafe work?',['No rights','The right and duty to refuse unsafe work','Only managers can refuse tasks','Must continue until told otherwise'],1,'Workers may refuse work they believe is unsafe.'),q('What may happen if safety rules are ignored?',['Nothing','Disciplinary action including termination','Only a casual reminder','Automatic promotion'],1,'Non-compliance may lead to termination.'),q('If on-site issues are not addressed, who may workers contact?',['No one','WorkSafe WA','The lunch room committee','Customers'],1,'WorkSafe WA is an escalation option.'),q('Who can refuse unsafe work?',['Only supervisors','Workers who believe the work is unsafe','Visitors only','Only HR'],1,'Workers have both the right and duty to refuse unsafe work.')]}
 ];
 
 // ── STATE ─────────────────────────────────────────────────────
-let profile        = null;
-let allEmployees   = [];
-let moduleProgress = {};
-let knowledgeViewed= [];
-let view           = 'dashboard';
-let activeModule   = 0;
-let activeQuestion = 0;
-let activeKbTopic  = 'welcome';
-let filters        = {search:'',dept:'',status:'',position:''};
+let profile=null, allEmployees=[], moduleProgress={}, knowledgeViewed=[];
+let view='dashboard', activeModule=0, activeQuestion=0, activeKbTopic='welcome';
+let filters={search:'',dept:'',status:'',position:''};
 
 // ── HELPERS ───────────────────────────────────────────────────
 function esc(v){return String(v??'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));}
@@ -285,81 +306,43 @@ function statusBadge(s){return s==='completed'?'badge-completed':s==='in_progres
 function fmtStatus(s){return s==='completed'?'Completed':s==='in_progress'?'In Progress':'Pending';}
 function toast(msg,dur=2800){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
 function closeModal(){document.getElementById('modalRoot').innerHTML='';}
-function showMsg(id,text,type){const el=document.getElementById(id);el.textContent=text;el.className='msg '+type;el.style.display='block';}
-function setLoading(btnId,loading,label='Sign In'){const btn=document.getElementById(btnId);btn.disabled=loading;btn.innerHTML=loading?'<span class="spinner"></span>Signing in\u2026':label;}
+function showMsg(id,text,type){const el=document.getElementById(id);if(!el)return;el.textContent=text;el.className='msg '+type;el.style.display='block';}
+function setLoading(btnId,loading,label='Sign In'){const btn=document.getElementById(btnId);if(!btn)return;btn.disabled=loading;btn.innerHTML=loading?'<span class="spinner"></span>Signing in\u2026':label;}
 
-// ── LOGIN ─────────────────────────────────────────────────────
-// ── LOGIN FUNCTIONS ───────────────────────────────────────────
-function showSignIn(){
-  document.getElementById('panel-signin').style.display='block';
-  document.getElementById('panel-forgot').style.display='none';
-  document.getElementById('panel-reset').style.display='none';
-}
-function showForgot(){
-  document.getElementById('panel-signin').style.display='none';
-  document.getElementById('panel-forgot').style.display='block';
-  document.getElementById('panel-reset').style.display='none';
-  // Pre-fill email if already typed
-  const email=document.getElementById('signin-email').value;
-  if(email)document.getElementById('forgot-email').value=email;
-}
-function showReset(){
-  document.getElementById('panel-signin').style.display='none';
-  document.getElementById('panel-forgot').style.display='none';
-  document.getElementById('panel-reset').style.display='block';
-}
+// ── LOGIN PANELS ──────────────────────────────────────────────
+function showSignIn(){document.getElementById('panel-signin').style.display='block';document.getElementById('panel-forgot').style.display='none';document.getElementById('panel-reset').style.display='none';}
+function showForgot(){document.getElementById('panel-signin').style.display='none';document.getElementById('panel-forgot').style.display='block';document.getElementById('panel-reset').style.display='none';const e=document.getElementById('signin-email').value;if(e)document.getElementById('forgot-email').value=e;}
+function showReset(){document.getElementById('panel-signin').style.display='none';document.getElementById('panel-forgot').style.display='none';document.getElementById('panel-reset').style.display='block';}
 
 async function doSignIn(){
   const email=document.getElementById('signin-email').value.trim().toLowerCase();
   const pass=document.getElementById('signin-pass').value;
   if(!email||!pass){showMsg('signin-msg','Please enter your email and password.','error');return;}
   setLoading('signin-btn',true);
-  // Clear any stale session first - fixes Chrome caching issue
-  try{ await sb.auth.signOut(); }catch(e){}
+  try{await sb.auth.signOut();}catch(e){}
   try{
     const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
     if(error){
-      console.error('Sign in error:',error.message);
-      if(error.message.includes('Invalid login')||error.message.includes('invalid_credentials')){
-        showMsg('signin-msg','Incorrect email or password. Please check and try again.','error');
-      } else if(error.message.includes('Email not confirmed')){
-        showMsg('signin-msg','Email not confirmed. Please contact your System Administrator.','error');
-      } else {
-        showMsg('signin-msg','Login error: '+error.message,'error');
-      }
-      setLoading('signin-btn',false);
-      return;
+      if(error.message.includes('Invalid login')||error.message.includes('invalid_credentials'))showMsg('signin-msg','Incorrect email or password.','error');
+      else if(error.message.includes('Email not confirmed'))showMsg('signin-msg','Email not confirmed. Contact your System Administrator.','error');
+      else showMsg('signin-msg','Login error: '+error.message,'error');
+      setLoading('signin-btn',false);return;
     }
-    if(!data.session){
-      showMsg('signin-msg','Login failed — no session returned. Please try again.','error');
-      setLoading('signin-btn',false);
-      return;
-    }
+    if(!data.session){showMsg('signin-msg','Login failed — no session returned.','error');setLoading('signin-btn',false);return;}
     await initApp();
-  }catch(e){
-    console.error('Login exception:',e);
-    showMsg('signin-msg','Connection error: '+e.message+'. Please try again.','error');
-    setLoading('signin-btn',false);
-  }
+  }catch(e){showMsg('signin-msg','Connection error: '+e.message,'error');setLoading('signin-btn',false);}
 }
 
 async function doForgotPassword(){
   const email=document.getElementById('forgot-email').value.trim();
   if(!email){showMsg('forgot-msg','Please enter your email address.','error');return;}
-  setLoading('forgot-btn',true);
+  document.getElementById('forgot-btn').disabled=true;
   try{
-    const{error}=await sb.auth.resetPasswordForEmail(email,{
-      redirectTo:'https://pezzano-portal.vercel.app'
-    });
-    if(error){showMsg('forgot-msg','Error: '+error.message,'error');return;}
-    showMsg('forgot-msg','&#10003; Reset link sent to '+email+'! Check your inbox and spam folder. Click the link in the email to set a new password.','success');
+    const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:'https://pezzano-portal.vercel.app'});
+    if(error){showMsg('forgot-msg','Error: '+error.message,'error');document.getElementById('forgot-btn').disabled=false;return;}
+    showMsg('forgot-msg','✓ Reset link sent to '+email+'! Check your inbox.','success');
     document.getElementById('forgot-btn').textContent='Email Sent ✓';
-    document.getElementById('forgot-btn').disabled=true;
-  }catch(e){
-    showMsg('forgot-msg','Connection error. Please try again.','error');
-  }finally{
-    setLoading('forgot-btn',false,'Send Reset Link');
-  }
+  }catch(e){showMsg('forgot-msg','Connection error. Please try again.','error');document.getElementById('forgot-btn').disabled=false;}
 }
 
 async function doResetPassword(){
@@ -367,70 +350,47 @@ async function doResetPassword(){
   const confirm=document.getElementById('reset-confirm').value;
   if(!pass||pass.length<8){showMsg('reset-msg','Password must be at least 8 characters.','error');return;}
   if(pass!==confirm){showMsg('reset-msg','Passwords do not match.','error');return;}
-  setLoading('reset-btn',true);
+  document.getElementById('reset-btn').disabled=true;
   try{
     const{error}=await sb.auth.updateUser({password:pass});
-    if(error){showMsg('reset-msg','Error: '+error.message,'error');return;}
-    showMsg('reset-msg','Password updated successfully! Signing you in...','success');
+    if(error){showMsg('reset-msg','Error: '+error.message,'error');document.getElementById('reset-btn').disabled=false;return;}
+    showMsg('reset-msg','Password updated! Signing you in...','success');
     setTimeout(()=>initApp(),1500);
-  }catch(e){
-    showMsg('reset-msg','Connection error. Please try again.','error');
-  }finally{
-    setLoading('reset-btn',false,'Update Password');
-  }
+  }catch(e){showMsg('reset-msg','Connection error.','error');document.getElementById('reset-btn').disabled=false;}
 }
 
-// Check URL for password reset token on page load
+// Enter key support
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter')return;
+  if(document.getElementById('panel-signin').style.display!=='none')doSignIn();
+  else if(document.getElementById('panel-forgot').style.display!=='none')doForgotPassword();
+  else if(document.getElementById('panel-reset').style.display!=='none')doResetPassword();
+});
+
+// ── BOOT ──────────────────────────────────────────────────────
+sb.auth.onAuthStateChange(async(event,session)=>{
+  if(event==='PASSWORD_RECOVERY')showReset();
+});
+
 (async()=>{
-  // Listen for auth state changes - only handle PASSWORD_RECOVERY
-  sb.auth.onAuthStateChange(async(event, session)=>{
-    console.log('Auth event:', event);
-    if(event==='PASSWORD_RECOVERY'){
-      showReset();
-    }
-  });
-
-  // Also check hash params (Supabase v2 puts token in hash)
-  const hashParams=new URLSearchParams(window.location.hash.replace('#',''));
-  const type=hashParams.get('type');
-  const accessToken=hashParams.get('access_token');
-
-  if(type==='recovery' && accessToken){
-    // Set session from the hash tokens
-    const{error}=await sb.auth.setSession({
-      access_token: accessToken,
-      refresh_token: hashParams.get('refresh_token')||''
-    });
-    if(!error){ showReset(); return; }
+  // Handle password recovery token in URL hash
+  const hash=new URLSearchParams(window.location.hash.replace('#',''));
+  if(hash.get('type')==='recovery'&&hash.get('access_token')){
+    const{error}=await sb.auth.setSession({access_token:hash.get('access_token'),refresh_token:hash.get('refresh_token')||''});
+    if(!error){showReset();return;}
   }
-
-  // Check if already signed in
   const{data:{session}}=await sb.auth.getSession();
-  if(session){
-    await initApp();
-    return;
-  }
+  if(session){await initApp();return;}
   showSignIn();
 })();
-
-// Allow Enter key
-document.addEventListener('keydown',e=>{
-  if(e.key!=='Enter'){
-    if(document.getElementById('panel-signin').style.display!=='none')doSignIn();
-    else if(document.getElementById('panel-forgot').style.display!=='none')doForgotPassword();
-    else if(document.getElementById('panel-reset').style.display!=='none')doResetPassword();
-  }
-});
 
 async function initApp(){
   const{data:{session}}=await sb.auth.getSession();
   if(!session){showLogin();return;}
-
   const{data:emp,error}=await sb.from('employees').select('*').eq('auth_id',session.user.id).single();
   if(error||!emp){await sb.auth.signOut();showLogin();return;}
   profile=emp;
 
-  // Load module progress
   const{data:progRows}=await sb.from('module_progress').select('module_id,answers,completed').eq('employee_id',profile.id);
   moduleProgress={};
   if(progRows)progRows.forEach(r=>{moduleProgress[r.module_id]={answers:r.answers||{},completed:r.completed};});
@@ -443,17 +403,13 @@ async function initApp(){
 
   document.getElementById('userLabel').textContent=`${profile.full_name} · ${profile.employee_code}`;
   showApp();
+  // sysAdmin goes straight to manager dashboard; everyone else sees their own induction dashboard
+  view='dashboard';
   renderView();
 }
 
-function showLogin(){
-  document.getElementById('loginScreen').classList.remove('hidden');
-  document.getElementById('appScreen').classList.add('hidden');
-}
-function showApp(){
-  document.getElementById('loginScreen').classList.add('hidden');
-  document.getElementById('appScreen').classList.remove('hidden');
-}
+function showLogin(){document.getElementById('loginScreen').classList.remove('hidden');document.getElementById('appScreen').classList.add('hidden');}
+function showApp(){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('appScreen').classList.remove('hidden');}
 
 async function doSignOut(){
   await sb.auth.signOut();
@@ -461,37 +417,48 @@ async function doSignOut(){
   showLogin();
 }
 
-// ── AUTO-LOGIN if session exists ──────────────────────────────
-(async()=>{
-  const{data:{session}}=await sb.auth.getSession();
-  if(session)await initApp();
-})();
-
-// ── RENDER ────────────────────────────────────────────────────
+// ── RENDER ROUTER ─────────────────────────────────────────────
 function renderView(){
   const app=document.getElementById('app');
-  if(view==='dashboard')    app.innerHTML=renderDashboard();
-  else if(view==='kb')      app.innerHTML=renderKnowledgeGate();
-  else if(view==='module')  app.innerHTML=renderModule();
-  else if(view==='decl')    app.innerHTML=renderDeclaration();
-  else if(view==='done')    app.innerHTML=renderCompletion();
+  if(view==='dashboard')   app.innerHTML=renderDashboard();
+  else if(view==='mgr')    app.innerHTML=renderManagerDashboard();
+  else if(view==='kb')     app.innerHTML=renderKnowledgeGate();
+  else if(view==='module') app.innerHTML=renderModule();
+  else if(view==='decl')   app.innerHTML=renderDeclaration();
+  else if(view==='done')   app.innerHTML=renderCompletion();
 }
 
-// ── EMPLOYEE DASHBOARD ────────────────────────────────────────
+// ── EMPLOYEE / LOCATION MANAGER DASHBOARD ─────────────────────
+// All roles except sysAdmin see their own induction status first.
+// Location managers also get a button to switch to the manager dashboard.
 function renderDashboard(){
-  if(isManager(profile))return renderManagerDashboard();
+  // sysAdmin goes directly to manager view
+  if(isSysAdmin(profile)){view='mgr';return renderManagerDashboard();}
+
   const pct=profile.progress_pct||0;
   const done=MODULES.filter(m=>moduleProgress[m.id]?.completed).length;
+  const inductionComplete=profile.completion_status==='completed';
+
   return`<div style="max-width:800px">
+  ${isManager(profile)?`<div style="margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <button class="btn btn-primary" onclick="view='mgr';renderView()">&#128202; Manager Dashboard</button>
+    <span style="font-size:.8rem;color:var(--muted)">Switch to staff tracking view</span>
+  </div>`:''}
   <div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,rgba(0,180,216,.08),transparent)">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
-      <div><div style="font-size:1.4rem;font-weight:700">Welcome, ${esc(profile.full_name)}</div>
-      <div style="color:var(--muted);font-size:.83rem;margin-top:3px">${esc(profile.employee_code)} &middot; ${esc(profile.department)} &middot; ${esc(profile.position)}</div></div>
+      <div>
+        <div style="font-size:1.4rem;font-weight:700">Welcome, ${esc(profile.full_name)}</div>
+        <div style="color:var(--muted);font-size:.83rem;margin-top:3px">${esc(profile.employee_code)} &middot; ${esc(profile.department)} &middot; ${esc(profile.position)}</div>
+      </div>
       <span class="badge ${statusBadge(profile.completion_status)}">${fmtStatus(profile.completion_status)}</span>
     </div>
     <div style="margin-top:16px">
-      <div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);margin-bottom:6px"><span>Induction progress</span><strong style="color:var(--text)">${pct}% &middot; ${done}/${MODULES.length} modules</strong></div>
-      <div style="height:8px;background:var(--surface3);border-radius:999px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--primary),var(--success));transition:.4s"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);margin-bottom:6px">
+        <span>Induction progress</span><strong style="color:var(--text)">${pct}% &middot; ${done}/${MODULES.length} modules</strong>
+      </div>
+      <div style="height:8px;background:var(--surface3);border-radius:999px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--primary),var(--success));transition:.4s"></div>
+      </div>
     </div>
   </div>
   <div class="card" style="margin-bottom:16px">
@@ -502,12 +469,13 @@ function renderDashboard(){
   </div>
   <div class="card">
     <div class="card-title">Induction</div>
-    ${profile.completion_status==='completed'
-      ?`<p style="color:var(--success);font-size:.9rem;margin-bottom:12px">&#10003; Induction complete. Your completion letter is ready.</p><button class="btn btn-success" onclick="printLetter()">Print Completion Letter</button>`
+    ${inductionComplete
+      ?`<p style="color:var(--success);font-size:.9rem;margin-bottom:12px">&#10003; Induction complete. Your completion letter is ready.</p>
+         <button class="btn btn-success" onclick="printLetter()">Print Completion Letter</button>`
       :`<div style="display:flex;gap:8px;flex-wrap:wrap">
-         <button class="btn btn-primary" onclick="resumeInduction()">${pct===0?'Start Induction':'Resume Induction'}</button>
-         <button class="btn btn-ghost" onclick="view='kb';renderView()">Review Knowledge Topics</button>
-       </div>`}
+           <button class="btn btn-primary" onclick="resumeInduction()">${pct===0?'Start Induction':'Resume Induction'}</button>
+           <button class="btn btn-ghost" onclick="view='kb';renderView()">Review Knowledge Topics</button>
+         </div>`}
   </div></div>`;
 }
 
@@ -519,6 +487,9 @@ function renderManagerDashboard(){
   const inprog=allEmployees.filter(e=>e.completion_status==='in_progress').length;
   const pct=total?Math.round(completed/total*100):0;
   return`
+  ${isManager(profile)&&!isSysAdmin(profile)?`<div style="margin-bottom:16px">
+    <button class="btn btn-ghost" onclick="view='dashboard';renderView()">&#8592; My Induction</button>
+  </div>`:''}
   <div class="metrics">
     <div class="metric card"><div class="val">${total}</div><div class="lbl">Total Staff</div></div>
     <div class="metric card"><div class="val" style="color:var(--primary)">${pct}%</div><div class="lbl">Overall Completion</div></div>
@@ -536,32 +507,40 @@ function renderManagerDashboard(){
       </div>
     </div>
     <div class="filters">
-      <input placeholder="Search name, code, phone…" value="${esc(filters.search)}" oninput="filters.search=this.value;renderView()">
-      <select onchange="filters.dept=this.value;renderView()"><option value="">All departments</option>${DEPARTMENTS.map(d=>`<option value="${d}" ${filters.dept===d?'selected':''}>${d}</option>`).join('')}</select>
-      <select onchange="filters.status=this.value;renderView()"><option value="">All status</option><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="completed">Completed</option></select>
-      <select onchange="filters.position=this.value;renderView()"><option value="">All positions</option>${POSITIONS.map(p=>`<option value="${p}" ${filters.position===p?'selected':''}>${p}</option>`).join('')}</select>
+      <input placeholder="Search name, code, phone…" value="${esc(filters.search)}" oninput="filters.search=this.value;refreshTable()">
+      <select onchange="filters.dept=this.value;refreshTable()"><option value="">All departments</option>${DEPARTMENTS.map(d=>`<option value="${d}" ${filters.dept===d?'selected':''}>${d}</option>`).join('')}</select>
+      <select onchange="filters.status=this.value;refreshTable()"><option value="">All status</option><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="completed">Completed</option></select>
+      <select onchange="filters.position=this.value;refreshTable()"><option value="">All positions</option>${POSITIONS.map(p=>`<option value="${p}" ${filters.position===p?'selected':''}>${p}</option>`).join('')}</select>
     </div>
-    <div class="table-wrap"><table>
-      <thead><tr><th>Code</th><th>Name</th><th>Dept</th><th>Position</th><th>Start Date</th><th>Status</th><th>Progress</th><th>Actions</th></tr></thead>
-      <tbody>${rows.length?rows.map(e=>`<tr>
-        <td style="font-family:monospace;font-size:.78rem">${esc(e.employee_code)}</td>
-        <td><div style="font-weight:500">${esc(e.full_name)}</div><div style="font-size:.72rem;color:var(--muted)">${esc(e.phone||'')}</div></td>
-        <td>${esc(e.department)}</td><td>${esc(e.position)}</td>
-        <td style="font-size:.78rem">${fmtDate(e.start_date)}</td>
-        <td><span class="badge ${statusBadge(e.completion_status)}">${fmtStatus(e.completion_status)}</span></td>
-        <td><div style="display:flex;align-items:center;gap:6px"><div class="prog-bar"><div class="prog-fill" style="width:${e.progress_pct}%"></div></div><span style="font-size:.75rem">${e.progress_pct}%</span></div></td>
-        <td><div class="actions-cell">
-          <button class="btn btn-ghost" onclick="viewDetail('${e.id}')">View</button>
-          <button class="btn btn-ghost" onclick="changeDept('${e.id}')">Dept</button>
-          ${isSysAdmin(profile)?`<button class="btn btn-warn" style="font-size:.75rem" onclick="openEdit('${e.id}')">&#9881; Edit</button>`:''}
-          ${e.completion_status==='completed'?`<button class="btn btn-success" onclick="printLetterFor('${e.id}')">Letter</button>`:''}
-          ${isSysAdmin(profile)?`<button class="btn btn-danger" style="font-size:.75rem" onclick="deleteEmp('${e.id}')">Del</button>`:''}
-        </div></td>
-      </tr>`).join(''):`<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:32px">No records found.</td></tr>`}
-      </tbody>
-    </table></div>
+    <div id="tblWrap">${buildTableHtml()}</div>
   </div>`;
 }
+
+function buildTableHtml(){
+  const rows=filteredEmployees();
+  return`<div class="table-wrap"><table>
+    <thead><tr><th>Code</th><th>Name</th><th>Dept</th><th>Position</th><th>Start Date</th><th>Status</th><th>Progress</th><th>Actions</th></tr></thead>
+    <tbody>${rows.length?rows.map(e=>`<tr>
+      <td style="font-family:monospace;font-size:.78rem">${esc(e.employee_code)}</td>
+      <td><div style="font-weight:500">${esc(e.full_name)}</div><div style="font-size:.72rem;color:var(--muted)">${esc(e.phone||'')}</div></td>
+      <td>${esc(e.department)}</td>
+      <td>${esc(e.position)}</td>
+      <td style="font-size:.78rem">${fmtDate(e.start_date)}</td>
+      <td><span class="badge ${statusBadge(e.completion_status)}">${fmtStatus(e.completion_status)}</span></td>
+      <td><div style="display:flex;align-items:center;gap:6px"><div class="prog-bar"><div class="prog-fill" style="width:${e.progress_pct}%"></div></div><span style="font-size:.75rem">${e.progress_pct}%</span></div></td>
+      <td><div class="actions-cell">
+        <button class="btn btn-ghost" onclick="viewDetail('${e.id}')">View</button>
+        <button class="btn btn-ghost" onclick="changeDept('${e.id}')">Dept</button>
+        ${isSysAdmin(profile)?`<button class="btn btn-warn" style="font-size:.75rem" onclick="openEdit('${e.id}')">&#9881; Edit</button>`:''}
+        ${e.completion_status==='completed'?`<button class="btn btn-success" onclick="printLetterFor('${e.id}')">Letter</button>`:''}
+        ${isSysAdmin(profile)?`<button class="btn btn-danger" style="font-size:.75rem" onclick="deleteEmp('${e.id}')">Del</button>`:''}
+      </div></td>
+    </tr>`).join(''):`<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:32px">No records found.</td></tr>`}
+    </tbody>
+  </table></div>`;
+}
+
+function refreshTable(){const w=document.getElementById('tblWrap');if(w)w.innerHTML=buildTableHtml();}
 
 function filteredEmployees(){
   return allEmployees.filter(e=>
@@ -572,7 +551,7 @@ function filteredEmployees(){
   );
 }
 
-// ── RESUME ────────────────────────────────────────────────────
+// ── INDUCTION FLOW ────────────────────────────────────────────
 function resumeInduction(){
   const allViewed=KNOWLEDGE_TOPICS.every(t=>knowledgeViewed.includes(t.id));
   if(!allViewed){view='kb';renderView();return;}
@@ -581,7 +560,6 @@ function resumeInduction(){
   activeQuestion=0;view='module';renderView();
 }
 
-// ── KNOWLEDGE GATE ────────────────────────────────────────────
 function renderKnowledgeGate(){
   const topic=KNOWLEDGE_TOPICS.find(t=>t.id===activeKbTopic)||KNOWLEDGE_TOPICS[0];
   const allDone=KNOWLEDGE_TOPICS.every(t=>knowledgeViewed.includes(t.id));
@@ -599,7 +577,7 @@ function renderKnowledgeGate(){
         <div class="card" style="padding:14px"><div style="font-size:.7rem;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase">Key Points</div><ul style="padding-left:1rem;display:grid;gap:6px;font-size:.83rem;color:var(--muted)">${topic.points.map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div>
         <div class="card" style="padding:14px"><div style="font-size:.7rem;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase">Quick Facts</div><ul style="padding-left:1rem;display:grid;gap:6px;font-size:.83rem;color:var(--muted)">${topic.facts.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></div>
       </div>
-      ${topic.videos.length?`<div style="aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#000;margin-bottom:14px"><iframe src="${topic.videos[0].embed}" title="${esc(topic.videos[0].title)}" width="100%" height="100%" frameborder="0" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>`:''}
+      ${topic.videos.length?`<div class="video-wrap"><iframe src="${topic.videos[0].embed}?rel=0&modestbranding=1" title="${esc(topic.videos[0].title)}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>`:''}
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${knowledgeViewed.includes(topic.id)?`<span class="badge badge-completed">&#9989; Confirmed</span>`:`<button class="btn btn-primary" onclick="confirmTopic('${topic.id}')">&#9989; I have read and understood this topic</button>`}
         ${allDone?`<button class="btn btn-success" onclick="startModules()">Start Quiz &#8594;</button>`:`<span style="font-size:.78rem;color:var(--muted);align-self:center">${KNOWLEDGE_TOPICS.length-knowledgeViewed.length} remaining</span>`}
@@ -609,21 +587,18 @@ function renderKnowledgeGate(){
 }
 
 async function confirmTopic(id){
-  if(!knowledgeViewed.includes(id)){
-    knowledgeViewed.push(id);
-    await sb.from('employees').update({knowledge_viewed:knowledgeViewed}).eq('id',profile.id);
-  }
+  if(!knowledgeViewed.includes(id)){knowledgeViewed.push(id);await sb.from('employees').update({knowledge_viewed:knowledgeViewed}).eq('id',profile.id);}
   const next=KNOWLEDGE_TOPICS.find(t=>!knowledgeViewed.includes(t.id));
   if(next)activeKbTopic=next.id;
   renderView();
 }
+
 function startModules(){
   if(!KNOWLEDGE_TOPICS.every(t=>knowledgeViewed.includes(t.id))){alert('Please confirm all knowledge topics first.');return;}
   const first=MODULES.findIndex(m=>!moduleProgress[m.id]?.completed);
   activeModule=first===-1?0:first;activeQuestion=0;view='module';renderView();
 }
 
-// ── MODULE VIEW ───────────────────────────────────────────────
 function renderModule(){
   const mod=MODULES[activeModule];
   const mp=moduleProgress[mod.id]||{answers:{},completed:false};
@@ -631,13 +606,11 @@ function renderModule(){
   const saved=mp.answers[activeQuestion];
   const completedSet=new Set(MODULES.filter(m=>moduleProgress[m.id]?.completed).map(m=>m.id));
   return`<div style="display:grid;grid-template-columns:200px 1fr;gap:16px;align-items:start">
-    <aside>
-      <div class="card" style="padding:14px">
-        <div class="card-title">Modules</div>
-        <div class="module-list">${MODULES.map((m,i)=>{const unlocked=i===0||completedSet.has(MODULES[i-1].id);const done=completedSet.has(m.id);return`<div class="mod-row ${i===activeModule?'active':''} ${done?'done':''} ${!unlocked?'locked':''}" onclick="${unlocked?`switchModule(${i})`:''}">${m.icon} ${esc(m.title)}${done?' <span style="margin-left:auto;font-size:.7rem;color:var(--success)">&#10003;</span>':''}</div>`;}).join('')}</div>
-        <button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="view='dashboard';renderView()">&#8592; Dashboard</button>
-      </div>
-    </aside>
+    <aside><div class="card" style="padding:14px">
+      <div class="card-title">Modules</div>
+      <div class="module-list">${MODULES.map((m,i)=>{const unlocked=i===0||completedSet.has(MODULES[i-1].id);const done=completedSet.has(m.id);return`<div class="mod-row ${i===activeModule?'active':''} ${done?'done':''} ${!unlocked?'locked':''}" onclick="${unlocked?`switchModule(${i})`:''}">${m.icon} ${esc(m.title)}${done?' <span style="margin-left:auto;font-size:.7rem;color:var(--success)">&#10003;</span>':''}</div>`;}).join('')}</div>
+      <button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="view='dashboard';renderView()">&#8592; Dashboard</button>
+    </div></aside>
     <div style="display:grid;gap:14px">
       <div class="card" style="background:linear-gradient(135deg,rgba(0,180,216,.06),transparent)">
         <div style="font-size:.72rem;color:var(--muted);margin-bottom:4px">Module ${activeModule+1} of ${MODULES.length}</div>
@@ -659,7 +632,12 @@ function renderModule(){
   </div>`;
 }
 
-function switchModule(i){activeModule=i;activeQuestion=0;const saved=moduleProgress[MODULES[i].id];if(saved&&Object.keys(saved.answers).length){activeQuestion=Object.keys(saved.answers).length;if(activeQuestion>=MODULES[i].questions.length)activeQuestion=0;}view='module';renderView();}
+function switchModule(i){
+  activeModule=i;activeQuestion=0;
+  const saved=moduleProgress[MODULES[i].id];
+  if(saved&&Object.keys(saved.answers).length){activeQuestion=Object.keys(saved.answers).length;if(activeQuestion>=MODULES[i].questions.length)activeQuestion=0;}
+  view='module';renderView();
+}
 
 async function answerQ(idx){
   const mod=MODULES[activeModule];const q=mod.questions[activeQuestion];
@@ -684,7 +662,7 @@ async function nextQ(){
   if(activeQuestion<mod.questions.length-1){activeQuestion++;renderView();return;}
   const mp=moduleProgress[mod.id]||{answers:{},completed:false};
   const allCorrect=mod.questions.every((q,i)=>mp.answers[i]===q.a);
-  if(!allCorrect){const first=mod.questions.findIndex((q,i)=>mp.answers[i]!==q.a);activeQuestion=first>=0?first:0;alert('Please answer all questions correctly to complete this module. Returning to the first unanswered question.');renderView();return;}
+  if(!allCorrect){const first=mod.questions.findIndex((q,i)=>mp.answers[i]!==q.a);activeQuestion=first>=0?first:0;alert('Please answer all questions correctly to complete this module.');renderView();return;}
   mp.completed=true;
   await sb.rpc('save_module_progress',{p_module_id:mod.id,p_answers:mp.answers,p_completed:true});
   const{data:upd}=await sb.from('employees').select('progress_pct,completion_status').eq('id',profile.id).single();
@@ -694,7 +672,6 @@ async function nextQ(){
   else{view='decl';renderView();}
 }
 
-// ── DECLARATION ───────────────────────────────────────────────
 function renderDeclaration(){
   return`<div style="max-width:760px">
   <button class="btn btn-ghost" style="margin-bottom:16px" onclick="view='module';renderView()">&#8592; Back</button>
@@ -726,10 +703,8 @@ async function submitDeclaration(){
   view='done';renderView();
 }
 
-// ── COMPLETION ────────────────────────────────────────────────
 function renderCompletion(){
-  return`<div style="max-width:640px;text-align:center;margin:40px auto">
-  <div class="card">
+  return`<div style="max-width:640px;text-align:center;margin:40px auto"><div class="card">
     <div style="font-size:3rem;margin-bottom:12px">&#127881;</div>
     <div style="font-size:1.4rem;font-weight:700;margin-bottom:8px">Induction Complete!</div>
     <p style="color:var(--muted);margin-bottom:20px">${esc(profile.full_name)} has successfully completed the Pezzano Enterprises Warehouse Staff Induction.</p>
@@ -773,17 +748,19 @@ function bulkPrint(){
 
 // ── EXCEL ─────────────────────────────────────────────────────
 function exportExcel(){
-  const rows=filteredEmployees().map(e=>({'Code':e.employee_code,'Name':e.full_name,'Phone':e.phone,'Dept':e.department,'Position':e.position,'Start':fmtDate(e.start_date),'Status':fmtStatus(e.completion_status),'Progress':e.progress_pct+'%','Completion':fmtDate(e.completion_date)}));
+  const rows=filteredEmployees().map(e=>({'Code':e.employee_code,'Name':e.full_name,'Phone':e.phone,'Email':e.email||'','Dept':e.department,'Position':e.position,'Start':fmtDate(e.start_date),'Status':fmtStatus(e.completion_status),'Progress':e.progress_pct+'%','Completion':fmtDate(e.completion_date)}));
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows.length?rows:[{Message:'No records'}]),'Induction');XLSX.writeFile(wb,'pezzano-induction.xlsx');
 }
 
 // ── MODALS ────────────────────────────────────────────────────
+
+// VIEW — shows email for managers and sysAdmin
 function viewDetail(id){
   const e=allEmployees.find(x=>x.id===id);if(!e)return;
   document.getElementById('modalRoot').innerHTML=`<div class="modal-back" onclick="if(event.target===this)closeModal()"><div class="modal">
   <h3>${esc(e.full_name)}</h3>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.83rem;margin-bottom:16px">
-    ${[['Code',e.employee_code],['Phone',e.phone],['Age',e.age],['Dept',e.department],['Position',e.position],['Location',e.work_location],['Start',fmtDate(e.start_date)],['Induction',fmtDate(e.induction_date)],['Status',fmtStatus(e.completion_status)],['Progress',e.progress_pct+'%']].map(([l,v])=>`<div><div style="color:var(--muted);font-size:.7rem">${l}</div><div style="font-weight:500">${esc(String(v||'—'))}</div></div>`).join('')}
+    ${[['Code',e.employee_code],['Phone',e.phone],['Email',e.email||'—'],['Age',e.age],['Dept',e.department],['Position',e.position],['Location',e.work_location],['Start',fmtDate(e.start_date)],['Induction',fmtDate(e.induction_date)],['Status',fmtStatus(e.completion_status)],['Progress',e.progress_pct+'%']].map(([l,v])=>`<div><div style="color:var(--muted);font-size:.7rem">${l}</div><div style="font-weight:500;word-break:break-all">${esc(String(v||'—'))}</div></div>`).join('')}
   </div>
   <div class="modal-actions">${e.completion_status==='completed'?`<button class="btn btn-success" onclick="printLetterFor('${e.id}');closeModal()">Print Letter</button>`:''}<button class="btn btn-ghost" onclick="closeModal()">Close</button></div>
   </div></div>`;
@@ -799,60 +776,94 @@ function changeDept(id){
   </div></div>`;
 }
 async function saveDept(id){
-  const newDept=document.getElementById('newDept').value;const e=allEmployees.find(x=>x.id===id);const old=e.department;
-  await sb.from('employees').update({department:newDept}).eq('id',id);
-  e.department=newDept;closeModal();renderView();toast('Department updated.');
+  const dept=document.getElementById('newDept').value;
+  await sb.from('employees').update({department:dept}).eq('id',id);
+  const e=allEmployees.find(x=>x.id===id);if(e)e.department=dept;
+  closeModal();refreshTable();toast('Department updated.');
 }
 
+// EDIT — sysAdmin only, includes email field
 function openEdit(id){
-  if(!isSysAdmin(profile))return;const e=allEmployees.find(x=>x.id===id);if(!e)return;
+  if(!isSysAdmin(profile))return;
+  const e=allEmployees.find(x=>x.id===id);if(!e)return;
   document.getElementById('modalRoot').innerHTML=`<div class="modal-back" onclick="if(event.target===this)closeModal()"><div class="modal">
   <h3>&#9881; Edit Staff Details</h3>
-  <p style="color:var(--muted);font-size:.78rem;margin-bottom:14px">Start date and induction date are locked and cannot be changed.</p>
+  <p style="color:var(--muted);font-size:.78rem;margin-bottom:14px">Start date and induction date are locked.</p>
   <div class="form-grid">
     <div class="field"><label>Full Name</label><input id="e_name" value="${esc(e.full_name)}"></div>
     <div class="field"><label>Phone</label><input id="e_phone" value="${esc(e.phone||'')}"></div>
     <div class="field"><label>Age</label><input id="e_age" type="number" min="15" max="100" value="${esc(String(e.age||''))}"></div>
     <div class="field"><label>Position</label><select id="e_pos">${POSITIONS.map(p=>`<option value="${p}" ${e.position===p?'selected':''}>${p}</option>`).join('')}</select></div>
     <div class="field full"><label>Department</label><select id="e_dept">${DEPARTMENTS.map(d=>`<option value="${d}" ${e.department===d?'selected':''}>${d}</option>`).join('')}</select></div>
+    <div class="field full">
+      <label>Email Address</label>
+      <input id="e_email" type="email" value="${esc(e.email||'')}" placeholder="employee@email.com">
+      <span style="font-size:.72rem;color:var(--warning);margin-top:4px;display:block">&#9888; Changing email updates their login. Also update it manually in Supabase Auth if the RPC is not configured.</span>
+    </div>
     <div class="field"><label>Start Date (locked)</label><input value="${fmtDate(e.start_date)}" readonly></div>
     <div class="field"><label>Induction Date (locked)</label><input value="${fmtDate(e.induction_date)}" readonly></div>
   </div>
-  <div class="modal-actions"><button class="btn btn-primary" onclick="saveEdit('${id}')">Save</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button></div>
+  <div id="edit_msg" style="display:none;margin-top:10px;padding:10px;border-radius:8px;font-size:.82rem"></div>
+  <div class="modal-actions">
+    <button class="btn btn-primary" id="edit_save_btn" onclick="saveEdit('${id}')">Save Changes</button>
+    <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+  </div>
   </div></div>`;
 }
+
 async function saveEdit(id){
+  const btn=document.getElementById('edit_save_btn');btn.disabled=true;btn.textContent='Saving…';
   const name=document.getElementById('e_name').value.trim();
   const phone=document.getElementById('e_phone').value.trim();
   const age=parseInt(document.getElementById('e_age').value)||null;
   const pos=document.getElementById('e_pos').value;
   const dept=document.getElementById('e_dept').value;
-  await sb.rpc('admin_edit_employee',{p_emp_id:id,p_full_name:name,p_phone:phone,p_age:age,p_position:pos,p_department:dept});
-  const e=allEmployees.find(x=>x.id===id);if(e)Object.assign(e,{full_name:name,phone,age,position:pos,department:dept});
-  closeModal();renderView();toast('Staff record updated.');
+  const email=document.getElementById('e_email').value.trim().toLowerCase();
+  const msgEl=document.getElementById('edit_msg');
+  const e=allEmployees.find(x=>x.id===id);
+  try{
+    const{error}=await sb.from('employees').update({full_name:name,phone,age,position:pos,department:dept,email:email||e.email}).eq('id',id);
+    if(error)throw error;
+    // Try to update auth email via RPC if email changed
+    if(email&&email!==e.email){
+      const{error:rpcErr}=await sb.rpc('admin_update_email',{p_emp_id:id,p_new_email:email});
+      if(rpcErr){
+        msgEl.style.display='block';msgEl.style.background='rgba(251,191,36,.1)';msgEl.style.color='var(--warning)';
+        msgEl.innerHTML='&#9888; Profile saved. Auth email must be updated manually in Supabase Dashboard.';
+        if(e)Object.assign(e,{full_name:name,phone,age,position:pos,department:dept,email});
+        refreshTable();btn.disabled=false;btn.textContent='Save Changes';return;
+      }
+    }
+    if(e)Object.assign(e,{full_name:name,phone,age,position:pos,department:dept,email:email||e.email});
+    closeModal();refreshTable();toast('Staff record updated.');
+  }catch(err){
+    msgEl.style.display='block';msgEl.style.background='rgba(248,113,113,.1)';msgEl.style.color='var(--error)';
+    msgEl.textContent='Error: '+err.message;btn.disabled=false;btn.textContent='Save Changes';
+  }
 }
 
+// CREATE — sysAdmin only
 function openCreate(){
   if(!isSysAdmin(profile))return;
   document.getElementById('modalRoot').innerHTML=`<div class="modal-back" onclick="if(event.target===this)closeModal()"><div class="modal">
   <h3>Add New Staff Member</h3>
   <div style="background:rgba(74,222,128,.07);border:1px solid rgba(74,222,128,.2);border-radius:8px;padding:12px;margin-bottom:16px;font-size:.82rem;color:var(--success)">
-    Fill in the form below. The system will automatically create a login account.<br>
-    The employee logs in with their <strong>email</strong> and their <strong>Employee Code</strong> as the password.
+    The employee logs in with their <strong>email</strong> and their <strong>Employee Code</strong> as the initial password.
   </div>
   <div class="form-grid">
     <div class="field"><label>Full Name</label><input id="c_name" placeholder="Full legal name"></div>
     <div class="field"><label>Phone</label><input id="c_phone" placeholder="04xx xxx xxx"></div>
     <div class="field"><label>Age</label><input id="c_age" type="number" min="15" max="100" placeholder="Age"></div>
-    <div class="field full"><label>Work Email (same as created in Supabase Dashboard)</label><input id="c_email" type="email" placeholder="employee@email.com"></div>
+    <div class="field full"><label>Work Email</label><input id="c_email" type="email" placeholder="employee@email.com"></div>
     <div class="field"><label>Position</label><select id="c_pos">${POSITIONS.map(p=>`<option>${p}</option>`).join('')}</select></div>
     <div class="field"><label>Department</label><select id="c_dept">${DEPARTMENTS.map(d=>`<option>${d}</option>`).join('')}</select></div>
-    <div class="field"><label>Role</label><select id="c_role"><option value="employee">Employee</option><option value="locationManager">Location Manager</option><option value="sysAdmin">System Administrator</option></select></div>
+    <div class="field"><label>Portal Role</label><select id="c_role"><option value="employee">Employee</option><option value="locationManager">Location Manager</option><option value="sysAdmin">System Administrator</option></select></div>
   </div>
   <div id="c_msg" style="display:none;margin-top:10px;padding:10px;border-radius:8px;font-size:.82rem"></div>
   <div class="modal-actions"><button class="btn btn-primary" id="c_btn" onclick="createEmployee()">Add Staff Record</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button></div>
   </div></div>`;
 }
+
 async function createEmployee(){
   const btn=document.getElementById('c_btn');btn.disabled=true;btn.textContent='Creating…';
   const{data,error}=await sb.rpc('create_employee',{
@@ -867,32 +878,32 @@ async function createEmployee(){
   const msg=document.getElementById('c_msg');
   if(error){
     msg.style.display='block';msg.style.background='rgba(248,113,113,.1)';msg.style.color='var(--error)';
-    msg.innerHTML='<strong>Error:</strong> '+error.message+(error.message.includes('No auth user')?'<br><br>Go to Supabase Dashboard &rarr; Authentication &rarr; Users &rarr; Add user first.':'');
+    msg.innerHTML='<strong>Error:</strong> '+error.message+(error.message.includes('No auth user')?'<br><br>Create the auth user in Supabase Dashboard → Authentication → Users first.':'');
     btn.disabled=false;btn.textContent='Add Staff Record';return;
   }
   msg.style.display='block';msg.style.background='rgba(74,222,128,.1)';msg.style.color='var(--success)';
   msg.innerHTML=`&#10003; Staff record created!<br><br>
-    <strong>Give these details to the employee:</strong><br>
+    <strong>Give these login details to the employee:</strong><br>
     &#128279; Portal: <strong>https://pezzano-portal.vercel.app</strong><br>
     &#128231; Email: <strong>${document.getElementById('c_email').value.trim()}</strong><br>
-    &#128274; Password: <strong>${data.employee_code}</strong> (their Employee Code)<br>
-    &#128194; Employee Code: <strong>${data.employee_code}</strong><br><br>
-    <small>The employee logs in with their email and uses their Employee Code as the password. They can use Forgot Password to set a new one.</small>`;
-  const{data:fresh}=await sb.rpc('get_dashboard_data');allEmployees=fresh||[];renderView();
+    &#128274; Password: <strong>${data.employee_code}</strong> (Employee Code)<br><br>
+    <small>They can use Forgot Password to set a new password after first login.</small>`;
+  const{data:fresh}=await sb.rpc('get_dashboard_data');allEmployees=fresh||[];refreshTable();
 }
 
 async function deleteEmp(id){
   const e=allEmployees.find(x=>x.id===id);if(!e)return;
   if(!confirm(`Delete ${e.full_name}? This cannot be undone.`))return;
   await sb.rpc('admin_delete_employee',{p_emp_id:id});
-  allEmployees=allEmployees.filter(x=>x.id!==id);renderView();toast('Record deleted.');
+  allEmployees=allEmployees.filter(x=>x.id!==id);refreshTable();toast('Record deleted.');
 }
 
 async function openAudit(){
   const{data,error}=await sb.from('audit_logs').select('*').order('created_at',{ascending:false}).limit(200);
   if(error){alert('Could not load audit log.');return;}
   document.getElementById('modalRoot').innerHTML=`<div class="modal-back" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:720px;max-height:85vh;overflow-y:auto">
-  <h3>Audit Log</h3><p style="color:var(--muted);font-size:.78rem;margin-bottom:14px">Last 200 entries. System Administrator view only.</p>
+  <h3>Audit Log</h3>
+  <p style="color:var(--muted);font-size:.78rem;margin-bottom:14px">Last 200 entries. System Administrator view only.</p>
   ${(data||[]).length===0?'<p style="color:var(--muted)">No entries yet.</p>':(data||[]).map(e=>`<div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:.82rem">
     <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px"><span style="color:var(--primary);font-weight:600">${esc(e.actor_name||'System')}</span><span style="color:var(--faint);font-size:.72rem">${new Date(e.created_at).toLocaleString('en-AU')}</span></div>
     <div style="margin-top:2px">${esc(e.action)}</div><div style="color:var(--muted);font-size:.78rem">${esc(e.detail||'')}</div>
