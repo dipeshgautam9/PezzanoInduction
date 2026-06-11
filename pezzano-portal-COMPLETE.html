@@ -310,22 +310,35 @@ function showReset(){
 }
 
 async function doSignIn(){
-  const email=document.getElementById('signin-email').value.trim();
+  const email=document.getElementById('signin-email').value.trim().toLowerCase();
   const pass=document.getElementById('signin-pass').value;
   if(!email||!pass){showMsg('signin-msg','Please enter your email and password.','error');return;}
   setLoading('signin-btn',true);
+  // Clear any stale session first - fixes Chrome caching issue
+  try{ await sb.auth.signOut(); }catch(e){}
   try{
-    const{error}=await sb.auth.signInWithPassword({email,password:pass});
+    const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
     if(error){
-      console.error('Sign in error:',error);
-      showMsg('signin-msg','Incorrect email or password. Please try again or click Forgot Password.','error');
+      console.error('Sign in error:',error.message);
+      if(error.message.includes('Invalid login')||error.message.includes('invalid_credentials')){
+        showMsg('signin-msg','Incorrect email or password. Please check and try again.','error');
+      } else if(error.message.includes('Email not confirmed')){
+        showMsg('signin-msg','Email not confirmed. Please contact your System Administrator.','error');
+      } else {
+        showMsg('signin-msg','Login error: '+error.message,'error');
+      }
+      setLoading('signin-btn',false);
+      return;
+    }
+    if(!data.session){
+      showMsg('signin-msg','Login failed — no session returned. Please try again.','error');
+      setLoading('signin-btn',false);
       return;
     }
     await initApp();
   }catch(e){
     console.error('Login exception:',e);
-    showMsg('signin-msg','Connection error. Please check your internet and try again.','error');
-  }finally{
+    showMsg('signin-msg','Connection error: '+e.message+'. Please try again.','error');
     setLoading('signin-btn',false);
   }
 }
@@ -369,19 +382,11 @@ async function doResetPassword(){
 
 // Check URL for password reset token on page load
 (async()=>{
-  // Listen for auth state changes - catches the recovery event from email link
+  // Listen for auth state changes - only handle PASSWORD_RECOVERY
   sb.auth.onAuthStateChange(async(event, session)=>{
-    console.log('Auth event:', event, session?.user?.email);
+    console.log('Auth event:', event);
     if(event==='PASSWORD_RECOVERY'){
-      // User clicked reset link in email - show reset password form
       showReset();
-      return;
-    }
-    if(event==='SIGNED_IN' && session){
-      // Check if we are on reset panel - if so stay there
-      const resetPanel=document.getElementById('panel-reset');
-      if(resetPanel && resetPanel.style.display!=='none') return;
-      await initApp();
     }
   });
 
