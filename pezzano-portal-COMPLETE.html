@@ -238,151 +238,100 @@ const DECLARATION_POINTS = [
   'I have had the opportunity to ask questions and all my questions have been answered satisfactorily.'
 ];
 
+// ── KNOWLEDGE TOPICS (all with confirmed working YouTube videos) ──
 const KNOWLEDGE_TOPICS = [
   {id:'welcome',title:'Welcome & Business Overview',cat:'About',
    summary:"Pezzano Enterprises is Perth's largest wholesale fruit and vegetables supplier, established in 1956.",
    points:[
-     "Pezzano Enterprises was established in 1956 and operates from Canning Vale, Perth WA. They serve over 1,000 establishments including restaurants, hotels, butcher shops, and supermarkets across the region.",
+     "Pezzano Enterprises was established in 1956 and operates from Canning Vale, Perth WA. They serve over 1,000 establishments including restaurants, hotels, butcher shops, and supermarkets.",
      "The company supplies premium fruits, vegetables, core juice, seafood, meat, dairy, and specialty items.",
-     "Core values: delivering quality fresh produce at competitive prices with reliable 7-day delivery while supporting local WA growers and being a trusted business partner."
+     "Core values: delivering quality fresh produce at competitive prices with reliable 7-day delivery while supporting local WA growers."
    ],
    facts:['Site speed limit: 10 km/h','Assembly point: front car park','Emergency: 000','Operating: 24 hours / 7 days'],
-   videos:[{title:'Workplace Induction Overview',embed:'https://www.youtube-nocookie.com/embed/oHGDFDpDFXQ'}]},
+   videos:[{title:'What Does a Warehouse Worker Do?',embed:'https://www.youtube-nocookie.com/embed/rK72jlH1zUE'}]},
 
   {id:'rules',title:'Site Rules & PPE',cat:'Safety',
    summary:'Daily rules for entering, moving around, and all mandatory PPE.',
    points:[
      'Sign in and out every shift. Wear hi-vis and ID on the warehouse floor at all times.',
      'Authorised access only in operational and cold storage areas. Visitors must be escorted at all times.',
-     'Hair must be tied back with hair net (snood) in food, juice production, processing areas, and meat room.',
-     'Report all hazards, incidents, or unsafe conditions to supervisor immediately.',
-     'The company provides all necessary PPE free of charge. Inspect PPE before each use and report damage immediately.',
+     'Hair must be tied back with hair net in food, juice production, processing areas, and meat room.',
+     'The company provides all necessary PPE free of charge. Inspect PPE before each use.',
      'Steel-capped boots and hi-vis mandatory in warehouse and dock areas.'
    ],
-   facts:[
-     'Hi-vis required in all operational areas',
-     'Wear gloves when handling produce or in cold storage',
-     'Company provides all necessary PPE free of charge',
-     'Steel-capped boots mandatory at all times',
-     'Visitors must be escorted at all times on site'
-   ],
-   videos:[{title:'Personal Protective Equipment (PPE) in the Workplace',embed:'https://www.youtube-nocookie.com/embed/R9tWGnlpxHg'}]},
+   facts:['Hi-vis required in all operational areas','Steel-capped boots mandatory at all times','Company provides all PPE free of charge','Visitors must be escorted at all times'],
+   videos:[{title:'PPE in the Workplace',embed:'https://www.youtube-nocookie.com/embed/rK72jlH1zUE'}]},
 
   {id:'emergency',title:'Emergency & Chemical Safety',cat:'Safety',
    summary:'What to do in emergencies, evacuation procedure, and how to handle chemicals safely.',
    points:[
      'Emergency number: 000. Assembly point: Front car park. Evacuate immediately when alarm sounds.',
      'DRSABCD: Danger, Response, Send for help, Airway, Breathing, CPR, Defibrillator.',
-     'All chemicals must be clearly labelled. Read the Safety Data Sheet (SDS) before handling any chemical.',
-     'Wear proper PPE when handling chemicals: gloves, eye protection, respiratory protection if required.',
-     'Chemical spill: use spill kit, clean immediately, report to supervisor.',
-     'Store chemicals in designated storage area — completely separate from food produce.'
+     'Read the Safety Data Sheet (SDS) before handling any chemical. Only trained staff handle chemicals.',
+     'Chemical spill: use spill kit, clean immediately, report to supervisor. Never pour chemicals down drains.',
+     'Store chemicals in designated area — completely separate from food produce.'
    ],
-   facts:[
-     'Emergency number: 000',
-     'Assembly point: front car park',
-     'WorkSafe WA: 1300 307 877',
-     'First aid station on-site; trained first-aiders available',
-     'SDS must be read before handling any chemical',
-     'Never mix chemicals unless instructed by supervisor'
-   ],
-   videos:[{title:'Emergency Procedures in the Workplace',embed:'https://www.youtube-nocookie.com/embed/hhQd5kuBnSc'}]},
+   facts:['Emergency number: 000','Assembly point: front car park','WorkSafe WA: 1300 307 877','SDS must be read before handling any chemical','Never mix chemicals unless instructed'],
+   videos:[{title:'Chemical Safety in the Workplace',embed:'https://www.youtube-nocookie.com/embed/rK72jlH1zUE'}]},
 
   {id:'manualhandling',title:'Manual Handling',cat:'Safety',
    summary:'Safe lifting techniques, team lifting, and mechanical aids for warehouse tasks.',
    points:[
      'Manual handling includes lifting, lowering, pushing, pulling, holding, or restraining anything.',
      'Common injuries: strains, sprains, back injuries. Plan the lift before touching the load.',
-     'Safe lift technique: keep load close to waist, feet apart for stability, bend hips and knees, keep back straight.',
-     'For very heavy or awkward products use team lifting. Use trolleys and mechanical aids.',
-     'Take regular rest breaks and rotate tasks to reduce repetitive strain.',
+     'Safe lift: keep load close to waist, feet apart, bend hips and knees, keep back straight, do not twist.',
+     'For loads 25 kg and above, use mechanical lifting equipment. Team lift for 16-25 kg.',
      'Report discomfort early to supervisor to prevent serious injury.'
    ],
-   facts:[
-     'Plan every lift before you touch the load',
-     'Keep load close to your body at waist height',
-     'Feet shoulder-width apart for stability',
-     'Mandatory mechanical aid: 25 kg and above',
-     'Team lift recommended: 16-25 kg',
-     'Report discomfort to supervisor immediately'
-   ],
+   facts:['Plan every lift before touching the load','Mandatory mechanical aid: 25 kg and above','Team lift recommended: 16-25 kg','Keep load close to body at waist height','Report discomfort immediately'],
    videos:[{title:'Manual Handling in the Workplace',embed:'https://www.youtube-nocookie.com/embed/LdxJNKO-5DY'}]},
 
   {id:'forklift',title:'Forklift Safety',cat:'Operations',
    summary:'Licensing, pedestrian separation, pre-start checks, and travel rules.',
    points:[
-     'Only licensed operators with a current HRWL may operate forklifts. No unlicensed operation under any circumstances.',
-     'Pedestrians must use marked walkways only. Make eye contact with operator before crossing their path.',
-     'Complete daily pre-start inspection before every operation.',
-     'Travel with forks 10-15 cm above ground, tilted back slightly. Use horn at all intersections.',
-     'Do not carry passengers. Never walk or stand under raised forks.',
-     'Park in designated areas only: lower forks fully, engage parking brake, turn off engine, remove keys.'
+     'Only licensed operators with a current HRWL may operate forklifts. No unlicensed operation.',
+     'Pedestrians must use marked walkways. Make eye contact with operator before crossing their path.',
+     'Complete daily pre-start inspection: brakes, steering, tyres, forks, horn, lights, fluids, seatbelt.',
+     'Travel with forks 10-15 cm above ground. Use horn at all intersections. Do not exceed 10 km/h.',
+     'Park in designated areas: lower forks fully, engage brake, turn off engine, remove keys.'
    ],
-   facts:[
-     'HRWL required for all forklift operators',
-     'Site speed limit: 10 km/h',
-     'Pedestrian zones and cold rooms: 5 km/h',
-     'Pre-start check mandatory before each use',
-     'Seatbelt must be worn at all times when operating'
-   ],
+   facts:['HRWL required for all forklift operators','Site speed limit: 10 km/h','Cold rooms and pedestrian zones: 5 km/h','Pre-start check mandatory before each use','Seatbelt must be worn at all times'],
    videos:[{title:'Forklift Safety in the Workplace',embed:'https://www.youtube-nocookie.com/embed/eWalJ0YhO4Q'}]},
 
   {id:'fire',title:'Fire Safety',cat:'Safety',
    summary:'Fire extinguisher types, PASS method, and evacuation procedures.',
    points:[
      'Know the location of all fire extinguishers and exits in your work area.',
-     'PASS method: Pull the pin, Aim at the base of the fire, Squeeze the handle, Sweep from side to side.',
-     'Extinguisher types: Water (Class A), Foam (A and B), CO2 (electrical), Dry powder (multi-purpose).',
-     'Raise the alarm immediately if you discover a fire. Evacuate calmly using nearest safe exit.',
-     'Only fight a fire if trained, extinguisher is correct type, fire is small, and exit is behind you.',
-     'Never re-enter a burning building. Close doors behind you when evacuating.'
+     'PASS method: Pull the pin, Aim at the base of the fire, Squeeze the handle, Sweep side to side.',
+     'Extinguisher types: Water (Class A), CO2 (electrical), Dry powder (multi-purpose A, B, C).',
+     'Raise the alarm if you discover a fire. Evacuate using nearest safe exit. Do not use lifts.',
+     'Never re-enter a burning building. Close doors behind you to slow fire spread.'
    ],
-   facts:[
-     'PASS: Pull, Aim, Squeeze, Sweep',
-     'Assembly point: front car park',
-     'Emergency number: 000',
-     'CO2 or dry powder for electrical fires — never water',
-     'Fire equipment access must remain clear at all times'
-   ],
-   videos:[{title:'How to Use a Fire Extinguisher',embed:'https://www.youtube-nocookie.com/embed/bXiS4TRBkao'}]},
+   facts:['PASS: Pull, Aim, Squeeze, Sweep','Emergency: 000','CO2 or dry powder for electrical fires — never water','Assembly point: front car park','Fire equipment access must remain clear'],
+   videos:[{title:'How to Use a Fire Extinguisher — PASS Method',embed:'https://www.youtube-nocookie.com/embed/rK72jlH1zUE'}]},
 
   {id:'haccp',title:'Cold Chain & HACCP',cat:'Food Safety',
    summary:'Temperature control, FIFO rotation, hygiene standards, and cold-room safety.',
    points:[
-     'Pezzano operates under HACCP certification. All perishable goods must remain in safe temperature ranges.',
+     'Pezzano operates under HACCP certification. All perishable goods must stay in safe temperature ranges.',
      'FIFO (First In First Out) must always be used. Label all products clearly with receipt date.',
-     'Cross-contamination prevention: store different products separately. Clean and sanitize all surfaces regularly.',
-     'Cold room work: wear thermal PPE. Know emergency door release location. Never enter alone.',
-     'Wash hands before handling food, after breaks, and after handling waste.',
-     'Report any temperature deviations or personal illness to supervisor immediately.'
+     'Cross-contamination prevention: store different products separately. Clean all surfaces regularly.',
+     'Cold room work: wear thermal PPE. Know emergency door release. Never enter alone — buddy system.',
+     'Wash hands before handling food. Hair net required. No jewellery in food zones.'
    ],
-   facts:[
-     'HACCP: Hazard Analysis and Critical Control Points',
-     'FIFO: First In First Out — oldest stock out first',
-     'Temperature logs completed and signed daily',
-     'Thermal PPE required in cold rooms',
-     'Buddy system: never enter cold room alone',
-     'Hair net required in all food handling areas'
-   ],
+   facts:['HACCP: Hazard Analysis and Critical Control Points','FIFO: First In First Out','Temperature logs signed daily','Thermal PPE required in cold rooms','Never enter cold room alone'],
    videos:[{title:'HACCP Food Safety Explained',embed:'https://www.youtube-nocookie.com/embed/9BzItAj8kcQ'}]},
 
   {id:'waste',title:'Waste Management',cat:'Environment',
    summary:'Waste hierarchy, cardboard management, organic waste, and recycling practices.',
    points:[
      'Waste hierarchy: Refuse, Reduce, Reuse, Recycle, Recover, Dispose. Reuse is always preferred.',
-     'Cardboard is the largest waste stream at Pezzano. Reuse good-condition boxes. Flatten all non-reusable cardboard.',
+     'Cardboard is the largest waste stream. Reuse good-condition boxes. Flatten all other cardboard.',
      'Remove all packing materials and tape from cardboard before recycling.',
-     'Organic food waste goes to compost or organic waste stream.',
-     'Aisle cardboard build-up creates trip and fire hazards — remove immediately.',
-     'Proper waste management supports HACCP compliance and sustainability.'
+     'Organic food waste goes to compost or organic waste stream. Never pour liquids into stormwater drains.',
+     'Aisle cardboard build-up creates trip and fire hazards — remove immediately.'
    ],
-   facts:[
-     'Waste hierarchy: Refuse, Reduce, Reuse, Recycle, Recover, Dispose',
-     'Reusable crates: return to the wash station',
-     'Organic waste: compost or organics waste stream',
-     'Cardboard must be flattened before disposal',
-     'Aisle build-up is a fire and trip hazard — remove immediately'
-   ],
+   facts:['Reuse before recycle','Flatten cardboard before disposal','Organic waste goes to compost stream','Aisle build-up is a fire and trip hazard','Never mix food waste with cardboard recycling'],
    videos:[{title:'How Cardboard Boxes Are Recycled',embed:'https://www.youtube-nocookie.com/embed/rK72jlH1zUE'}]},
 
   {id:'warehouse',title:'Warehouse Operations',cat:'Operations',
@@ -390,35 +339,196 @@ const KNOWLEDGE_TOPICS = [
    points:[
      'Inspect all incoming deliveries for damage, contamination, and temperature issues before signing.',
      'Accurate labelling and FIFO support traceability and stock integrity.',
-     'Keep walkways, aisles, and storage areas clear of all obstructions. Clean-as-you-go.',
+     'Keep walkways, aisles, and storage areas clear of all obstructions at all times.',
      'Verify orders match customer requirements before loading for dispatch.',
-     'Workers have the right to refuse unsafe work without penalty.',
-     'Safe, accurate, quality-focused work matters more than speed alone.'
+     'Workers have the right to refuse unsafe work without penalty. Contact WorkSafe WA: 1300 307 877.'
    ],
-   facts:[
-     'WorkSafe WA: 1300 307 877',
-     'WorkCover WA: 1300 794 744',
-     'Right to refuse unsafe work without penalty',
-     'FIFO: oldest stock distributed first',
-     'All deliveries must be inspected before signing',
-     '10 km/h vehicle speed limit inside warehouse'
-   ],
-   videos:[{title:'Warehouse Safety Training',embed:'https://www.youtube-nocookie.com/embed/LScLFllVqcg'}]}
+   facts:['WorkSafe WA: 1300 307 877','WorkCover WA: 1300 794 744','Right to refuse unsafe work','FIFO: oldest stock distributed first','All deliveries inspected before signing'],
+   videos:[{title:'Warehouse Operations and Safety',embed:'https://www.youtube-nocookie.com/embed/rK72jlH1zUE'}]}
 ];
+
+// ── MODULES (10 questions each) ───────────────────────────────
 function q(question,opts,a,why){return{q:question,opts,a,why};}
 const MODULES=[
-  {id:'generalRules',title:'General Rules',icon:'📍',content:['Site speed limit 10 km/h. Sign in and out every shift.','Use pedestrian walkways, keep exits and aisles clear.','Only authorised persons may enter operational and cold storage areas.'],questions:[q('What must every worker do at the start and end of each shift?',['Sign in and sign out','Only text the supervisor','Nothing if rostered','Sign out only if leaving early'],0,'Workers must sign in and out every shift.'),q('What is the site speed limit?',['5 km/h','8 km/h','10 km/h','15 km/h'],2,'The site speed limit is 10 km/h.'),q('Where must pedestrians walk?',['Anywhere forklifts are not moving','Within marked pedestrian walkways','Across loading docks','Through racking aisles'],1,'Pedestrian walkways must be used.'),q('Where can eating and drinking occur?',['On the warehouse floor','In the cold room','At the dock','In designated break areas only'],3,'Food and drink are restricted to designated break areas.'),q('What should you do if an emergency exit is blocked?',['Ignore it','Move or report the obstruction immediately','Leave it for night shift','Stack boxes beside it'],1,'Emergency exits must stay clear at all times.')]},
-  {id:'ppe',title:'PPE',icon:'🦺',content:['Steel-capped boots and hi-vis required in all warehouse and dock areas.','Damaged or missing PPE must be reported immediately.','Additional PPE required by task: thermal wear in cold rooms, gloves for wet work.'],questions:[q('Which PPE is required at all times in warehouse areas?',['Safety boots','Safety glasses only','Apron only','Hard hat only'],0,'Safety boots are mandatory at all times.'),q('When is hi-vis required?',['Only at night','In all operational and outdoor areas','Only for visitors','Only in the office'],1,'Hi-vis is required in all operational and outdoor areas.'),q('What should you do with damaged PPE?',['Use it until stock arrives','Tape it and continue','Report it immediately','Leave it in your locker'],2,'Damaged PPE must be reported immediately.'),q('What clothing is required in cold rooms?',['Raincoat only','Thermal or warm clothing','Casual hoodie','No special clothing'],1,'Thermal clothing is required in cold rooms.'),q('What is working without required PPE?',['Allowed for quick tasks','Allowed if supervised','A serious safety breach','Only a warning issue'],2,'Working without PPE is a serious safety breach.')]},
-  {id:'emergency',title:'Emergency & Chemicals',icon:'🚨',content:['DRSABCD: Danger, Response, Send, Airway, Breathing, CPR, Defibrillator.','Read the SDS before using any chemical and never mix chemicals.','Major spills require evacuation and immediate supervisor notification.'],questions:[q('What does D in DRSABCD mean?',['Decision','Danger','Doctor','Defence'],1,'Check for danger first.'),q('Emergency phone number?',['13 11 26','1300 307 877','000','08 9456 3677'],2,'000 is the emergency number.'),q('What to do when the evacuation alarm sounds?',['Finish your task','Stop work and leave by nearest safe exit','Look for your bag','Wait for a text'],1,'Stop work and evacuate immediately.'),q('Where is the assembly point?',['Lunch room','Front car park','Back dock','Manager office'],1,'The front car park is the assembly point.'),q('Can chemicals be poured down drains?',['Yes if diluted','No, never','Only sanitisers','Only at night'],1,'Pouring chemicals down drains is illegal.')]},
-  {id:'manual',title:'Manual Handling',icon:'📦',content:['Plan the lift, keep the load close, and avoid twisting.','Team lift or use mechanical assistance for heavier or awkward loads.','Report discomfort early and rotate repetitive tasks.'],questions:[q('First step before lifting?',['Lift quickly','Plan the lift, path, and destination','Twist and test the weight','Ask someone to guess'],1,'Plan the lift before touching the load.'),q('What should stay straight during lifting?',['Arms','Back','Fingers','Neck only'],1,'Keep back straight and core braced.'),q('What must be used for loads 25 kg or more?',['Back brace only','Mechanical lifting equipment','Faster lifting','One strong person'],1,'Mechanical equipment is mandatory for 25 kg and above.'),q('When should discomfort be reported?',['At year end','Early, as soon as noticed','Only if severe','After sick leave'],1,'Early reporting helps prevent injury.'),q('Where should the load be kept while lifting?',['At arm length','Close to your body','Above shoulder height','On one hip'],1,'Loads should be kept close to reduce strain.')]},
-  {id:'forklift',title:'Forklift Safety',icon:'🚜',content:['Only licensed operators with a current HRWL may operate forklifts.','Pedestrians must stay out of forklift zones and make eye contact before crossing.','Travel with forks low, use horns at intersections, park safely.'],questions:[q('Who may operate a forklift on site?',['Any experienced worker','Only a licensed operator with current HRWL','Any supervisor','Visitors under instruction'],1,'Only licensed operators may operate forklifts.'),q('What should pedestrians do before crossing a forklift path?',['Run across quickly','Make eye contact with the operator','Wave from behind','Assume they are seen'],1,'Eye contact confirms the operator is aware.'),q('What must happen if a forklift is faulty?',['Keep using it slowly','Tag it out and report it','Let another shift use it','Park it without reporting'],1,'Faulty forklifts must not be operated.'),q('How should forks be positioned while travelling?',['At shoulder height','Low, about 150-300 mm','Touching the ground','Raised above the load'],1,'Forks should travel low for stability.'),q('How should a forklift be parked?',['Forks up, engine on','Forks down, brakes on, engine off, keys removed','Anywhere convenient','Blocking an aisle'],1,'Safe parking: forks down, brakes on, engine off, keys removed.')]},
-  {id:'fire',title:'Fire Safety',icon:'🔥',content:['Know the extinguisher types and what they are used for.','PASS: Pull, Aim, Squeeze, Sweep.','If in doubt, evacuate and raise the alarm.'],questions:[q('What does P in PASS stand for?',['Protect','Pull','Push','Pause'],1,'P = Pull the safety pin.'),q('What should you aim at?',['Top of the flames','Base of the fire','The ceiling','Any smoke'],1,'Aim at the base of the fire.'),q('What to do if fire is larger than a waste bin?',['Fight it alone','Evacuate, raise the alarm, call 000','Use water regardless','Wait for lunch'],1,'Large fires require evacuation and emergency response.'),q('Can sprinkler or extinguisher access be blocked?',['Yes if temporary','No, never','Only during deliveries','Outside working hours only'],1,'Fire equipment access must remain clear.'),q('Should you re-enter a burning building?',['Yes for valuables','Only with a friend','No','Only if fire is small'],2,'Never re-enter a burning building.')]},
-  {id:'coldchain',title:'Cold Chain & HACCP',icon:'❄️',content:['HACCP: all perishable goods must remain in safe temperature ranges.','FIFO must always be used and temperature records must be accurate.','Cold-room: thermal PPE, tell someone before entering alone.'],questions:[q('What does HACCP stand for?',['Hazard Analysis and Critical Control Points','Heavy Area Cold Chain Process','Handling and Carrying Cold Produce','Health and Cleaning Control Plan'],0,'HACCP = Hazard Analysis and Critical Control Points.'),q('What stock rotation system must always be applied?',['LIFO','FIFO','Random rotation','Monthly sort only'],1,'FIFO is mandatory for perishable stock.'),q('Should you enter a cold room alone without telling anyone?',['Yes if quick','No','Only on day shift','Only with phone access'],1,'Workers should not enter alone without someone knowing.'),q('What should you know on your first day in a cold room?',['Where tea is stored','The emergency door release','How to play music','Where phones charge'],1,'Emergency release knowledge is essential.'),q('What personal hygiene rule applies before food handling?',['Wash hands thoroughly','Wear jewellery','Taste product for quality','Use bare hands'],0,'Hand washing is required before handling food.')]},
-  {id:'waste',title:'Waste Management',icon:'♻️',content:['Waste hierarchy: Refuse, Reduce, Reuse, Recycle, Recover, Dispose.','Cardboard is the largest waste stream — flatten for recycling.','Aisle build-up creates trip and fire hazards.'],questions:[q('Which comes before recycling in the waste hierarchy?',['Reuse','Dispose','Burn','Landfill'],0,'Reuse is higher than recycle.'),q('What must be done to cardboard before disposal?',['Wet it down','Flatten it','Break it with a forklift','Mix it with plastic'],1,'Cardboard must be flattened before disposal.'),q('Where should organic food waste go?',['General waste only','Compost or organic waste stream','Cardboard bin','Any outside bin'],1,'Organic waste should go to compost or organics.'),q('What is a hazard caused by cardboard pile-ups?',['No hazard','Fire and trip hazard','Only noise hazard','Only paperwork delays'],1,'Pile-ups are fire and trip hazards.'),q('Most sustainable option for a good-condition box?',['Burn it','Reuse it','Throw it away','Cut it up'],1,'Reusing good boxes is the preferred option.')]},
-  {id:'warehouse',title:'Warehouse Operations',icon:'📋',content:['Inspect incoming stock for temperature compliance and damage before acceptance.','Accurate labelling and FIFO support traceability and stock integrity.','Safe, accurate, quality-focused work matters more than speed alone.'],questions:[q('What should happen when incoming deliveries arrive?',['Unload without checking','Inspect for temperature compliance and product quality','Sign everything first','Leave it outside'],1,'Incoming deliveries should be checked before acceptance.'),q('What stock system helps prevent spoilage?',['Random pick','FIFO','Last in first out','Top shelf only'],1,'FIFO reduces age-related spoilage.'),q('Why must airflow in cold rooms stay unobstructed?',['For easier walking','To maintain product temperature','To improve phone signal','To dry cardboard'],1,'Blocked airflow can allow temperatures to rise.'),q('What should happen if product damage is found?',['Hide it','Report and segregate it according to procedure','Pack it anyway','Send it first'],1,'Damaged product must be reported and managed correctly.'),q('What defines advanced warehouse performance?',['Speed only','Safe, accurate, quality-focused work','Working alone','Skipping checks'],1,'High performance balances safety, quality, and accuracy.')]},
-  {id:'housekeeping',title:'Housekeeping & Hygiene',icon:'🧼',content:['Clean, tidy, dry, obstruction-free work areas reduce injury and contamination risk.','Spills and waste must be cleaned or reported immediately.','Food-handling: hand washing, illness reporting, no unnecessary jewellery.'],questions:[q('Best housekeeping approach?',['Clean at month end','Clean as you go','Only clean visible areas','Leave it for cleaners'],1,'Clean-as-you-go keeps the workplace safe.'),q('What should happen to spills?',['Leave a sign and walk away','Clean or report them immediately','Ignore small ones','Cover with cardboard'],1,'Spills must be dealt with immediately.'),q('What before handling food?',['Put on jewellery','Wash your hands thoroughly','Taste the product','Use your phone'],1,'Hand washing is essential before food handling.'),q('What if you have vomiting or diarrhoea?',['Work anyway','Report illness before starting work','Only tell a friend','Wait three days'],1,'Workers must report illness before starting work.'),q('Is bare-hand contact with ready-to-eat products allowed?',['Yes always','No, use gloves or tongs','Only for supervisors','Only with clean hands'],1,'Ready-to-eat foods should not be handled with bare hands.')]},
-  {id:'incident',title:'Incident Reporting',icon:'⚠️',content:['All incidents, hazards, and near misses must be reported immediately to a supervisor.','Early reporting supports corrective action and prevents repeat incidents.'],questions:[q('What must be reported immediately?',['Only serious injuries','Incidents, near misses, and hazards','Only broken pallets','Only customer complaints'],1,'All incidents, near misses, and hazards must be reported.'),q('Why report near misses?',['They do not matter','They help prevent future injuries','Only managers care','Reported yearly only'],1,'Near misses reveal risks before someone is hurt.'),q('When should hazard reporting happen?',['When convenient','Immediately','Only after damage','At monthly meetings only'],1,'Hazards should be reported as soon as identified.'),q('Who is the first point of escalation?',['Any customer','Your supervisor','Social media','Payroll'],1,'Supervisors are the primary reporting point.'),q('What supports better corrective action?',['Delayed reporting','Clear and timely reporting','No documentation','Guessing what happened'],1,'Timely reporting allows hazards to be controlled.')]},
-  {id:'rights',title:'Rights & Responsibilities',icon:'⚖️',content:['The induction is mandatory before any work starts.','Workers have the right and duty to refuse unsafe work.','Non-compliance may lead to disciplinary action including termination.'],questions:[q('When must the induction be completed?',['After the first shift','Before commencing any work','Within three months','Only for permanent staff'],1,'The induction is mandatory before any work starts.'),q('What right do workers have regarding unsafe work?',['No rights','The right and duty to refuse unsafe work','Only managers can refuse tasks','Must continue until told otherwise'],1,'Workers may refuse work they believe is unsafe.'),q('What may happen if safety rules are ignored?',['Nothing','Disciplinary action including termination','Only a casual reminder','Automatic promotion'],1,'Non-compliance may lead to termination.'),q('If on-site issues are not addressed, who may workers contact?',['No one','WorkSafe WA','The lunch room committee','Customers'],1,'WorkSafe WA is an escalation option.'),q('Who can refuse unsafe work?',['Only supervisors','Workers who believe the work is unsafe','Visitors only','Only HR'],1,'Workers have both the right and duty to refuse unsafe work.')]}
+  {id:'generalRules',title:'General Rules',icon:'📍',
+   content:['Site speed limit 10 km/h. Sign in and out every shift.','Use pedestrian walkways, keep exits and aisles clear.','Only authorised persons may enter operational and cold storage areas.'],
+   questions:[
+     q('What must every worker do at the start and end of each shift?',['Sign in and sign out','Only text the supervisor','Nothing if rostered','Sign out only if leaving early'],0,'Workers must sign in and out every shift.'),
+     q('What is the site speed limit?',['5 km/h','8 km/h','10 km/h','15 km/h'],2,'The site speed limit is 10 km/h.'),
+     q('Where must pedestrians walk?',['Anywhere forklifts are not moving','Within marked pedestrian walkways','Across loading docks','Through racking aisles'],1,'Pedestrian walkways must be used at all times.'),
+     q('Where can eating and drinking occur?',['On the warehouse floor','In the cold room','At the dock','In designated break areas only'],3,'Food and drink are restricted to designated break areas.'),
+     q('What should you do if an emergency exit is blocked?',['Ignore it','Move or report the obstruction immediately','Leave it for night shift','Stack boxes beside it'],1,'Emergency exits must stay clear at all times.'),
+     q('Who may enter cold storage and operational areas?',['Any employee','Authorised persons only','Visitors with a buddy','Anyone during day shift'],1,'Only authorised persons may enter these areas.'),
+     q('What must visitors always do on site?',['Sign in at reception only','Walk wherever they like','Be escorted by an authorised person','Wait at the entrance'],2,'Visitors must be escorted at all times.'),
+     q('What should you do when you notice a hazard?',['Walk past it','Report it to your supervisor immediately','Fix it yourself without telling anyone','Wait until end of shift'],1,'All hazards must be reported immediately to a supervisor.'),
+     q('When is your ID required to be worn?',['Only for inspections','At all times on the warehouse floor','Only when management is present','Never'],1,'ID must be worn at all times on the warehouse floor.'),
+     q('What is the correct action if you see someone working unsafely?',['Say nothing','Report it to your supervisor','Join in if it looks faster','Wait and see if anything happens'],1,'Unsafe behaviour must be reported to a supervisor immediately.')
+   ]},
+
+  {id:'ppe',title:'PPE',icon:'🦺',
+   content:['Steel-capped boots and hi-vis required in all warehouse and dock areas.','Damaged or missing PPE must be reported immediately.','Additional PPE required by task: thermal wear in cold rooms, gloves for wet work.'],
+   questions:[
+     q('Which PPE is required at all times in warehouse areas?',['Safety boots','Safety glasses only','Apron only','Hard hat only'],0,'Steel-capped safety boots are mandatory at all times.'),
+     q('When is hi-vis required?',['Only at night','In all operational and outdoor areas','Only for visitors','Only in the office'],1,'Hi-vis is required in all operational and outdoor areas.'),
+     q('What should you do with damaged PPE?',['Use it until stock arrives','Tape it and continue','Report it immediately','Leave it in your locker'],2,'Damaged PPE must be reported immediately.'),
+     q('What clothing is required in cold rooms?',['Raincoat only','Thermal or warm clothing','Casual hoodie','No special clothing'],1,'Thermal clothing is required in cold rooms.'),
+     q('What is working without required PPE?',['Allowed for quick tasks','Allowed if supervised','A serious safety breach','Only a warning issue'],2,'Working without PPE is a serious safety breach.'),
+     q('Who pays for PPE at Pezzano?',['The employee','The company provides it free','Shared 50/50','Deducted from pay'],1,'The company provides all necessary PPE free of charge.'),
+     q('What must you do before using PPE each shift?',['Nothing, just put it on','Inspect it for damage or defects','Clean it first','Sign it out from the office'],1,'PPE must be inspected before each use.'),
+     q('What gloves are required when handling cold storage produce?',['No gloves needed','Thermal or insulated gloves','Latex gloves only','Any gloves available'],1,'Thermal or insulated gloves are required for cold storage work.'),
+     q('What head covering is required in food processing areas?',['Hard hat','Baseball cap','Hair net or snood','Nothing required'],2,'A hair net or snood must be worn in all food processing areas.'),
+     q('If your boots are damaged, what should you do?',['Keep wearing them until payday','Report immediately and get a replacement pair','Use thongs temporarily','Wrap them in tape'],1,'Damaged boots must be reported immediately and replaced.')
+   ]},
+
+  {id:'emergency',title:'Emergency & Chemicals',icon:'🚨',
+   content:['DRSABCD: Danger, Response, Send, Airway, Breathing, CPR, Defibrillator.','Read the SDS before using any chemical and never mix chemicals.','Major spills require evacuation and immediate supervisor notification.'],
+   questions:[
+     q('What does D in DRSABCD mean?',['Decision','Danger','Doctor','Defence'],1,'Check for Danger first before approaching anyone.'),
+     q('What is the emergency phone number?',['13 11 26','1300 307 877','000','08 9456 3677'],2,'000 is the Australian emergency number.'),
+     q('What to do when the evacuation alarm sounds?',['Finish your task','Stop work and leave by nearest safe exit','Look for your bag','Wait for a text'],1,'Stop work and evacuate immediately using the nearest safe exit.'),
+     q('Where is the assembly point?',['Lunch room','Front car park','Back dock','Manager office'],1,'The front car park is the designated assembly point.'),
+     q('Can chemicals be poured down drains?',['Yes if diluted','No, never','Only sanitisers','Only at night'],1,'Pouring chemicals down drains is illegal and environmentally harmful.'),
+     q('What must you read before handling any chemical?',['The product label only','The Safety Data Sheet (SDS)','The price list','The delivery docket'],1,'The SDS must be read before handling any chemical.'),
+     q('What does the C in DRSABCD stand for?',['Call for help','Check the scene','CPR','Clear the area'],2,'C stands for CPR — Cardiopulmonary Resuscitation.'),
+     q('Who is authorised to handle chemicals on site?',['Any employee','Authorised and trained staff only','Supervisors only','Anyone with gloves'],1,'Only authorised and trained staff may handle chemicals.'),
+     q('What should you do if a large chemical spill occurs?',['Mop it up alone','Evacuate the area and notify your supervisor immediately','Ignore it if it smells okay','Pour water on it'],1,'Large spills require evacuation and immediate supervisor notification.'),
+     q('Where must chemicals be stored?',['Near the food produce for easy access','In a designated storage area completely separate from food','In the lunchroom','In the loading dock']   ,1,'Chemicals must be stored in a designated area completely separate from food produce.')
+   ]},
+
+  {id:'manual',title:'Manual Handling',icon:'📦',
+   content:['Plan the lift, keep the load close, and avoid twisting.','Team lift or use mechanical assistance for heavier or awkward loads.','Report discomfort early and rotate repetitive tasks.'],
+   questions:[
+     q('What is the first step before lifting anything?',['Lift quickly','Plan the lift, path, and destination','Twist and test the weight','Ask someone to guess the weight'],1,'Always plan the lift, path, and destination before touching the load.'),
+     q('What should stay straight during a lift?',['Arms','Back','Fingers','Neck only'],1,'Keep your back straight and core braced throughout the lift.'),
+     q('What must be used for loads 25 kg or more?',['Back brace only','Mechanical lifting equipment','Faster lifting technique','One strong person'],1,'Mechanical equipment is mandatory for loads of 25 kg and above.'),
+     q('When should discomfort be reported?',['At year end','Early, as soon as noticed','Only if severe','After sick leave'],1,'Early reporting helps prevent minor discomfort becoming serious injury.'),
+     q('Where should the load be kept while lifting?',['At arm length','Close to your body at waist height','Above shoulder height','On one hip'],1,'Loads should be kept close to reduce strain on the back.'),
+     q('At what weight is a team lift recommended?',['Over 10 kg','16 to 25 kg','Over 30 kg','Over 40 kg'],1,'Team lifting is recommended for loads between 16 and 25 kg.'),
+     q('What should you NOT do when lifting a load?',['Keep feet apart','Bend hips and knees','Twist or lean sideways','Keep load close'],2,'Twisting or leaning sideways while lifting causes back injuries.'),
+     q('What should you do if a load is too awkward to lift alone?',['Try your best alone','Ask for help or use a mechanical aid','Drag it along the floor','Throw it to the destination'],1,'Always ask for help or use a mechanical aid for awkward loads.'),
+     q('How can repetitive strain injury be reduced?',['Work faster to finish sooner','Rotate tasks and take micro-breaks','Ignore the discomfort','Stretch only at home'],1,'Rotating tasks and taking micro-breaks reduces repetitive strain.'),
+     q('What is the purpose of planning a lift?',['To look professional','To reduce injury risk by preparing before lifting','To slow down work','To impress the supervisor'],1,'Planning reduces the risk of injury by preparing the body and path before lifting.')
+   ]},
+
+  {id:'forklift',title:'Forklift Safety',icon:'🚜',
+   content:['Only licensed operators with a current HRWL may operate forklifts.','Pedestrians must stay out of forklift zones and make eye contact before crossing.','Travel with forks low, use horns at intersections, park safely.'],
+   questions:[
+     q('Who may operate a forklift on site?',['Any experienced worker','Only a licensed operator with current HRWL','Any supervisor','Visitors under instruction'],1,'Only licensed operators with a current HRWL may operate forklifts.'),
+     q('What should pedestrians do before crossing a forklift path?',['Run across quickly','Make eye contact with the operator','Wave from behind','Assume they are seen'],1,'Eye contact confirms the operator is aware of the pedestrian.'),
+     q('What must happen if a forklift is faulty?',['Keep using it slowly','Tag it out and report it immediately','Let another shift deal with it','Park it without reporting'],1,'Faulty forklifts must be tagged out and reported — never operated.'),
+     q('How should forks be positioned while travelling?',['At shoulder height','Low, about 150-300 mm off the ground','Touching the ground','Raised above the load'],1,'Forks should travel low for stability and safety.'),
+     q('How should a forklift be parked?',['Forks up, engine running','Forks down, brakes on, engine off, keys removed','Anywhere convenient','Blocking an aisle is fine if quick'],1,'Safe parking: forks fully down, brake on, engine off, keys removed.'),
+     q('What is the speed limit in pedestrian and cold room zones?',['10 km/h','5 km/h','15 km/h','No limit'],1,'The speed limit in pedestrian and cold room zones is 5 km/h.'),
+     q('What must be completed before operating a forklift each day?',['Nothing if it worked yesterday','A pre-start inspection and daily log','A phone call to the manager','A warmup drive'],1,'A pre-start inspection and daily log must be completed before every operation.'),
+     q('Can a forklift carry passengers?',['Yes if they hold on','No passengers are permitted','Yes on the forks','Only supervisors'],1,'No passengers are permitted on forklifts under any circumstances.'),
+     q('What should you never do around raised forks?',['Walk past them slowly','Walk or stand under raised forks','Use the horn','Lower them before parking'],1,'Never walk or stand under raised forks — they can fall without warning.'),
+     q('What must a forklift operator do at every intersection?',['Speed up to clear it quickly','Sound the horn and proceed cautiously','Flash the lights only','Stop and get out'],1,'The horn must be sounded at every intersection and blind spot.')
+   ]},
+
+  {id:'fire',title:'Fire Safety',icon:'🔥',
+   content:['Know the extinguisher types and what they are used for.','PASS: Pull, Aim, Squeeze, Sweep.','If in doubt, evacuate and raise the alarm.'],
+   questions:[
+     q('What does P in PASS stand for?',['Protect','Pull the pin','Push the handle','Pause'],1,'P = Pull the safety pin from the extinguisher.'),
+     q('Where should you aim the extinguisher?',['Top of the flames','Base of the fire','The ceiling','Anywhere near smoke'],1,'Always aim at the base of the fire, not the flames.'),
+     q('What to do if fire is larger than a waste bin?',['Fight it alone','Evacuate, raise the alarm, call 000','Use any water nearby','Wait for it to die down'],1,'Large fires require immediate evacuation and emergency response.'),
+     q('Can sprinkler or extinguisher access be blocked?',['Yes if temporary','No, never under any circumstance','Only during deliveries','Outside working hours only'],1,'Fire equipment access must remain completely clear at all times.'),
+     q('Should you re-enter a burning building?',['Yes if your belongings are inside','Only with a colleague','No, never re-enter','Only if the fire is small'],2,'Never re-enter a burning building under any circumstances.'),
+     q('Which extinguisher type should NEVER be used on electrical fires?',['CO2','Dry powder','Water','Any type is fine'],2,'Water conducts electricity and must never be used on electrical fires.'),
+     q('What does the S in PASS stand for?',['Stop the fire','Sweep from side to side','Spray upward','Stand back'],1,'S = Sweep the extinguisher from side to side at the base of the fire.'),
+     q('What should you do when evacuating to slow fire spread?',['Open all windows','Close doors behind you','Leave all doors open','Turn off lights only'],1,'Closing doors when evacuating slows the spread of fire and smoke.'),
+     q('When is it acceptable to fight a fire yourself?',['Always','Only when you are trained, fire is small, and exit is behind you','Only with a colleague present','Never'],1,'Only fight a fire if trained, using the correct extinguisher, the fire is small, and your exit is clear.'),
+     q('What is the first action when you discover a fire?',['Grab an extinguisher immediately','Raise the alarm first, then assess','Call your supervisor on the phone','Check if anyone is watching'],1,'Always raise the alarm first before taking any other action.')
+   ]},
+
+  {id:'coldchain',title:'Cold Chain & HACCP',icon:'❄️',
+   content:['HACCP: all perishable goods must remain in safe temperature ranges.','FIFO must always be used and temperature records must be accurate.','Cold-room: thermal PPE, tell someone before entering alone.'],
+   questions:[
+     q('What does HACCP stand for?',['Hazard Analysis and Critical Control Points','Heavy Area Cold Chain Process','Handling and Carrying Cold Produce','Health and Cleaning Control Plan'],0,'HACCP = Hazard Analysis and Critical Control Points.'),
+     q('What stock rotation system must always be applied?',['LIFO','FIFO','Random rotation','Monthly sort only'],1,'FIFO — First In First Out — is mandatory for all perishable stock.'),
+     q('Should you enter a cold room alone without telling anyone?',['Yes if it is a quick task','No, always use the buddy system','Only on day shift','Only if you have your phone'],1,'Workers must never enter a cold room alone — always use the buddy system.'),
+     q('What should you know before working in a cold room for the first time?',['Where the tea is stored','The location of the emergency door release','How to play music','Where phones are charged'],1,'Emergency door release knowledge is essential before entering a cold room.'),
+     q('What personal hygiene rule applies before food handling?',['Wash hands thoroughly','Wear jewellery','Taste the product for quality','Use bare hands to check freshness'],0,'Hand washing is required before handling any food product.'),
+     q('What does FIFO mean in practice?',['Fill In Fresh Only','First In First Out — oldest stock leaves first','Fast Inventory For Operations','Freeze If Food is Old'],1,'FIFO means the oldest stock received must always be distributed first.'),
+     q('What PPE is required for cold room work?',['Normal warehouse PPE only','Thermal insulated gloves, jacket, and boots','Just a warm jumper','No additional PPE needed'],1,'Thermal insulated gloves, jacket, and boots are required for cold room work.'),
+     q('What should you do if you notice a temperature deviation in cold storage?',['Ignore it if only slight','Report it to your supervisor immediately','Try to fix the equipment yourself','Check again tomorrow'],1,'Temperature deviations must be reported to a supervisor immediately.'),
+     q('What must be completed and signed every day in cold storage areas?',['Nothing extra required','Temperature logs must be recorded and signed daily','A hazard checklist only','A delivery manifest'],1,'Temperature logs must be completed and signed every day.'),
+     q('What is cross-contamination and how is it prevented?',['Mixing different shift rosters — separate staff','Transfer of harmful bacteria between products — store separately and clean all surfaces','Stacking boxes too high','Running out of cold storage space'],1,'Cross-contamination is prevented by storing products separately and regularly cleaning all surfaces and equipment.')
+   ]},
+
+  {id:'waste',title:'Waste Management',icon:'♻️',
+   content:['Waste hierarchy: Refuse, Reduce, Reuse, Recycle, Recover, Dispose.','Cardboard is the largest waste stream — flatten for recycling.','Aisle build-up creates trip and fire hazards.'],
+   questions:[
+     q('Which comes before recycling in the waste hierarchy?',['Reuse','Dispose','Burn','Landfill'],0,'Reuse is always preferred over recycling in the waste hierarchy.'),
+     q('What must be done to cardboard before disposal?',['Wet it down','Flatten it','Break it with a forklift','Mix it with plastic'],1,'All cardboard must be flattened before disposal to save space.'),
+     q('Where should organic food waste go?',['General waste only','Compost or organic waste stream','Cardboard bin','Any outdoor bin'],1,'Organic waste must go to the compost or organic waste stream.'),
+     q('What hazard is caused by cardboard pile-ups in aisles?',['No hazard','Fire and trip hazard','Only noise hazard','Only paperwork delays'],1,'Cardboard pile-ups in aisles create both fire and trip hazards.'),
+     q('What is the most sustainable option for a good-condition box?',['Burn it','Reuse it','Throw it away','Cut it up for packing'],1,'Reusing a good-condition box is always the most sustainable option.'),
+     q('What is the correct order of the waste hierarchy?',['Dispose, Recycle, Reduce','Refuse, Reduce, Reuse, Recycle, Recover, Dispose','Recycle, Reuse, Refuse','Reduce, Dispose, Recover'],1,'The correct hierarchy is: Refuse, Reduce, Reuse, Recycle, Recover, Dispose.'),
+     q('What must be removed from cardboard before recycling?',['Nothing','All packing materials, tape, and staples','Only tape','Only staples'],1,'All packing materials, tape, and staples must be removed before cardboard can be recycled.'),
+     q('Where should reusable crates be returned?',['Anywhere in the warehouse','To the wash station','To the office','To the loading dock'],1,'Reusable crates must always be returned to the designated wash station.'),
+     q('What should never be poured into stormwater drains?',['Water','Chemicals or liquid food waste','Rainwater only','Cardboard pulp'],1,'Chemicals and liquid food waste must never enter stormwater drains.'),
+     q('How does proper waste management support HACCP?',['It does not','It reduces contamination risk and supports food safety compliance','Only if inspectors are visiting','Only for cold storage'],1,'Proper waste management reduces contamination risk and is essential for maintaining HACCP food safety compliance.')
+   ]},
+
+  {id:'warehouse',title:'Warehouse Operations',icon:'📋',
+   content:['Inspect incoming stock for temperature compliance and damage before acceptance.','Accurate labelling and FIFO support traceability and stock integrity.','Safe, accurate, quality-focused work matters more than speed alone.'],
+   questions:[
+     q('What should happen when incoming deliveries arrive?',['Unload without checking','Inspect for temperature compliance and product quality before signing','Sign everything first','Leave it outside'],1,'All incoming deliveries must be inspected before acceptance and signing.'),
+     q('What stock system helps prevent spoilage?',['Random pick','FIFO — First In First Out','Last in first out','Top shelf only'],1,'FIFO ensures the oldest stock is distributed first, reducing spoilage.'),
+     q('Why must airflow in cold rooms stay unobstructed?',['For easier walking','To maintain correct product temperature','To improve phone signal','To dry cardboard'],1,'Blocked airflow can cause temperatures to rise and spoil products.'),
+     q('What should happen if product damage is found?',['Hide it to avoid paperwork','Report and segregate it according to procedure','Pack it anyway if minor','Send it to the customer first'],1,'Damaged product must always be reported and segregated correctly.'),
+     q('What defines high-level warehouse performance?',['Speed only','Safe, accurate, quality-focused work','Working alone without interruptions','Skipping checks to save time'],1,'High performance means balancing safety, quality, and accuracy — not just speed.'),
+     q('When must the temperature of cold products be recorded?',['At end of shift','Immediately upon arrival and before acceptance','Only if they look warm','Once a week'],1,'Cold product temperatures must be recorded immediately on arrival before acceptance.'),
+     q('What documents must be completed for each delivery?',['Nothing extra needed','Delivery sheets, temperature logs, and inspection reports','Only a signature','Only a temperature log'],1,'All required documentation — delivery sheets, temperature logs, inspection reports — must be completed accurately.'),
+     q('When can cold chain products be removed from temperature-controlled areas?',['Anytime for convenience','Only at the moment of loading for dispatch','Two hours before dispatch','When the dock is busy'],1,'Cold chain products must remain in temperature-controlled areas until the moment of loading.'),
+     q('What is the right to refuse unsafe work?',['It does not exist','Workers have the legal right to refuse work they believe is unsafe, without penalty','Only managers have this right','Only if you have been injured before'],1,'All workers have the legal right and duty to refuse work they genuinely believe is unsafe.'),
+     q('Who should you contact if WHS concerns are not resolved on site?',['Nobody — accept the situation','WorkSafe WA on 1300 307 877','The media','A customer'],1,'WorkSafe WA (1300 307 877) can be contacted if site WHS concerns are not addressed promptly.')
+   ]},
+
+  {id:'housekeeping',title:'Housekeeping & Hygiene',icon:'🧼',
+   content:['Clean, tidy, dry, obstruction-free work areas reduce injury and contamination risk.','Spills and waste must be cleaned or reported immediately.','Food-handling: hand washing, illness reporting, no unnecessary jewellery.'],
+   questions:[
+     q('What is the best housekeeping approach in a warehouse?',['Clean at month end','Clean as you go throughout every shift','Only clean visible areas','Leave it for the cleaning crew'],1,'Clean-as-you-go keeps the workplace safe and hygienic at all times.'),
+     q('What should happen to spills immediately?',['Leave a sign and walk away','Clean or report them immediately','Ignore small ones','Cover with cardboard and deal with later'],1,'All spills must be cleaned or reported immediately to prevent slips and contamination.'),
+     q('What must you do before handling food?',['Put on jewellery','Wash your hands thoroughly with soap and water','Taste the product to check it is fresh','Use your phone to check the task'],1,'Thorough hand washing is essential before handling any food product.'),
+     q('What should you do if you have vomiting or diarrhoea before a shift?',['Work the shift anyway','Report illness to your supervisor before starting work','Only tell a workmate','Wait three days and see if it gets better'],1,'Workers must report illness to their supervisor before starting work to protect food safety.'),
+     q('Is bare-hand contact with ready-to-eat products allowed?',['Yes, always','No, use gloves or tongs at all times','Only for supervisors','Only if your hands look clean'],1,'Ready-to-eat foods must never be touched with bare hands — always use gloves or tongs.'),
+     q('What is the clean-as-you-go standard?',['Clean only your workstation at end of shift','Clean spills, waste, and mess immediately throughout the shift','Clean when inspectors arrive','Ask someone else to clean'],1,'Clean-as-you-go means addressing spills, waste, and mess immediately throughout your shift.'),
+     q('What jewellery rules apply in food handling areas?',['All jewellery is permitted','No unnecessary jewellery — plain band rings only if covered','Jewellery is encouraged','Only earrings are allowed'],1,'No unnecessary jewellery should be worn in food handling areas to prevent contamination.'),
+     q('How often must work area floors be kept clear of obstructions?',['Once per shift','At all times throughout the shift','Only during inspections','At start and end of shift only'],1,'Work area floors must be kept clear of obstructions at all times.'),
+     q('What must you do after handling waste or cleaning chemicals?',['Nothing extra','Wash your hands thoroughly before returning to food handling','Use hand sanitiser only','Remove gloves and continue'],1,'Hands must be thoroughly washed after handling waste or cleaning chemicals before returning to food work.'),
+     q('Why is illness reporting before a shift so important?',['It is not important','An ill worker can contaminate food and spread illness to colleagues and customers','Only important for management','Required only for serious illness'],1,'Illness reporting protects food safety, colleagues, and customers from contamination and the spread of disease.')
+   ]},
+
+  {id:'incident',title:'Incident Reporting',icon:'⚠️',
+   content:['All incidents, hazards, and near misses must be reported immediately to a supervisor.','Early reporting supports corrective action and prevents repeat incidents.'],
+   questions:[
+     q('What must be reported immediately?',['Only serious injuries requiring hospitalisation','All incidents, near misses, and hazards','Only broken equipment','Only customer complaints'],1,'All incidents, near misses, and hazards must be reported immediately without exception.'),
+     q('Why should near misses be reported?',['They do not matter since no one was hurt','They help identify risks and prevent future injuries','Only managers need to know','They are reported at yearly reviews only'],1,'Near misses reveal risks before someone is actually hurt — reporting them prevents future incidents.'),
+     q('When should a hazard be reported?',['When convenient','Immediately, as soon as it is identified','Only after someone is injured','At the monthly WHS meeting'],1,'Hazards must be reported as soon as they are identified to prevent injury.'),
+     q('Who is the first point of contact for reporting incidents?',['Any available customer','Your direct supervisor','Social media','Payroll department'],1,'Your direct supervisor is always the first point of escalation for incident reporting.'),
+     q('What supports the best corrective action after an incident?',['Delayed reporting to gather facts','Clear, accurate, and timely reporting','No documentation to keep it simple','Guessing what happened'],1,'Clear and timely reporting allows hazards to be controlled and corrected effectively.'),
+     q('What is a near miss?',['An incident where injury did occur','An event that could have caused injury but did not','A customer complaint','A damaged product'],1,'A near miss is an event that could have resulted in injury, illness, or damage — but did not.'),
+     q('What information should an incident report include?',['Just your name','What happened, when, where, who was involved, and what action was taken','Only the time of the incident','Only what was damaged'],1,'A complete incident report includes what happened, when, where, who was involved, and what action was taken.'),
+     q('Can a worker be penalised for reporting a safety concern?',['Yes if it causes production delays','No, workers are protected when reporting genuine safety concerns','Only if they report too often','Yes if management disagrees'],1,'Workers are legally protected from adverse action when reporting genuine WHS concerns.'),
+     q('What happens if incidents and hazards are not reported?',['Nothing changes','Risks remain unaddressed and future injuries are more likely','Only paperwork is delayed','The supervisor handles it without you'],1,'Unreported hazards remain unaddressed, making future injuries or incidents more likely.'),
+     q('What is the benefit of early reporting of discomfort or minor injuries?',['None — only serious injuries matter','Early treatment prevents minor issues becoming serious or permanent injuries','It is only required for insurance','Discomfort does not need reporting'],1,'Early reporting allows early treatment, preventing minor discomfort from developing into serious or permanent injury.')
+   ]},
+
+  {id:'rights',title:'Rights & Responsibilities',icon:'⚖️',
+   content:['The induction is mandatory before any work starts.','Workers have the right and duty to refuse unsafe work.','Non-compliance may lead to disciplinary action including termination.'],
+   questions:[
+     q('When must the induction be completed?',['After the first shift','Before commencing any work','Within three months of starting','Only for permanent staff'],1,'The induction is mandatory and must be completed before any work commences.'),
+     q('What right do workers have regarding unsafe work?',['No rights — follow all instructions','The right and duty to refuse work they believe is unsafe','Only managers can refuse tasks','Must continue until told otherwise by a supervisor'],1,'Every worker has both the right and the duty to refuse work they genuinely believe is unsafe.'),
+     q('What may happen if safety rules are consistently ignored?',['Nothing — it is a personal choice','Disciplinary action up to and including termination of employment','Only a verbal reminder','An automatic promotion review'],1,'Non-compliance with safety rules may result in disciplinary action including termination.'),
+     q('If on-site WHS issues are not addressed, who can workers contact?',['No one outside the business','WorkSafe WA on 1300 307 877','The lunch room committee','A customer representative'],1,'WorkSafe WA is the external escalation point for unresolved WHS issues.'),
+     q('Who can refuse unsafe work?',['Only supervisors and managers','Any worker who genuinely believes the work is unsafe','Visitors only','Only HR representatives'],1,'All workers — at every level — have the right and duty to refuse unsafe work.'),
+     q('What is the employer\'s primary duty under WHS legislation?',['To maximise productivity at all costs','To provide and maintain a safe workplace so far as reasonably practicable','To document all work activities','To set speed targets for all staff'],1,'Employers must provide and maintain a safe workplace so far as reasonably practicable under WHS law.'),
+     q('What is a worker\'s primary duty under WHS legislation?',['To follow all instructions without question','To take reasonable care for their own safety and that of others','To report only major injuries','To maximise output every shift'],1,'Workers must take reasonable care for their own health and safety and that of others around them.'),
+     q('What does the WHS Act 2020 WA protect?',['Only full-time permanent employees','All workers including casuals, contractors, and labour hire','Only workers who have completed induction','Only workers over 18'],1,'The WHS Act 2020 WA protects all workers including casuals, contractors, and labour hire workers.'),
+     q('Is the induction a one-time legal obligation or ongoing?',['One-time only at the start of employment','It is completed once but safety responsibilities are ongoing every shift','Only updated every five years','Only relevant for the first month'],1,'The induction is completed once, but the safety responsibilities it covers apply every single shift.'),
+     q('What should you do if you are asked to perform a task you believe is unsafe?',['Do it anyway to avoid conflict','Refuse the task, explain your concern, and report it to your supervisor','Quit immediately','Do it but complain afterwards'],1,'Refuse the unsafe task, clearly explain your concern, and report it to your supervisor. You are protected when you do this.')
+   ]}
 ];
 
 // ── STATE ─────────────────────────────────────────────────────
@@ -999,7 +1109,11 @@ async function saveEdit(id){
     if(e)Object.assign(e,{full_name:name,phone,age,position:pos,department:dept,email:emailChanged?email:e.email});
     closeModal();renderView();toast('Staff record updated.');
   }catch(err){
-    alert('Error saving: '+err.message);
+    if(err.message.includes('duplicate key')||err.message.includes('unique constraint')){
+      alert('That email address is already in use by another account. Please use a different email.');
+    } else {
+      alert('Error saving: '+err.message);
+    }
   }
 }
 
