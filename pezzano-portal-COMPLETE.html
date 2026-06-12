@@ -765,7 +765,7 @@ function renderKnowledgeGate(){
         <div class="card" style="padding:14px"><div style="font-size:.7rem;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase">Key Points</div><ul style="padding-left:1rem;display:grid;gap:6px;font-size:.83rem;color:var(--muted)">${topic.points.map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div>
         <div class="card" style="padding:14px"><div style="font-size:.7rem;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase">Quick Facts</div><ul style="padding-left:1rem;display:grid;gap:6px;font-size:.83rem;color:var(--muted)">${topic.facts.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></div>
       </div>
-      ${topic.videos.length?`<div style="aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#000;margin-bottom:14px"><iframe src="${topic.videos[0].embed}" title="${esc(topic.videos[0].title)}" width="100%" height="100%" frameborder="0" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>`:''}
+      ${topic.videos.length?`<div style="position:relative;padding-bottom:56.25%;height:0;border-radius:10px;overflow:hidden;background:#000;margin-bottom:14px"><iframe src="${topic.videos[0].embed}?rel=0&modestbranding=1" title="${esc(topic.videos[0].title)}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>`:''}
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${knowledgeViewed.includes(topic.id)?`<span class="badge badge-completed">&#9989; Confirmed</span>`:`<button class="btn btn-primary" onclick="confirmTopic('${topic.id}')">&#9989; I have read and understood this topic</button>`}
         ${allDone?`<button class="btn btn-success" onclick="startModules()">Start Quiz &#8594;</button>`:`<span style="font-size:.78rem;color:var(--muted);align-self:center">${KNOWLEDGE_TOPICS.length-knowledgeViewed.length} remaining</span>`}
@@ -981,7 +981,8 @@ function openEdit(id){
     <div class="field"><label>Age</label><input id="e_age" type="number" min="15" max="100" value="${esc(String(e.age||''))}"></div>
     <div class="field"><label>Position</label><select id="e_pos">${POSITIONS.map(p=>`<option value="${p}" ${e.position===p?'selected':''}>${p}</option>`).join('')}</select></div>
     <div class="field full"><label>Department</label><select id="e_dept">${DEPARTMENTS.map(d=>`<option value="${d}" ${e.department===d?'selected':''}>${d}</option>`).join('')}</select></div>
-    <div class="field"><label>Start Date (locked)</label><input value="${fmtDate(e.start_date)}" readonly></div>
+    <div class="field full"><label>Email Address</label><input id="e_email" type="email" value="${esc(e.email||'')}" placeholder="employee@email.com"></div>
+<div class="field"><label>Start Date (locked)</label><input value="${fmtDate(e.start_date)}" readonly></div>
     <div class="field"><label>Induction Date (locked)</label><input value="${fmtDate(e.induction_date)}" readonly></div>
   </div>
   <div class="modal-actions"><button class="btn btn-primary" onclick="saveEdit('${id}')">Save</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button></div>
@@ -993,9 +994,23 @@ async function saveEdit(id){
   const age=parseInt(document.getElementById('e_age').value)||null;
   const pos=document.getElementById('e_pos').value;
   const dept=document.getElementById('e_dept').value;
-  await sb.rpc('admin_edit_employee',{p_emp_id:id,p_full_name:name,p_phone:phone,p_age:age,p_position:pos,p_department:dept});
-  const e=allEmployees.find(x=>x.id===id);if(e)Object.assign(e,{full_name:name,phone,age,position:pos,department:dept});
-  closeModal();renderView();toast('Staff record updated.');
+  const email=document.getElementById('e_email').value.trim().toLowerCase();
+  const e=allEmployees.find(x=>x.id===id);
+  const emailChanged=email&&email!==(e.email||'');
+
+  try{
+    if(emailChanged){
+      // Update auth email + employees.email via RPC
+      const{error:rpcErr}=await sb.rpc('admin_update_email',{p_emp_id:id,p_new_email:email});
+      if(rpcErr)throw rpcErr;
+    }
+    // Update all other fields (email already handled by RPC above)
+    await sb.rpc('admin_edit_employee',{p_emp_id:id,p_full_name:name,p_phone:phone,p_age:age,p_position:pos,p_department:dept});
+    if(e)Object.assign(e,{full_name:name,phone,age,position:pos,department:dept,email:emailChanged?email:e.email});
+    closeModal();renderView();toast('Staff record updated.');
+  }catch(err){
+    alert('Error saving: '+err.message);
+  }
 }
 
 function openCreate(){
