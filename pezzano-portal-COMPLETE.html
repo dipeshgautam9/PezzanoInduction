@@ -930,13 +930,29 @@ function renderModule(){
   </div>`;
 }
 
-function switchModule(i){activeModule=i;activeQuestion=0;const saved=moduleProgress[MODULES[i].id];if(saved&&Object.keys(saved.answers).length){activeQuestion=Object.keys(saved.answers).length;if(activeQuestion>=MODULES[i].questions.length)activeQuestion=0;}view='module';renderView();}
+function switchModule(i){
+  activeModule=i;
+  const saved=moduleProgress[MODULES[i].id];
+  if(saved&&saved.answers){
+    const answered=Object.keys(saved.answers).map(Number).sort((a,b)=>a-b);
+    activeQuestion=answered.length ? Math.min(answered[answered.length-1]+1, MODULES[i].questions.length-1) : 0;
+  } else {
+    activeQuestion=0;
+  }
+  view='module';
+  renderView();
+}
 
 async function answerQ(idx){
   const mod=MODULES[activeModule];const q=mod.questions[activeQuestion];
   if(!moduleProgress[mod.id])moduleProgress[mod.id]={answers:{},completed:false};
   moduleProgress[mod.id].answers[activeQuestion]=idx;
-  await sb.rpc('save_module_progress',{p_module_id:mod.id,p_answers:moduleProgress[mod.id].answers,p_completed:false});
+  await sb.rpc('save_module_progress',{
+    p_employee_id: profile.id,
+    p_module_id: mod.id,
+    p_answers: moduleProgress[mod.id].answers,
+    p_completed: false
+  });
   const{data:upd}=await sb.from('employees').select('progress_pct').eq('id',profile.id).single();
   if(upd)profile.progress_pct=upd.progress_pct;
   document.querySelectorAll('.opt').forEach((el,i)=>{el.disabled=true;if(i===q.a)el.classList.add('correct');if(i===idx&&idx!==q.a)el.classList.add('wrong');});
@@ -948,7 +964,19 @@ async function answerQ(idx){
   document.getElementById('tryAgainBtn').classList.toggle('hidden',idx===q.a);
 }
 
-function tryAgain(){const mod=MODULES[activeModule];if(moduleProgress[mod.id])delete moduleProgress[mod.id].answers[activeQuestion];renderView();}
+async function tryAgain(){
+  const mod=MODULES[activeModule];
+  if(moduleProgress[mod.id]){
+    delete moduleProgress[mod.id].answers[activeQuestion];
+    await sb.rpc('save_module_progress',{
+      p_employee_id: profile.id,
+      p_module_id: mod.id,
+      p_answers: moduleProgress[mod.id].answers,
+      p_completed: !!moduleProgress[mod.id].completed
+    });
+  }
+  renderView();
+}
 
 async function nextQ(){
   const mod=MODULES[activeModule];
@@ -957,7 +985,12 @@ async function nextQ(){
   const allCorrect=mod.questions.every((q,i)=>mp.answers[i]===q.a);
   if(!allCorrect){const first=mod.questions.findIndex((q,i)=>mp.answers[i]!==q.a);activeQuestion=first>=0?first:0;alert('Please answer all questions correctly to complete this module. Returning to the first unanswered question.');renderView();return;}
   mp.completed=true;
-  await sb.rpc('save_module_progress',{p_module_id:mod.id,p_answers:mp.answers,p_completed:true});
+  await sb.rpc('save_module_progress',{
+    p_employee_id: profile.id,
+    p_module_id: mod.id,
+    p_answers: mp.answers,
+    p_completed: true
+  });
   const{data:upd}=await sb.from('employees').select('progress_pct,completion_status').eq('id',profile.id).single();
   if(upd){profile.progress_pct=upd.progress_pct;profile.completion_status=upd.completion_status;}
   toast(`&#10003; Module "${mod.title}" completed!`);
