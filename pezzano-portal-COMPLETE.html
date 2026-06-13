@@ -679,12 +679,13 @@ async function doResetPassword(){
   showSignIn();
 })();
 
-// Allow Enter key
-document.addEventListener('keydown',e=>{
-  if(e.key!=='Enter'){
-    if(document.getElementById('panel-signin').style.display!=='none')doSignIn();
-    else if(document.getElementById('panel-forgot').style.display!=='none')doForgotPassword();
-    else if(document.getElementById('panel-reset').style.display!=='none')doResetPassword();
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+
+    if (document.getElementById('panel-signin').style.display !== 'none') doSignIn();
+    else if (document.getElementById('panel-forgot').style.display !== 'none') doForgotPassword();
+    else if (document.getElementById('panel-reset').style.display !== 'none') doResetPassword();
   }
 });
 
@@ -715,7 +716,9 @@ async function initApp(){
 function showLogin(){
   document.getElementById('loginScreen').classList.remove('hidden');
   document.getElementById('appScreen').classList.add('hidden');
+  showSignIn();
 }
+
 function showApp(){
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('appScreen').classList.remove('hidden');
@@ -723,10 +726,12 @@ function showApp(){
 
 async function doSignOut(){
   await sb.auth.signOut();
-  profile=null;allEmployees=[];moduleProgress={};knowledgeViewed=[];
+  profile = null;
+  allEmployees = [];
+  moduleProgress = {};
+  knowledgeViewed = [];
   showLogin();
 }
-
 // ── AUTO-LOGIN if session exists ──────────────────────────────
 (async()=>{
   const{data:{session}}=await sb.auth.getSession();
@@ -1099,46 +1104,46 @@ async function saveEdit(id){
   const emailChanged=email&&email!==(e.email||'');
 
   try {
-  if (emailChanged) {
-    const { error: rpcErr } = await sb.rpc('admin_update_email', {
+    if (emailChanged) {
+      const { error: rpcErr } = await sb.rpc('admin_update_email', {
+        p_emp_id: id,
+        p_new_email: email
+      });
+      if (rpcErr) throw rpcErr;
+    }
+
+    const { error: editErr } = await sb.rpc('admin_edit_employee', {
       p_emp_id: id,
-      p_new_email: email
+      p_full_name: name,
+      p_phone: phone,
+      p_age: age,
+      p_position: pos,
+      p_department: dept
     });
-    if (rpcErr) throw rpcErr;
-  }
+    if (editErr) throw editErr;
 
-  const { error: editErr } = await sb.rpc('admin_edit_employee', {
-    p_emp_id: id,
-    p_full_name: name,
-    p_phone: phone,
-    p_age: age,
-    p_position: pos,
-    p_department: dept
-  });
-  if (editErr) throw editErr;
+    if (e) {
+      Object.assign(e, {
+        full_name: name,
+        phone,
+        age,
+        position: pos,
+        department: dept,
+        email: emailChanged ? email : e.email
+      });
+    }
 
-  if (e) {
-    Object.assign(e, {
-      full_name: name,
-      phone,
-      age,
-      position: pos,
-      department: dept,
-      email: emailChanged ? email : e.email
-    });
-  }
+    closeModal();
+    renderView();
+    toast('Staff record updated.');
+  } catch (err) {
+    const msg = err?.message || 'Unknown error';
 
-  closeModal();
-  renderView();
-  toast('Staff record updated.');
-}
-catch (err) {
-  const msg = err?.message || 'Unknown error';
-
-  if (msg.includes('duplicate key') || msg.includes('unique constraint')) {
-    alert('That email address is already in use by another account. Please use a different email.');
-  } else {
-    alert('Error saving: ' + msg);
+    if (msg.includes('duplicate key') || msg.includes('unique constraint')) {
+      alert('That email address is already in use by another account. Please use a different email.');
+    } else {
+      alert('Error saving: ' + msg);
+    }
   }
 }
 function openCreate(){
