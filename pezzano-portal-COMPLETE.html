@@ -1024,7 +1024,11 @@ async function submitDeclaration(){
   const ssig=document.getElementById('d_ssig').value.trim();
   const ddate=document.getElementById('d_date').value;
   if(!esig||!sname||!ssig){alert('Please fill in all signature fields.');return;}
-  if(profile.progress_pct!==100){alert('All modules must be completed at 100% before submission.');return;}
+  const completedCount=Object.values(moduleProgress).filter(m=>m.completed).length;
+if(completedCount<MODULES.length){
+  alert(`Please complete all ${MODULES.length} modules before submitting. You have completed ${completedCount} of ${MODULES.length}.`);
+  return;
+}
   await sb.from('employees').update({completion_status:'completed',completion_date:ddate,employee_signature:esig,supervisor_name:sname,supervisor_signature:ssig}).eq('id',profile.id);
   Object.assign(profile,{completion_status:'completed',completion_date:ddate,employee_signature:esig,supervisor_name:sname,supervisor_signature:ssig});
   view='done';renderView();
