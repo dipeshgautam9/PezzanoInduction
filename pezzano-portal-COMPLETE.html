@@ -794,8 +794,7 @@ function renderManagerDashboard(){
   const completed=allEmployees.filter(e=>e.completion_status==='completed').length;
   const inprog=allEmployees.filter(e=>e.completion_status==='in_progress').length;
   const pct=total?Math.round(completed/total*100):0;
-  return`
-  return`
+  return
   ${!isSysAdmin(profile)?`<div style="margin-bottom:16px">
     <button class="btn btn-ghost" onclick="view='dashboard';renderView()">&#8592; My Induction</button>
   </div>`:''}
