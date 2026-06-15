@@ -993,35 +993,56 @@ async function tryAgain(){
 
 async function nextQ(){
   const mod=MODULES[activeModule];
-  if(activeQuestion<mod.questions.length-1){activeQuestion++;renderView();return;}
+  if(activeQuestion<mod.questions.length-1){
+    activeQuestion++;
+    renderView();
+    return;
+  }
+
   const mp=moduleProgress[mod.id]||{answers:{},completed:false};
   const allCorrect=mod.questions.every((q,i)=>mp.answers[i]===q.a);
-  if(!allCorrect){const first=mod.questions.findIndex((q,i)=>mp.answers[i]!==q.a);activeQuestion=first>=0?first:0;alert('Please answer all questions correctly to complete this module. Returning to the first unanswered question.');renderView();return;}
+
+  if(!allCorrect){
+    const first=mod.questions.findIndex((q,i)=>mp.answers[i]!==q.a);
+    activeQuestion=first>=0?first:0;
+    alert('Please answer all questions correctly to complete this module. Returning to the first unanswered question.');
+    renderView();
+    return;
+  }
+
   mp.completed=true;
-await sb.rpc('save_module_progress',{
-  p_employee_id: profile.id,
-  p_module_id: mod.id,
-  p_answers: mp.answers,
-  p_completed: true
-});
+  moduleProgress[mod.id]=mp;
 
-const doneCount = Object.values(moduleProgress).filter(m => m.completed).length;
-const newPct = Math.round((doneCount / MODULES.length) * 100);
-const completedNow = doneCount === MODULES.length;
+  await sb.rpc('save_module_progress',{
+    p_employee_id: profile.id,
+    p_module_id: mod.id,
+    p_answers: mp.answers,
+    p_completed: true
+  });
 
-await sb.from('employees').update({
-  progress_pct: completedNow ? 100 : newPct,
-  completion_status: completedNow ? 'completed' : 'in_progress'
-}).eq('id', profile.id);
+  const doneCount = Object.values(moduleProgress).filter(m => m.completed).length;
+  const newPct = Math.round((doneCount / MODULES.length) * 100);
+  const completedNow = doneCount === MODULES.length;
 
-profile.progress_pct = completedNow ? 100 : newPct;
-profile.completion_status = completedNow ? 'completed' : 'in_progress';
+  await sb.from('employees').update({
+    progress_pct: completedNow ? 100 : newPct,
+    completion_status: completedNow ? 'completed' : 'in_progress'
+  }).eq('id', profile.id);
 
-toast(`&#10003; Module "${mod.title}" completed!`);
-if(activeModule<MODULES.length-1){activeModule++;activeQuestion=0;renderView();}
-else{view='decl';renderView();}
+  profile.progress_pct = completedNow ? 100 : newPct;
+  profile.completion_status = completedNow ? 'completed' : 'in_progress';
+
+  toast(`&#10003; Module "${mod.title}" completed!`);
+
+  if(activeModule<MODULES.length-1){
+    activeModule++;
+    activeQuestion=0;
+    renderView();
+  }else{
+    view='decl';
+    renderView();
+  }
 }
-
 // ── DECLARATION ───────────────────────────────────────────────
 function renderDeclaration(){
   return`<div style="max-width:760px">
