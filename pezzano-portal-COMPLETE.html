@@ -1042,9 +1042,26 @@ if(completedCount<MODULES.length){
   alert(`Please complete all ${MODULES.length} modules before submitting. You have completed ${completedCount} of ${MODULES.length}.`);
   return;
 }
-  await sb.from('employees').update({completion_status:'completed',completion_date:ddate,employee_signature:esig,supervisor_name:sname,supervisor_signature:ssig}).eq('id',profile.id);
-  Object.assign(profile,{completion_status:'completed',completion_date:ddate,employee_signature:esig,supervisor_name:sname,supervisor_signature:ssig});
-  view='done';renderView();
+await sb.from('employees').update({
+  completion_status:'completed',
+  completion_date:ddate,
+  employee_signature:esig,
+  supervisor_name:sname,
+  supervisor_signature:ssig,
+  progress_pct:100
+}).eq('id',profile.id);
+
+Object.assign(profile,{
+  completion_status:'completed',
+  completion_date:ddate,
+  employee_signature:esig,
+  supervisor_name:sname,
+  supervisor_signature:ssig,
+  progress_pct:100
+});
+
+view='done';
+renderView();
 }
 
 // ── COMPLETION ────────────────────────────────────────────────
