@@ -689,27 +689,32 @@ document.addEventListener('keydown', e => {
   }
 });
 
-async function initApp(){
-  const{data:{session}}=await sb.auth.getSession();
-  if(!session){showLogin();return;}
+async function initApp() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { showLogin(); return; }
 
-  const{data:emp,error}=await sb.from('employees').select('*').eq('auth_id',session.user.id).single();
-  if(error||!emp){await sb.auth.signOut();showLogin();return;}
-  profile=emp;
+  const { data: emp, error } = await sb.from('employees').select('*').eq('auth_id', session.user.id).single();
+  if (error || !emp) { await sb.auth.signOut(); showLogin(); return; }
+  profile = emp;
 
   // Load module progress
-  const{data:progRows}=await sb.from('module_progress').select('module_id,answers,completed').eq('employee_id',profile.id);
-  moduleProgress={};
-  if(progRows)progRows.forEach(r=>{moduleProgress[r.module_id]={answers:r.answers||{},completed:r.completed};});
-  knowledgeViewed=profile.knowledge_viewed||[];
+  const { data: progRows } = await sb.from('module_progress').select('module_id,answers,completed').eq('employee_id', profile.id);
+  moduleProgress = {};
+  if (progRows) progRows.forEach(r => { moduleProgress[r.module_id] = { answers: r.answers || {}, completed: r.completed }; });
+  knowledgeViewed = profile.knowledge_viewed || [];
 
-  if(isManager(profile)){
-    const{data}=await sb.rpc('get_dashboard_data');
-    allEmployees=data||[];
+  if (isManager(profile)) {
+    const { data } = await sb.rpc('get_dashboard_data');
+    allEmployees = data || [];
   }
 
-  document.getElementById('userLabel').textContent=`${profile.full_name} · ${profile.employee_code}`;
+  document.getElementById('userLabel').textContent = `${profile.full_name} · ${profile.employee_code}`;
   showApp();
+
+  // === ADD THIS LINE ===
+  view = 'dashboard';
+  // === END ADD ===
+
   renderView();
 }
 
