@@ -957,22 +957,43 @@ function switchModule(i){
 }
 
 async function answerQ(idx){
-  const mod=MODULES[activeModule];const q=mod.questions[activeQuestion];
+  const mod=MODULES[activeModule];
+  const q=mod.questions[activeQuestion];
+
   if(!moduleProgress[mod.id])moduleProgress[mod.id]={answers:{},completed:false};
+
   moduleProgress[mod.id].answers[activeQuestion]=idx;
+
   await sb.rpc('save_module_progress',{
     p_employee_id: profile.id,
     p_module_id: mod.id,
     p_answers: moduleProgress[mod.id].answers,
     p_completed: false
   });
-  const{data:upd}=await sb.from('employees').select('progress_pct').eq('id',profile.id).single();
-  if(upd)profile.progress_pct=upd.progress_pct;
-  document.querySelectorAll('.opt').forEach((el,i)=>{el.disabled=true;if(i===q.a)el.classList.add('correct');if(i===idx&&idx!==q.a)el.classList.add('wrong');});
-  const fb=document.getElementById('feedback');const ex=document.getElementById('explain');
+
+  const doneCount = Object.values(moduleProgress).filter(m => m.completed).length;
+  const newPct = Math.round((doneCount / MODULES.length) * 100);
+
+  await sb.from('employees').update({
+    progress_pct: newPct,
+    completion_status: newPct === 100 ? 'completed' : 'in_progress'
+  }).eq('id', profile.id);
+
+  profile.progress_pct = newPct;
+  profile.completion_status = newPct === 100 ? 'completed' : 'in_progress';
+
+  document.querySelectorAll('.opt').forEach((el,i)=>{
+    el.disabled=true;
+    if(i===q.a)el.classList.add('correct');
+    if(i===idx&&idx!==q.a)el.classList.add('wrong');
+  });
+
+  const fb=document.getElementById('feedback');
+  const ex=document.getElementById('explain');
   fb.className='feedback show '+(idx===q.a?'good':'bad');
   fb.innerHTML=idx===q.a?'&#10003; Correct.':'Saved. Review the explanation and try again.';
-  ex.className='explain show';ex.textContent=q.why;
+  ex.className='explain show';
+  ex.textContent=q.why;
   document.getElementById('nextBtn').classList.toggle('hidden',idx!==q.a);
   document.getElementById('tryAgainBtn').classList.toggle('hidden',idx===q.a);
 }
