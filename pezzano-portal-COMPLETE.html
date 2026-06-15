@@ -742,6 +742,7 @@ async function doSignOut(){
 function renderView(){
   const app=document.getElementById('app');
   if(view==='dashboard')    app.innerHTML=renderDashboard();
+  else if(view==='mgr')     app.innerHTML=renderManagerDashboard();
   else if(view==='kb')      app.innerHTML=renderKnowledgeGate();
   else if(view==='module')  app.innerHTML=renderModule();
   else if(view==='decl')    app.innerHTML=renderDeclaration();
@@ -750,10 +751,14 @@ function renderView(){
 
 // ── EMPLOYEE DASHBOARD ────────────────────────────────────────
 function renderDashboard(){
-  if(isManager(profile))return renderManagerDashboard();
+  if(isSysAdmin(profile))return renderManagerDashboard();
   const pct=profile.progress_pct||0;
   const done=MODULES.filter(m=>moduleProgress[m.id]?.completed).length;
   return`<div style="max-width:800px">
+  ${isManager(profile)?`<div style="margin-bottom:16px;display:flex;gap:8px;align-items:center">
+    <button class="btn btn-primary" onclick="view='mgr';renderView()">&#128202; Manager Dashboard</button>
+    <span style="font-size:.8rem;color:var(--muted)">Switch to staff tracking</span>
+  </div>`:''}
   <div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,rgba(0,180,216,.08),transparent)">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
       <div><div style="font-size:1.4rem;font-weight:700">Welcome, ${esc(profile.full_name)}</div>
@@ -790,6 +795,10 @@ function renderManagerDashboard(){
   const inprog=allEmployees.filter(e=>e.completion_status==='in_progress').length;
   const pct=total?Math.round(completed/total*100):0;
   return`
+  return`
+  ${!isSysAdmin(profile)?`<div style="margin-bottom:16px">
+    <button class="btn btn-ghost" onclick="view='dashboard';renderView()">&#8592; My Induction</button>
+  </div>`:''}
   <div class="metrics">
     <div class="metric card"><div class="val">${total}</div><div class="lbl">Total Staff</div></div>
     <div class="metric card"><div class="val" style="color:var(--primary)">${pct}%</div><div class="lbl">Overall Completion</div></div>
