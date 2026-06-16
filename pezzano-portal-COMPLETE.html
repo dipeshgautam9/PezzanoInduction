@@ -401,18 +401,29 @@ async function loadMyDocs(){
 
 async function loadAllDocAlerts(){
   try{
-    // Try the RPC first
-    const{data:rpcData,error:rpcErr}=await sb.rpc('get_document_alerts');
-    if(!rpcErr){allDocAlerts=rpcData||[];return;}
-    // Fallback: direct query with join
-    const cutoff=new Date(Date.now()+180*24*60*60*1000).toISOString().slice(0,10);
-    const{data}=await sb.from('employee_documents')
+    const { data: rpcData, error: rpcErr } = await sb.rpc('getdocumentalerts');
+    if(!rpcErr){
+      allDocAlerts = rpcData || [];
+      return;
+    }
+
+    const cutoff = new Date(Date.now() + 180*24*60*60*1000).toISOString().slice(0,10);
+    const { data } = await sb.from('employee_documents')
       .select('*, employees!inner(full_name,employee_code,department,position)')
       .not('expiry_date','is',null)
-      .lte('expiry_date',cutoff)
+      .lte('expiry_date', cutoff)
       .order('expiry_date');
-    allDocAlerts=(data||[]).map(d=>({...d,full_name:d.employees?.full_name,employee_code:d.employees?.employee_code,department:d.employees?.department,position:d.employees?.position}));
-  }catch(e){allDocAlerts=[];}
+
+    allDocAlerts = (data || []).map(d => ({
+      ...d,
+      full_name: d.employees?.full_name,
+      employee_code: d.employees?.employee_code,
+      department: d.employees?.department,
+      employee_position: d.employees?.position
+    }));
+  }catch(e){
+    allDocAlerts = [];
+  }
 }
 
 // ── LOGIN ─────────────────────────────────────────────────────
