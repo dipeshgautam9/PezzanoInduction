@@ -37,6 +37,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .btn-warn{background:rgba(251,191,36,.12);color:var(--warning);border:1px solid rgba(251,191,36,.2)}
 .btn-danger{background:rgba(248,113,113,.12);color:var(--error);border:1px solid rgba(248,113,113,.2)}
 .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-info{background:rgba(0,180,216,.12);color:var(--primary);border:1px solid rgba(0,180,216,.2)}
 .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at 20% 50%,rgba(0,180,216,.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(74,222,128,.04) 0%,transparent 50%)}
 .login-box{width:100%;max-width:420px}
 .logo-row{text-align:center;margin-bottom:28px}
@@ -145,6 +146,10 @@ tbody tr:hover{background:var(--surface2)}
 .letter-sigs{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:18px}
 .sig-line{border-top:1px solid #333;padding-top:5px;font-size:.82rem}
 .sig-block p{font-weight:600;margin-bottom:32px;font-size:.85rem}
+.tab-bar{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:20px}
+.tab-btn{padding:8px 16px;background:transparent;border:none;border-bottom:2px solid transparent;font-size:.83rem;color:var(--muted);cursor:pointer;font-family:var(--font);transition:.15s;margin-bottom:-1px}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
 @media(max-width:900px){.metrics{grid-template-columns:1fr 1fr}.kb-grid{grid-template-columns:1fr}}
 @media(max-width:600px){.metrics{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}}
 </style>
@@ -298,9 +303,13 @@ const MODULES=[
 let profile=null,allEmployees=[],moduleProgress={},knowledgeViewed=[];
 let view='dashboard',activeModule=0,activeQuestion=0,activeKbTopic='welcome';
 let filters={search:'',dept:'',status:'',position:''};
-let myDocs=[],allDocAlerts=[],docFilters={search:'',type:'',level:''};
+// myDocs = current user's own docs
+// adminViewDocs = docs being viewed by sysAdmin for another employee
+// allDocAlerts = cross-staff doc alerts for manager/sysAdmin
+let myDocs=[],allDocAlerts=[],adminViewDocs=[],adminViewEmpId=null;
+let docFilters={search:'',type:'',level:''};
 
-// ── HELPERS ── (defined ONCE here, never redefined below) ─────
+// ── HELPERS ───────────────────────────────────────────────────
 function esc(v){return String(v??'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));}
 function fmtDate(d){return d?new Date(d).toLocaleDateString('en-AU'):'—';}
 function isManager(p){return p&&['locationManager','sysAdmin'].includes(p.role);}
@@ -327,16 +336,46 @@ function expiryStatus(dateStr){
 }
 
 async function loadMyDocs(){
-  try{const{data,error}=await sb.from('employee_documents').select('*').eq('employee_id',profile.id).order('uploaded_at',{ascending:false});if(!error)myDocs=data||[];}catch(e){myDocs=[];}
+  try{
+    const{data,error}=await sb.from('employee_documents').select('*').eq('employee_id',profile.id).order('uploaded_at',{ascending:false});
+    if(!error)myDocs=data||[];
+  }catch(e){myDocs=[];}
 }
+
+// ── KEY FIX: Load all docs using employee IDs we already have from get_dashboard_data ──
 async function loadAllDocAlerts(){
   try{
+    // First try the RPC if it exists
     const{data:rpcData,error:rpcErr}=await sb.rpc('get_document_alerts');
-    if(!rpcErr){allDocAlerts=rpcData||[];return;}
+    if(!rpcErr&&rpcData){
+      allDocAlerts=rpcData;
+      return;
+    }
+    // Fallback: we have allEmployees from get_dashboard_data, query docs by their IDs
+    if(!allEmployees.length)return;
+    const empIds=allEmployees.map(e=>e.id);
     const cutoff=new Date(Date.now()+180*24*60*60*1000).toISOString().slice(0,10);
-    const{data}=await sb.from('employee_documents').select('*, employees!inner(full_name,employee_code,department,position)').not('expiry_date','is',null).lte('expiry_date',cutoff).order('expiry_date');
-    allDocAlerts=(data||[]).map(d=>({...d,full_name:d.employees?.full_name,employee_code:d.employees?.employee_code,department:d.employees?.department,employee_position:d.employees?.position}));
-  }catch(e){allDocAlerts=[];}
+    const{data,error}=await sb.from('employee_documents')
+      .select('*')
+      .in('employee_id',empIds)
+      .not('expiry_date','is',null)
+      .lte('expiry_date',cutoff)
+      .order('expiry_date',{ascending:true});
+    if(error){console.warn('Doc alerts fallback error:',error.message);allDocAlerts=[];return;}
+    // Merge employee info from our already-loaded allEmployees
+    allDocAlerts=(data||[]).map(d=>{
+      const emp=allEmployees.find(e=>e.id===d.employee_id);
+      return{...d,full_name:emp?.full_name||'Unknown',employee_code:emp?.employee_code||'',department:emp?.department||'',employee_position:emp?.position||''};
+    });
+  }catch(e){console.warn('loadAllDocAlerts error:',e);allDocAlerts=[];}
+}
+
+// Load docs for a specific employee (sysAdmin only)
+async function loadEmployeeDocs(empId){
+  try{
+    const{data,error}=await sb.from('employee_documents').select('*').eq('employee_id',empId).order('uploaded_at',{ascending:false});
+    if(!error){adminViewDocs=data||[];adminViewEmpId=empId;}
+  }catch(e){adminViewDocs=[];}
 }
 
 // ── LOGIN ─────────────────────────────────────────────────────
@@ -425,8 +464,14 @@ async function initApp(){
   moduleProgress={};
   if(progRows)progRows.forEach(r=>{moduleProgress[r.module_id]={answers:r.answers||{},completed:r.completed};});
   knowledgeViewed=profile.knowledge_viewed||[];
-  if(isManager(profile)){const{data}=await sb.rpc('get_dashboard_data');allEmployees=data||[];}
+  // Load all employees first (needed for doc alert fallback)
+  if(isManager(profile)){
+    const{data}=await sb.rpc('get_dashboard_data');
+    allEmployees=data||[];
+  }
+  // Load own docs (everyone including sysAdmin)
   await loadMyDocs();
+  // Load all doc alerts (managers + sysAdmin)
   if(isManager(profile))await loadAllDocAlerts();
   document.getElementById('userLabel').textContent=`${profile.full_name} · ${profile.employee_code}`;
   showApp();
@@ -436,24 +481,26 @@ async function initApp(){
 
 function showLogin(){document.getElementById('loginScreen').classList.remove('hidden');document.getElementById('appScreen').classList.add('hidden');showSignIn();}
 function showApp(){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('appScreen').classList.remove('hidden');}
-async function doSignOut(){await sb.auth.signOut();profile=null;allEmployees=[];moduleProgress={};knowledgeViewed=[];myDocs=[];allDocAlerts=[];showLogin();}
+async function doSignOut(){await sb.auth.signOut();profile=null;allEmployees=[];moduleProgress={};knowledgeViewed=[];myDocs=[];allDocAlerts=[];adminViewDocs=[];adminViewEmpId=null;showLogin();}
 
 // ── RENDER ROUTER ─────────────────────────────────────────────
 function renderView(){
   const app=document.getElementById('app');
-  if(view==='dashboard')       app.innerHTML=renderDashboard();
-  else if(view==='mgr')        app.innerHTML=renderManagerDashboard();
-  else if(view==='kb')         app.innerHTML=renderKnowledgeGate();
-  else if(view==='module')     app.innerHTML=renderModule();
-  else if(view==='decl')       app.innerHTML=renderDeclaration();
-  else if(view==='done')       app.innerHTML=renderCompletion();
-  else if(view==='docs')       app.innerHTML=renderDocsView();
-  else if(view==='docsAlerts') app.innerHTML=renderDocsAlerts();
+  if(view==='dashboard')        app.innerHTML=renderDashboard();
+  else if(view==='mgr')         app.innerHTML=renderManagerDashboard();
+  else if(view==='kb')          app.innerHTML=renderKnowledgeGate();
+  else if(view==='module')      app.innerHTML=renderModule();
+  else if(view==='decl')        app.innerHTML=renderDeclaration();
+  else if(view==='done')        app.innerHTML=renderCompletion();
+  else if(view==='docs')        app.innerHTML=renderDocsView();
+  else if(view==='docsAlerts')  app.innerHTML=renderDocsAlerts();
+  else if(view==='empDocs')     app.innerHTML=renderEmpDocsView();
 }
 
 // ── EMPLOYEE / LOCATION MANAGER DASHBOARD ─────────────────────
 function renderDashboard(){
-  if(isSysAdmin(profile))return renderManagerDashboard();
+  // SysAdmin goes to manager dashboard but with "My Docs & Induction" tab available
+  if(isSysAdmin(profile))return renderSysAdminDashboard();
   const pct=profile.progress_pct||0;
   const done=MODULES.filter(m=>moduleProgress[m.id]?.completed).length;
   const getLatestDoc=(type)=>myDocs.filter(d=>d.doc_type===type).sort((a,b)=>new Date(b.uploaded_at)-new Date(a.uploaded_at))[0];
@@ -489,7 +536,7 @@ function renderDashboard(){
     ${docAlertCount>0?`<div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:8px;padding:9px 13px;font-size:.82rem;color:var(--warning);margin-bottom:12px">⚠ ${docAlertCount} document${docAlertCount>1?'s':''} need attention — expiring soon or expired</div>`:''}
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
       ${['passport','visa','forklift_license'].map((type,idx)=>{
-        const d=[passport,visa,forklift][idx];
+        const d=[getLatestDoc('passport'),getLatestDoc('visa'),getLatestDoc('forklift_license')][idx];
         const s=d?expiryStatus(d.expiry_date):{label:'Not uploaded',cls:'s-missing',lvl:5};
         const dt=DOC_TYPES.find(t=>t.id===type);
         return`<div style="padding:12px;background:var(--surface2);border:1px solid ${s.lvl<=1?'rgba(248,113,113,.4)':s.lvl<=3?'rgba(251,191,36,.35)':'var(--border)'};border-radius:10px;cursor:pointer" onclick="view='docs';renderView()">
@@ -509,14 +556,82 @@ function renderDashboard(){
   </div></div>`;
 }
 
-// ── MANAGER DASHBOARD ─────────────────────────────────────────
+// ── SYSADMIN DASHBOARD (tabbed: Staff | My Profile) ──────────
+let adminTab='staff'; // 'staff' | 'myprofile'
+
+function renderSysAdminDashboard(){
+  if(adminTab==='myprofile')return renderSysAdminMyProfile();
+  return renderManagerDashboard();
+}
+
+function renderSysAdminMyProfile(){
+  const pct=profile.progress_pct||0;
+  const done=MODULES.filter(m=>moduleProgress[m.id]?.completed).length;
+  const getLatestDoc=(type)=>myDocs.filter(d=>d.doc_type===type).sort((a,b)=>new Date(b.uploaded_at)-new Date(a.uploaded_at))[0];
+  const docAlertCount=myDocs.filter(d=>d.expiry_date&&expiryStatus(d.expiry_date).lvl<=3).length;
+  return`<div>
+  <div class="tab-bar">
+    <button class="tab-btn" onclick="adminTab='staff';renderView()">📊 Staff Management</button>
+    <button class="tab-btn active">👤 My Profile & Documents</button>
+  </div>
+  <div style="max-width:820px">
+    <div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,rgba(0,180,216,.08),transparent)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+        <div><div style="font-size:1.4rem;font-weight:700">Welcome, ${esc(profile.full_name)}</div>
+        <div style="color:var(--muted);font-size:.83rem;margin-top:3px">${esc(profile.employee_code)} &middot; ${esc(profile.department)} &middot; ${esc(profile.position)}</div></div>
+        <span class="badge ${statusBadge(profile.completion_status)}">${fmtStatus(profile.completion_status)}</span>
+      </div>
+      <div style="margin-top:16px">
+        <div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);margin-bottom:6px"><span>Induction progress</span><strong style="color:var(--text)">${pct}% &middot; ${done}/${MODULES.length} modules</strong></div>
+        <div style="height:8px;background:var(--surface3);border-radius:999px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--primary),var(--success));transition:.4s"></div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">My Details</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;font-size:.83rem">
+        ${[['Start Date',fmtDate(profile.start_date)],['Induction Date',fmtDate(profile.induction_date)],['Location',profile.work_location],['Department',profile.department],['Position',profile.position],['Employee Code',profile.employee_code]].map(([l,v])=>`<div><div style="color:var(--muted);font-size:.72rem;margin-bottom:2px">${l}</div><div style="font-weight:500">${esc(String(v||'—'))}</div></div>`).join('')}
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin:0">My Documents</div>
+        <button class="btn btn-primary" style="font-size:.78rem" onclick="view='docs';renderView()">Manage Documents →</button>
+      </div>
+      ${docAlertCount>0?`<div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:8px;padding:9px 13px;font-size:.82rem;color:var(--warning);margin-bottom:12px">⚠ ${docAlertCount} document${docAlertCount>1?'s':''} need attention — expiring soon or expired</div>`:''}
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        ${['passport','visa','forklift_license'].map((type)=>{
+          const d=getLatestDoc(type);
+          const s=d?expiryStatus(d.expiry_date):{label:'Not uploaded',cls:'s-missing',lvl:5};
+          const dt=DOC_TYPES.find(t=>t.id===type);
+          return`<div style="padding:12px;background:var(--surface2);border:1px solid ${s.lvl<=1?'rgba(248,113,113,.4)':s.lvl<=3?'rgba(251,191,36,.35)':'var(--border)'};border-radius:10px;cursor:pointer" onclick="view='docs';renderView()">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="font-size:1.1rem">${dt.icon}</span><span class="s-dot ${s.cls}"></span></div>
+            <div style="font-size:.78rem;font-weight:600;color:var(--text);margin-bottom:2px">${dt.label}</div>
+            ${d?.doc_subtype?`<div style="font-size:.7rem;color:var(--muted)">${esc(d.doc_subtype)}</div>`:''}
+            <div style="font-size:.7rem;color:${s.lvl<=1?'var(--error)':s.lvl<=3?'var(--warning)':'var(--muted)'};margin-top:4px">${d?s.label:'Tap to upload'}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Induction</div>
+      ${profile.completion_status==='completed'
+        ?`<p style="color:var(--success);font-size:.9rem;margin-bottom:12px">✓ Induction complete. Your completion letter is ready.</p><button class="btn btn-success" onclick="printLetter()">Print Completion Letter</button>`
+        :`<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" onclick="resumeInduction()">${pct===0?'Start Induction':'Resume Induction'}</button><button class="btn btn-ghost" onclick="view='kb';renderView()">Review Knowledge Topics</button></div>`}
+    </div>
+  </div></div>`;
+}
+
+// ── MANAGER / SYSADMIN STAFF DASHBOARD ───────────────────────
 function renderManagerDashboard(){
   const rows=filteredEmployees();
   const total=allEmployees.length,completed=allEmployees.filter(e=>e.completion_status==='completed').length,inprog=allEmployees.filter(e=>e.completion_status==='in_progress').length;
   const pct=total?Math.round(completed/total*100):0;
   const urgentDocCount=allDocAlerts.filter(d=>expiryStatus(d.expiry_date).lvl<=1).length;
-  return`
-  ${isManager(profile)&&!isSysAdmin(profile)?`<div style="margin-bottom:16px"><button class="btn btn-ghost" onclick="view='dashboard';renderView()">← My Induction</button></div>`:''}
+  return`<div>
+  ${isSysAdmin(profile)?`<div class="tab-bar">
+    <button class="tab-btn active">📊 Staff Management</button>
+    <button class="tab-btn" onclick="adminTab='myprofile';renderView()">👤 My Profile & Documents</button>
+  </div>`:`<div style="margin-bottom:16px"><button class="btn btn-ghost" onclick="view='dashboard';renderView()">← My Induction</button></div>`}
   <div class="metrics">
     <div class="metric card"><div class="val">${total}</div><div class="lbl">Total Staff</div></div>
     <div class="metric card"><div class="val" style="color:var(--primary)">${pct}%</div><div class="lbl">Overall Completion</div></div>
@@ -531,9 +646,9 @@ function renderManagerDashboard(){
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
       <div class="card-title" style="margin:0">Staff Tracking</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="btn btn-ghost" onclick="exportExcel()">Export Excel</button>
+        <button class="btn btn-ghost" onclick="exportExcel()">📥 Export Excel</button>
         <button class="btn btn-warn" onclick="view='docsAlerts';renderView()">📋 Doc Alerts${allDocAlerts.length?` (${allDocAlerts.length})`:''}</button>
-        <button class="btn btn-warn" onclick="bulkPrint()">Bulk Print</button>
+        <button class="btn btn-warn" onclick="bulkPrint()">🖨 Bulk Print Letters</button>
         ${isSysAdmin(profile)?`<button class="btn btn-primary" onclick="openCreate()">+ Add Staff</button>`:''}
         ${isSysAdmin(profile)?`<button class="btn btn-ghost" onclick="openAudit()">Audit Log</button>`:''}
       </div>
@@ -545,7 +660,7 @@ function renderManagerDashboard(){
       <select onchange="filters.position=this.value;refreshTable()"><option value="">All positions</option>${POSITIONS.map(p=>`<option value="${p}" ${filters.position===p?'selected':''}>${p}</option>`).join('')}</select>
     </div>
     <div id="tblWrap">${buildTableHtml()}</div>
-  </div>`;
+  </div></div>`;
 }
 
 function buildTableHtml(){
@@ -562,8 +677,9 @@ function buildTableHtml(){
       <td><div class="actions-cell">
         <button class="btn btn-ghost" onclick="viewDetail('${e.id}')">View</button>
         <button class="btn btn-ghost" onclick="changeDept('${e.id}')">Dept</button>
+        ${isSysAdmin(profile)?`<button class="btn btn-info" style="font-size:.75rem" onclick="viewEmpDocs('${e.id}')">📄 Docs</button>`:''}
         ${isSysAdmin(profile)?`<button class="btn btn-warn" style="font-size:.75rem" onclick="openEdit('${e.id}')">⚙ Edit</button>`:''}
-        ${e.completion_status==='completed'?`<button class="btn btn-success" onclick="printLetterFor('${e.id}')">Letter</button>`:''}
+        ${e.completion_status==='completed'?`<button class="btn btn-success" onclick="printLetterFor('${e.id}')">🖨 Letter</button>`:''}
         ${isSysAdmin(profile)?`<button class="btn btn-danger" style="font-size:.75rem" onclick="deleteEmp('${e.id}')">Del</button>`:''}
       </div></td>
     </tr>`).join(''):`<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:32px">No records found.</td></tr>`}
@@ -574,16 +690,228 @@ function buildTableHtml(){
 function refreshTable(){const w=document.getElementById('tblWrap');if(w)w.innerHTML=buildTableHtml();}
 function filteredEmployees(){return allEmployees.filter(e=>(!filters.search||[e.full_name,e.employee_code,e.phone||'',e.department,e.position].join(' ').toLowerCase().includes(filters.search.toLowerCase()))&&(!filters.dept||e.department===filters.dept)&&(!filters.status||e.completion_status===filters.status)&&(!filters.position||e.position===filters.position));}
 
-// ── DOCUMENTS VIEW ────────────────────────────────────────────
+// ── SYSADMIN: VIEW EMPLOYEE DOCUMENTS ─────────────────────────
+async function viewEmpDocs(empId){
+  if(!isSysAdmin(profile)){toast('Access denied.');return;}
+  await loadEmployeeDocs(empId);
+  view='empDocs';
+  renderView();
+}
+
+function renderEmpDocsView(){
+  if(!isSysAdmin(profile)){return`<div class="card"><p style="color:var(--error)">Access denied.</p></div>`;}
+  const emp=allEmployees.find(e=>e.id===adminViewEmpId);
+  if(!emp){return`<div class="card"><p style="color:var(--muted)">Employee not found.</p><button class="btn btn-ghost" onclick="view='mgr';renderView()">← Back</button></div>`;}
+  const getLatest=(type)=>adminViewDocs.filter(d=>d.doc_type===type).sort((a,b)=>new Date(b.uploaded_at)-new Date(a.uploaded_at))[0];
+  const passport=getLatest('passport'),visa=getLatest('visa'),forklift=getLatest('forklift_license');
+  const alertDocs=adminViewDocs.filter(d=>d.expiry_date&&expiryStatus(d.expiry_date).lvl<=3).sort((a,b)=>new Date(a.expiry_date)-new Date(b.expiry_date));
+  return`<div style="max-width:960px">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+    <button class="btn btn-ghost" onclick="view='mgr';renderView()">← Staff List</button>
+    <div>
+      <div style="font-size:1.15rem;font-weight:700">Documents — ${esc(emp.full_name)}</div>
+      <div style="font-size:.78rem;color:var(--muted)">${esc(emp.employee_code)} · ${esc(emp.department)} · ${esc(emp.position)}</div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">
+      ${emp.completion_status==='completed'?`<button class="btn btn-success" onclick="printLetterFor('${emp.id}')">🖨 Print Letter</button>`:''}
+      <button class="btn btn-ghost" onclick="loadEmployeeDocs('${emp.id}').then(()=>renderView())">⟳ Refresh</button>
+    </div>
+  </div>
+  ${alertDocs.length?`<div class="card" style="margin-bottom:16px;border-color:rgba(251,191,36,.4)">
+    <div class="card-title" style="color:var(--warning)">⚠ Action Required</div>
+    <div style="display:grid;gap:7px">
+      ${alertDocs.map(d=>{const s=expiryStatus(d.expiry_date);return`<div class="alert-strip ${s.alertCls}"><span class="s-dot ${s.cls}"></span><strong>${docTypeIcon(d.doc_type)} ${docTypeLabel(d.doc_type)}</strong>${d.doc_subtype?`<span style="color:var(--muted);font-size:.8rem">${esc(d.doc_subtype)}</span>`:''}<span style="margin-left:auto;font-size:.78rem;font-weight:500">${s.label}</span><button class="btn btn-ghost" style="padding:4px 10px;font-size:.72rem" onclick="adminEditDoc('${d.id}')">Update Expiry</button></div>`;}).join('')}
+    </div>
+  </div>`:''}
+  <div class="doc-grid" style="margin-bottom:20px">
+    ${renderAdminDocCard('passport','🛂','Passport',passport,emp.id)}
+    ${renderAdminDocCard('visa','📋','Visa / Work Rights',visa,emp.id)}
+    ${renderAdminDocCard('forklift_license','🚜','Forklift License (HRWL)',forklift,emp.id)}
+  </div>
+  ${adminViewDocs.length?`<div class="card">
+    <div class="card-title">Document History</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Type</th><th>Subtype</th><th>Ref No.</th><th>Expiry</th><th>Status</th><th>File</th><th>Uploaded</th><th>Actions</th></tr></thead>
+      <tbody>${adminViewDocs.map(d=>{const s=expiryStatus(d.expiry_date);return`<tr>
+        <td><span style="font-size:1rem;margin-right:5px">${docTypeIcon(d.doc_type)}</span>${docTypeLabel(d.doc_type)}</td>
+        <td style="font-size:.8rem">${esc(d.doc_subtype||'—')}</td>
+        <td style="font-family:monospace;font-size:.78rem">${esc(d.doc_number||'—')}</td>
+        <td style="font-size:.82rem;font-weight:500;color:${s.lvl<=1?'var(--error)':s.lvl<=3?'var(--warning)':'var(--text)'}">${d.expiry_date?fmtDate(d.expiry_date):'—'}</td>
+        <td><span style="display:inline-flex;align-items:center;gap:5px"><span class="s-dot ${s.cls}"></span><span style="font-size:.74rem">${s.lvl===0?'Expired':s.lvl===1?'Critical':s.lvl<=3?'Warning':'Valid'}</span></span></td>
+        <td>${d.file_path?`<span style="color:var(--success);font-size:.78rem">✓ Attached</span>`:`<span style="color:var(--faint);font-size:.78rem">None</span>`}</td>
+        <td style="font-size:.74rem;color:var(--muted)">${new Date(d.uploaded_at).toLocaleDateString('en-AU')}</td>
+        <td><div class="actions-cell">
+          ${d.file_path?`<button class="btn btn-ghost" style="font-size:.72rem;padding:4px 9px" onclick="adminViewDocFile('${d.id}')">View</button>`:''}
+          <button class="btn btn-ghost" style="font-size:.72rem;padding:4px 9px" onclick="adminEditDoc('${d.id}')">Edit</button>
+          <button class="btn btn-danger" style="font-size:.72rem;padding:4px 9px" onclick="adminDeleteDoc('${d.id}')">Del</button>
+        </div></td>
+      </tr>`;}).join('')}</tbody>
+    </table></div>
+  </div>`:`<div class="card" style="text-align:center;padding:36px;color:var(--muted)"><div style="font-size:2rem;margin-bottom:10px">📁</div><div style="font-weight:600;color:var(--text);margin-bottom:6px">No documents uploaded yet</div><p style="font-size:.85rem">Use the cards above to upload documents for this staff member.</p></div>`}
+  </div>`;
+}
+
+function renderAdminDocCard(type,icon,label,doc,empId){
+  const dt=DOC_TYPES.find(t=>t.id===type);
+  const s=doc?expiryStatus(doc.expiry_date):{label:'Not uploaded',cls:'s-missing',alertCls:'',lvl:5};
+  const borderColor=doc?(s.lvl<=1?'rgba(248,113,113,.45)':s.lvl<=3?'rgba(251,191,36,.4)':'var(--border)'):'var(--border)';
+  return`<div class="doc-card" style="border-color:${borderColor}">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="doc-icon-wrap" style="background:${dt.bg}">${icon}</div>
+        <div><div style="font-weight:600;font-size:.92rem">${label}</div>${doc?.doc_subtype?`<div style="font-size:.72rem;color:var(--muted);margin-top:1px">${esc(doc.doc_subtype)}</div>`:''}</div>
+      </div>
+      <span class="s-dot ${s.cls}" style="width:12px;height:12px;flex-shrink:0;margin-top:4px"></span>
+    </div>
+    ${doc?`<div style="display:grid;gap:4px;font-size:.8rem">
+      ${doc.doc_number?`<div style="color:var(--muted)">Ref: <span style="color:var(--text);font-family:monospace">${esc(doc.doc_number)}</span></div>`:''}
+      ${doc.expiry_date?`<div style="color:var(--muted)">Expiry: <strong style="color:${s.lvl<=1?'var(--error)':s.lvl<=3?'var(--warning)':'var(--text)'}">${fmtDate(doc.expiry_date)}</strong></div>`:`<div style="color:var(--muted)">No expiry date recorded</div>`}
+      <div style="font-size:.75rem;margin-top:2px;color:${s.lvl<=1?'var(--error)':s.lvl<=3?'var(--warning)':'var(--muted)'};font-weight:${s.lvl<=1?600:400}">${s.label}</div>
+      ${doc.notes?`<div style="font-size:.73rem;color:var(--faint);margin-top:2px">Note: ${esc(doc.notes)}</div>`:''}
+    </div>
+    <div style="font-size:.74rem;color:${doc.file_path?'var(--success)':'var(--faint)'}">${doc.file_path?'✓ File attached':'No file attached'}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px">
+      ${doc.file_path?`<button class="btn btn-ghost" style="font-size:.75rem;padding:5px 11px" onclick="adminViewDocFile('${doc.id}')">View File</button>`:''}
+      <button class="btn btn-ghost" style="font-size:.75rem;padding:5px 11px" onclick="adminEditDoc('${doc.id}')">Edit Details</button>
+      <button class="btn btn-primary" style="font-size:.75rem;padding:5px 11px" onclick="adminUploadDoc('${type}','${empId}')">Upload New</button>
+    </div>`:`<div style="color:var(--muted);font-size:.83rem;flex:1">No document on record.</div>
+    <button class="btn btn-primary" onclick="adminUploadDoc('${type}','${empId}')">+ Upload ${label}</button>`}
+  </div>`;
+}
+
+// Admin upload doc for another employee
+function adminUploadDoc(type,empId){
+  const dt=DOC_TYPES.find(t=>t.id===type)||DOC_TYPES[0];
+  const subtypeField=type==='visa'
+    ?`<div class="field full"><label>Visa Type</label><select id="up_subtype">${VISA_TYPES.map(v=>`<option>${v}</option>`).join('')}</select></div>`
+    :type==='forklift_license'
+    ?`<div class="field full"><label>License Class</label><select id="up_subtype">${FORKLIFT_CLASSES.map(c=>`<option>${c}</option>`).join('')}</select></div>`
+    :'';
+  document.getElementById('modalRoot').innerHTML=`<div class="modal-back" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>${dt.icon} Upload ${dt.label}</h3>
+    <p style="color:var(--muted);font-size:.8rem;margin-bottom:14px">For: <strong>${allEmployees.find(e=>e.id===empId)?.full_name||'Staff Member'}</strong></p>
+    <div class="form-grid">
+      ${subtypeField}
+      <div class="field"><label>Reference / Document Number</label><input id="up_number" placeholder="Optional"></div>
+      <div class="field"><label>Expiry Date</label><input id="up_expiry" type="date"></div>
+      <div class="field full"><label>Notes (optional)</label><input id="up_notes" placeholder="e.g. renewal in progress"></div>
+      <div class="field full">
+        <label>Document File (PDF, JPG, PNG — max 10 MB)</label>
+        <div class="upload-drop" id="upload_drop" onclick="document.getElementById('up_file').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleFileDrop(event)">
+          <div style="font-size:1.4rem;margin-bottom:6px">📎</div>
+          <div>Click to choose file or drag &amp; drop</div>
+          <div style="font-size:.73rem;margin-top:4px;color:var(--faint)">PDF, JPG, PNG — max 10 MB</div>
+        </div>
+        <input type="file" id="up_file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="showChosenFile(this)">
+      </div>
+    </div>
+    <div id="up_msg" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="up_btn" onclick="adminUploadDocSave('${type}','${empId}')">Save Document</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  </div></div>`;
+}
+
+async function adminUploadDocSave(docType,empId){
+  const btn=document.getElementById('up_btn');btn.disabled=true;btn.textContent='Saving…';
+  const subtype=document.getElementById('up_subtype')?.value||null;
+  const number=document.getElementById('up_number')?.value.trim()||null;
+  const expiry=document.getElementById('up_expiry')?.value||null;
+  const notes=document.getElementById('up_notes')?.value.trim()||null;
+  const fileInput=document.getElementById('up_file');
+  const file=fileInput?.files[0]||null;
+  let filePath=null,fileName=null;
+  if(file){
+    if(file.size>10*1024*1024){showMsg('up_msg','File too large. Maximum is 10 MB.','error');btn.disabled=false;btn.textContent='Save Document';return;}
+    const ext=file.name.split('.').pop();
+    fileName=file.name;filePath=`${empId}/${docType}/${Date.now()}.${ext}`;
+    const{error:storErr}=await sb.storage.from('employee-documents').upload(filePath,file,{upsert:false,contentType:file.type});
+    if(storErr){
+      console.warn('Storage error:',storErr.message);filePath=null;fileName=null;
+      if(!confirm('File upload failed. Save document details without a file?')){btn.disabled=false;btn.textContent='Save Document';return;}
+    }
+  }
+  const{error}=await sb.from('employee_documents').insert({employee_id:empId,doc_type:docType,doc_subtype:subtype,doc_number:number,expiry_date:expiry||null,file_path:filePath,file_name:fileName,notes,uploaded_by:profile.id});
+  if(error){showMsg('up_msg','Error saving: '+error.message,'error');btn.disabled=false;btn.textContent='Save Document';return;}
+  await loadEmployeeDocs(empId);
+  await loadAllDocAlerts();
+  closeModal();toast('✓ Document saved.');renderView();
+}
+
+function adminEditDoc(docId){
+  const doc=adminViewDocs.find(d=>d.id===docId);if(!doc)return;
+  const type=doc.doc_type;
+  const subtypeField=type==='visa'
+    ?`<div class="field full"><label>Visa Type</label><select id="ed_subtype">${VISA_TYPES.map(v=>`<option value="${v}" ${doc.doc_subtype===v?'selected':''}>${v}</option>`).join('')}</select></div>`
+    :type==='forklift_license'
+    ?`<div class="field full"><label>License Class</label><select id="ed_subtype">${FORKLIFT_CLASSES.map(c=>`<option value="${c}" ${doc.doc_subtype===c?'selected':''}>${c}</option>`).join('')}</select></div>`
+    :'';
+  document.getElementById('modalRoot').innerHTML=`<div class="modal-back" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>✏️ Edit Document Details</h3>
+    <p style="color:var(--muted);font-size:.82rem;margin-bottom:16px">${docTypeIcon(type)} ${docTypeLabel(type)}</p>
+    <div class="form-grid">
+      ${subtypeField}
+      <div class="field"><label>Reference Number</label><input id="ed_number" value="${esc(doc.doc_number||'')}"></div>
+      <div class="field"><label>Expiry Date</label><input id="ed_expiry" type="date" value="${doc.expiry_date||''}"></div>
+      <div class="field full"><label>Notes</label><input id="ed_notes" value="${esc(doc.notes||'')}"></div>
+    </div>
+    <div id="ed_msg" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="adminSaveEditDoc('${docId}')">Save Changes</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  </div></div>`;
+}
+
+async function adminSaveEditDoc(docId){
+  const doc=adminViewDocs.find(d=>d.id===docId);if(!doc)return;
+  const subtype=document.getElementById('ed_subtype')?.value||null;
+  const number=document.getElementById('ed_number').value.trim()||null;
+  const expiry=document.getElementById('ed_expiry').value||null;
+  const notes=document.getElementById('ed_notes').value.trim()||null;
+  const{error}=await sb.from('employee_documents').update({doc_subtype:subtype,doc_number:number,expiry_date:expiry||null,notes}).eq('id',docId);
+  if(error){showMsg('ed_msg','Error: '+error.message,'error');return;}
+  await loadEmployeeDocs(doc.employee_id);
+  await loadAllDocAlerts();
+  closeModal();toast('Document updated.');renderView();
+}
+
+async function adminDeleteDoc(docId){
+  const doc=adminViewDocs.find(d=>d.id===docId);
+  if(!doc||!confirm(`Delete this ${docTypeLabel(doc.doc_type)} record? This cannot be undone.`))return;
+  if(doc.file_path){try{await sb.storage.from('employee-documents').remove([doc.file_path]);}catch(e){}}
+  await sb.from('employee_documents').delete().eq('id',docId);
+  await loadEmployeeDocs(doc.employee_id);
+  await loadAllDocAlerts();
+  toast('Document deleted.');renderView();
+}
+
+async function adminViewDocFile(docId){
+  const doc=adminViewDocs.find(d=>d.id===docId);
+  if(!doc?.file_path){toast('No file attached to this record.');return;}
+  try{
+    const{data,error}=await sb.storage.from('employee-documents').createSignedUrl(doc.file_path,300);
+    if(error){toast('Could not open file: '+error.message);return;}
+    window.open(data.signedUrl,'_blank');
+  }catch(e){toast('Error opening file.');}
+}
+
+// ── MY OWN DOCUMENTS VIEW (all roles including sysAdmin) ──────
 function renderDocsView(){
   const getLatest=(type)=>myDocs.filter(d=>d.doc_type===type).sort((a,b)=>new Date(b.uploaded_at)-new Date(a.uploaded_at))[0];
   const passport=getLatest('passport'),visa=getLatest('visa'),forklift=getLatest('forklift_license');
   const alertDocs=myDocs.filter(d=>d.expiry_date&&expiryStatus(d.expiry_date).lvl<=3).sort((a,b)=>new Date(a.expiry_date)-new Date(b.expiry_date));
   const visaDocs=myDocs.filter(d=>d.doc_type==='visa').sort((a,b)=>new Date(b.uploaded_at)-new Date(a.uploaded_at));
   const visaChanged=visaDocs.length>1&&visaDocs[0].doc_subtype!==visaDocs[1].doc_subtype;
+  const backBtn=isSysAdmin(profile)
+    ?`<button class="btn btn-ghost" onclick="adminTab='myprofile';view='dashboard';renderView()">← Back</button>`
+    :isManager(profile)
+    ?`<button class="btn btn-ghost" onclick="view='dashboard';renderView()">← Back</button>`
+    :`<button class="btn btn-ghost" onclick="view='dashboard';renderView()">← Back</button>`;
   return`<div style="max-width:960px">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
-    <button class="btn btn-ghost" onclick="view='dashboard';renderView()">← Back</button>
+    ${backBtn}
     <div><div style="font-size:1.15rem;font-weight:700">My Documents</div><div style="font-size:.78rem;color:var(--muted)">${esc(profile.full_name)} · ${esc(profile.employee_code)}</div></div>
     ${isManager(profile)?`<button class="btn btn-warn" style="margin-left:auto" onclick="view='docsAlerts';renderView()">⚠ Team Document Alerts</button>`:''}
   </div>
@@ -650,17 +978,19 @@ function renderDocCard(type,icon,label,doc){
   </div>`;
 }
 
-// ── DOCUMENT ALERTS VIEW ──────────────────────────────────────
+// ── DOCUMENT ALERTS VIEW (manager/sysAdmin) ───────────────────
 function renderDocsAlerts(){
   const all=allDocAlerts;
   const expired=all.filter(d=>expiryStatus(d.expiry_date).lvl===0);
   const critical=all.filter(d=>expiryStatus(d.expiry_date).lvl===1);
   const warning=all.filter(d=>[2,3].includes(expiryStatus(d.expiry_date).lvl));
+  const backTarget=isSysAdmin(profile)?`adminTab='staff';view='mgr'`:`view='mgr'`;
   return`<div style="max-width:1200px">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
-    <button class="btn btn-ghost" onclick="view='mgr';renderView()">← Manager Dashboard</button>
+    <button class="btn btn-ghost" onclick="${backTarget};renderView()">← Manager Dashboard</button>
     <div><div style="font-size:1.15rem;font-weight:700">Team Document Alerts</div><div style="font-size:.78rem;color:var(--muted)">Documents expiring within 6 months across all staff</div></div>
     <button class="btn btn-ghost" style="margin-left:auto" onclick="loadAllDocAlerts().then(()=>renderView())">⟳ Refresh</button>
+    <button class="btn btn-ghost" onclick="exportDocAlertsExcel()">📥 Export Excel</button>
   </div>
   <div class="metrics" style="margin-bottom:20px">
     <div class="metric card"><div class="val" style="color:var(--error)">${expired.length}</div><div class="lbl">Expired</div></div>
@@ -668,7 +998,7 @@ function renderDocsAlerts(){
     <div class="metric card"><div class="val" style="color:var(--warning)">${warning.length}</div><div class="lbl">Warning</div></div>
     <div class="metric card"><div class="val">${all.length}</div><div class="lbl">Total Alerts</div></div>
   </div>
-  ${all.length===0?`<div class="card" style="text-align:center;padding:48px"><div style="font-size:2.5rem;margin-bottom:14px">✅</div><div style="font-size:1.1rem;font-weight:600;margin-bottom:6px">All clear</div><p style="color:var(--muted);font-size:.85rem">No team documents are expiring within the next 6 months.</p></div>`:''}
+  ${all.length===0?`<div class="card" style="text-align:center;padding:48px"><div style="font-size:2.5rem;margin-bottom:14px">✅</div><div style="font-size:1.1rem;font-weight:600;margin-bottom:6px">All clear</div><p style="color:var(--muted);font-size:.85rem">No team documents are expiring within the next 6 months.</p>${isSysAdmin(profile)?`<p style="color:var(--faint);font-size:.75rem;margin-top:12px">If you expect to see records here, ensure the <code>employee_documents</code> table RLS policy allows sysAdmin to read all rows, or add a <code>get_document_alerts</code> SECURITY DEFINER RPC.</p>`:''}</div>`:''}
   ${expired.length?`<div class="card" style="margin-bottom:14px;border-color:rgba(248,113,113,.5)"><div class="card-title" style="color:var(--error)">🔴 Expired — Immediate Action Required</div>${renderDocAlertTable(expired)}</div>`:''}
   ${critical.length?`<div class="card" style="margin-bottom:14px;border-color:rgba(248,113,113,.35)"><div class="card-title" style="color:var(--error)">🟠 Critical — Expiring within 30 days</div>${renderDocAlertTable(critical)}</div>`:''}
   ${warning.length?`<div class="card" style="margin-bottom:14px;border-color:rgba(251,191,36,.35)"><div class="card-title" style="color:var(--warning)">🟡 Warning — Expiring within 6 months</div>${renderDocAlertTable(warning)}</div>`:''}
@@ -678,7 +1008,7 @@ function renderDocsAlerts(){
 function renderDocAlertTable(docs){
   if(!docs.length)return`<p style="color:var(--muted);font-size:.83rem;padding:8px 0">No records match this filter.</p>`;
   return`<div class="table-wrap"><table>
-    <thead><tr><th>Name</th><th>Code</th><th>Dept</th><th>Document Type</th><th>Subtype</th><th>Ref No.</th><th>Expiry Date</th><th>Status</th></tr></thead>
+    <thead><tr><th>Name</th><th>Code</th><th>Dept</th><th>Document Type</th><th>Subtype</th><th>Ref No.</th><th>Expiry Date</th><th>Status</th>${isSysAdmin(profile)?'<th>Action</th>':''}</tr></thead>
     <tbody>${docs.map(d=>{const s=expiryStatus(d.expiry_date);return`<tr>
       <td style="font-weight:500">${esc(d.full_name||'—')}</td>
       <td style="font-family:monospace;font-size:.75rem">${esc(d.employee_code||'—')}</td>
@@ -688,11 +1018,29 @@ function renderDocAlertTable(docs){
       <td style="font-family:monospace;font-size:.75rem">${esc(d.doc_number||'—')}</td>
       <td style="font-weight:600;color:${s.lvl<=1?'var(--error)':'var(--warning)'}">${fmtDate(d.expiry_date)}</td>
       <td><span style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap"><span class="s-dot ${s.cls}"></span><span style="font-size:.73rem">${s.lvl===0?'EXPIRED':s.lvl===1?'CRITICAL':s.lvl===2?'3-month':'6-month'}</span></span></td>
+      ${isSysAdmin(profile)?`<td><button class="btn btn-info" style="font-size:.72rem;padding:4px 9px" onclick="viewEmpDocs('${d.employee_id}')">Manage Docs</button></td>`:''}
     </tr>`;}).join('')}</tbody>
   </table></div>`;
 }
 
-// ── UPLOAD / EDIT / DELETE DOCS ───────────────────────────────
+// Export doc alerts to Excel
+function exportDocAlertsExcel(){
+  const rows=allDocAlerts.map(d=>{
+    const s=expiryStatus(d.expiry_date);
+    return{
+      'Name':d.full_name||'','Code':d.employee_code||'','Department':d.department||'',
+      'Document Type':docTypeLabel(d.doc_type),'Subtype':d.doc_subtype||'',
+      'Reference No':d.doc_number||'','Expiry Date':d.expiry_date?fmtDate(d.expiry_date):'',
+      'Alert Level':s.lvl===0?'EXPIRED':s.lvl===1?'Critical (<30d)':s.lvl===2?'Warning (<3mo)':'Caution (<6mo)',
+      'Days Remaining':s.days!==null?String(s.days):'N/A'
+    };
+  });
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows.length?rows:[{Message:'No alerts'}]),'Document Alerts');
+  XLSX.writeFile(wb,'pezzano-doc-alerts.xlsx');
+}
+
+// ── UPLOAD / EDIT / DELETE MY OWN DOCS ───────────────────────
 function openUploadDoc(type,existingId){
   const dt=DOC_TYPES.find(t=>t.id===type)||DOC_TYPES[0];
   const subtypeField=type==='visa'
@@ -760,7 +1108,9 @@ async function uploadDocument(docType){
   }
   const{error}=await sb.from('employee_documents').insert({employee_id:profile.id,doc_type:docType,doc_subtype:subtype,doc_number:number,expiry_date:expiry||null,file_path:filePath,file_name:fileName,notes,uploaded_by:profile.id});
   if(error){showMsg('up_msg','Error saving: '+error.message,'error');btn.disabled=false;btn.textContent='Save Document';return;}
-  await loadMyDocs();closeModal();toast('✓ Document saved successfully.');renderView();
+  await loadMyDocs();
+  if(isManager(profile))await loadAllDocAlerts();
+  closeModal();toast('✓ Document saved successfully.');renderView();
 }
 
 function openEditDoc(docId){
@@ -795,7 +1145,9 @@ async function saveEditDoc(docId){
   const notes=document.getElementById('ed_notes').value.trim()||null;
   const{error}=await sb.from('employee_documents').update({doc_subtype:subtype,doc_number:number,expiry_date:expiry||null,notes}).eq('id',docId);
   if(error){showMsg('ed_msg','Error: '+error.message,'error');return;}
-  await loadMyDocs();closeModal();toast('Document updated.');renderView();
+  await loadMyDocs();
+  if(isManager(profile))await loadAllDocAlerts();
+  closeModal();toast('Document updated.');renderView();
 }
 
 async function deleteDoc(docId){
@@ -803,7 +1155,9 @@ async function deleteDoc(docId){
   if(!doc||!confirm(`Delete this ${docTypeLabel(doc.doc_type)} record? This cannot be undone.`))return;
   if(doc.file_path){try{await sb.storage.from('employee-documents').remove([doc.file_path]);}catch(e){}}
   await sb.from('employee_documents').delete().eq('id',docId);
-  await loadMyDocs();toast('Document deleted.');renderView();
+  await loadMyDocs();
+  if(isManager(profile))await loadAllDocAlerts();
+  toast('Document deleted.');renderView();
 }
 
 async function viewDocFile(docId){
@@ -1018,9 +1372,49 @@ function bulkPrint(){
   const area=document.getElementById('printArea');area.style.display='block';area.innerHTML=done.map(buildLetter).join('<div style="page-break-after:always"></div>');window.print();area.style.display='none';
 }
 
+// ── ENHANCED EXCEL EXPORT (includes doc expiry data) ──────────
 function exportExcel(){
-  const rows=filteredEmployees().map(e=>({'Code':e.employee_code,'Name':e.full_name,'Phone':e.phone,'Dept':e.department,'Position':e.position,'Start':fmtDate(e.start_date),'Status':fmtStatus(e.completion_status),'Progress':e.progress_pct+'%','Completion':fmtDate(e.completion_date)}));
-  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows.length?rows:[{Message:'No records'}]),'Induction');XLSX.writeFile(wb,'pezzano-induction.xlsx');
+  const empRows=filteredEmployees();
+  // Build a map of latest docs per employee from allDocAlerts + all known docs
+  // We'll do a simplified version: include doc expiry info we have
+  const rows=empRows.map(e=>{
+    // Find this employee's docs in allDocAlerts (may be partial — only expiring ones)
+    const empDocs=allDocAlerts.filter(d=>d.employee_id===e.id);
+    const passport=empDocs.find(d=>d.doc_type==='passport');
+    const visa=empDocs.find(d=>d.doc_type==='visa');
+    const forklift=empDocs.find(d=>d.doc_type==='forklift_license');
+    const ps=passport?expiryStatus(passport.expiry_date):null;
+    const vs=visa?expiryStatus(visa.expiry_date):null;
+    const fs=forklift?expiryStatus(forklift.expiry_date):null;
+    return{
+      'Employee Code':e.employee_code,
+      'Full Name':e.full_name,
+      'Phone':e.phone||'',
+      'Department':e.department,
+      'Position':e.position,
+      'Start Date':fmtDate(e.start_date),
+      'Induction Status':fmtStatus(e.completion_status),
+      'Progress %':e.progress_pct+'%',
+      'Completion Date':fmtDate(e.completion_date),
+      'Passport Expiry':passport?fmtDate(passport.expiry_date):'',
+      'Passport Alert':ps?ps.label:'',
+      'Visa Type':visa?.doc_subtype||'',
+      'Visa Expiry':visa?fmtDate(visa.expiry_date):'',
+      'Visa Alert':vs?vs.label:'',
+      'Forklift Class':forklift?.doc_subtype||'',
+      'Forklift Expiry':forklift?fmtDate(forklift.expiry_date):'',
+      'Forklift Alert':fs?fs.label:''
+    };
+  });
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows.length?rows:[{Message:'No records'}]),'Induction');
+  // Second sheet: doc alerts
+  const alertRows=allDocAlerts.map(d=>{
+    const s=expiryStatus(d.expiry_date);
+    return{'Name':d.full_name||'','Code':d.employee_code||'','Dept':d.department||'','Doc Type':docTypeLabel(d.doc_type),'Subtype':d.doc_subtype||'','Ref':d.doc_number||'','Expiry':fmtDate(d.expiry_date),'Alert Level':s.lvl===0?'EXPIRED':s.lvl===1?'Critical':s.lvl<=3?'Warning':''};
+  });
+  if(alertRows.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(alertRows),'Doc Alerts');
+  XLSX.writeFile(wb,'pezzano-induction.xlsx');
 }
 
 // ── STAFF MODALS ──────────────────────────────────────────────
@@ -1031,7 +1425,11 @@ function viewDetail(id){
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.83rem;margin-bottom:16px">
     ${[['Code',e.employee_code],['Phone',e.phone],['Email',e.email||'—'],['Age',e.age],['Dept',e.department],['Position',e.position],['Location',e.work_location],['Start',fmtDate(e.start_date)],['Induction',fmtDate(e.induction_date)],['Status',fmtStatus(e.completion_status)],['Progress',e.progress_pct+'%']].map(([l,v])=>`<div><div style="color:var(--muted);font-size:.7rem">${l}</div><div style="font-weight:500;word-break:break-all">${esc(String(v||'—'))}</div></div>`).join('')}
   </div>
-  <div class="modal-actions">${e.completion_status==='completed'?`<button class="btn btn-success" onclick="printLetterFor('${e.id}');closeModal()">Print Letter</button>`:''}<button class="btn btn-ghost" onclick="closeModal()">Close</button></div>
+  <div class="modal-actions">
+    ${e.completion_status==='completed'?`<button class="btn btn-success" onclick="printLetterFor('${e.id}');closeModal()">🖨 Print Letter</button>`:''}
+    ${isSysAdmin(profile)?`<button class="btn btn-info" onclick="closeModal();viewEmpDocs('${e.id}')">📄 View Docs</button>`:''}
+    <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+  </div>
   </div></div>`;
 }
 
@@ -1092,7 +1490,6 @@ async function saveEdit(id){
       const{error:rpcErr}=await sb.rpc('admin_update_email',{p_emp_id:id,p_new_email:email});
       if(rpcErr)throw rpcErr;
     }
-    // Update role + other fields
     const{error:updErr}=await sb.from('employees').update({full_name:name,phone,age,position:pos,department:dept,role,email:email||e.email}).eq('id',id);
     if(updErr)throw updErr;
     if(e)Object.assign(e,{full_name:name,phone,age,position:pos,department:dept,role,email:emailChanged?email:e.email});
@@ -1146,14 +1543,18 @@ async function createEmployee(){
   }
   msg.style.display='block';msg.style.background='rgba(74,222,128,.1)';msg.style.color='var(--success)';
   msg.innerHTML=`✓ Staff record created!<br><br><strong>Login details:</strong><br>🔗 Portal: <strong>https://pezzano-portal.vercel.app</strong><br>📧 Email: <strong>${document.getElementById('c_email').value.trim()}</strong><br>🔑 Password: <strong>${data.employee_code}</strong>`;
-  const{data:fresh}=await sb.rpc('get_dashboard_data');allEmployees=fresh||[];refreshTable();
+  const{data:fresh}=await sb.rpc('get_dashboard_data');allEmployees=fresh||[];
+  await loadAllDocAlerts();
+  refreshTable();
 }
 
 async function deleteEmp(id){
   const e=allEmployees.find(x=>x.id===id);if(!e)return;
   if(!confirm(`Delete ${e.full_name}? This cannot be undone.`))return;
   await sb.rpc('admin_delete_employee',{p_emp_id:id});
-  allEmployees=allEmployees.filter(x=>x.id!==id);refreshTable();toast('Record deleted.');
+  allEmployees=allEmployees.filter(x=>x.id!==id);
+  await loadAllDocAlerts();
+  refreshTable();toast('Record deleted.');
 }
 
 async function openAudit(){
