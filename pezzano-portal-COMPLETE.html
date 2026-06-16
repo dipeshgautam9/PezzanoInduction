@@ -715,6 +715,14 @@ function filteredEmployees(){
 // ─────────────────────────────────────────────────────────────
 // ── DOCUMENTS VIEW (Employee) ─────────────────────────────────
 // ─────────────────────────────────────────────────────────────
+function isManager(profile){
+  return ['locationManager', 'sysAdmin'].includes(profile?.role);
+}
+
+function isSysAdmin(profile){
+  return profile?.role === 'sysAdmin';
+}
+
 function canManageConfidentialDocs(profile){
   return profile?.position === 'System Administrator';
 }
@@ -799,10 +807,6 @@ function canManageConfidentialDocs(profile){
   <div style="font-weight:600;color:var(--text);margin-bottom:6px">No documents uploaded yet</div>
   <p style="font-size:.85rem">Use the cards above to upload your passport, visa, and forklift license.</p>
 </div>`}
-
-function canManageConfidentialDocs(profile){
-  return profile?.position === 'System Administrator';
-}
 
 function renderDocCard(type, icon, label, doc){
   const dt = DOC_TYPES.find(t => t.id === type);
