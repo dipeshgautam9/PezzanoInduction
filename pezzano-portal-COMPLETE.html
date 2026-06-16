@@ -837,29 +837,14 @@ function renderDocCard(type, icon, label, doc){
 // ── MANAGER DOCUMENT ALERTS VIEW ─────────────────────────────
 // ─────────────────────────────────────────────────────────────
 function renderDocsAlerts(){
-  let docs = [...allDocAlerts];
-
-  if(docFilters.search){
-    const q = docFilters.search.toLowerCase();
-    docs = docs.filter(d =>
-      [d.full_name, d.employee_code, d.department, d.employee_position]
-        .join(' ')
-        .toLowerCase()
-        .includes(q)
-    );
-  }
-
-  if(docFilters.type){
-    docs = docs.filter(d => d.doc_type === docFilters.type);
-  }
-
+  // Apply filters
+  let docs=[...allDocAlerts];
+  if(docFilters.search)docs=docs.filter(d=>[d.full_name,d.employee_code,d.department].join(' ').toLowerCase().includes(docFilters.search.toLowerCase()));
+  if(docFilters.type)docs=docs.filter(d=>d.doc_type===docFilters.type);
   if(docFilters.level){
-    const lv = parseInt(docFilters.level, 10);
-    docs = docs.filter(d => expiryStatus(d.expiry_date).lvl === lv);
+    const lv=parseInt(docFilters.level);
+    docs=docs.filter(d=>expiryStatus(d.expiry_date).lvl===lv);
   }
-
-  // render docs here...
-}
 
   const all=allDocAlerts;
   const expired  = all.filter(d=>expiryStatus(d.expiry_date).lvl===0);
