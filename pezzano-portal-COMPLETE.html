@@ -737,7 +737,7 @@ function renderDocsView(){
       <div style="font-size:1.15rem;font-weight:700">My Documents</div>
       <div style="font-size:.78rem;color:var(--muted)">${esc(profile.full_name)} · ${esc(profile.employee_code)}</div>
     </div>
-    ${isManager(profile)?`<button class="btn btn-warn" style="margin-left:auto" onclick="view='docsAlerts';renderView()">⚠ Team Document Alerts</button>`:''}
+   ${canManageConfidentialDocs(profile)?`<button class="btn btn-warn" style="margin-left:auto" onclick="view='docsAlerts';renderView()">⚠ Team Document Alerts</button>`:''}
   </div>
 
   ${alertDocs.length?`<div class="card" style="margin-bottom:16px;border-color:rgba(251,191,36,.4)">
@@ -797,38 +797,46 @@ function renderDocsView(){
 }
 
 function renderDocCard(type, icon, label, doc){
-  const dt=DOC_TYPES.find(t=>t.id===type);
-  const s=doc?expiryStatus(doc.expiry_date):{label:'Not uploaded',cls:'s-missing',alertCls:'',lvl:5};
-  const borderColor=doc?(s.lvl<=1?'rgba(248,113,113,.45)':s.lvl<=3?'rgba(251,191,36,.4)':'var(--border)'):'var(--border)';
-  return`<div class="doc-card" style="border-color:${borderColor}">
+  const dt = DOC_TYPES.find(t => t.id === type);
+  const s = doc ? expiryStatus(doc.expiry_date) : { label:'Not uploaded', cls:'s-missing', alertCls:'', lvl:5 };
+  const borderColor = doc ? (s.lvl<=1 ? 'rgba(248,113,113,.45)' : s.lvl<=3 ? 'rgba(251,191,36,.4)' : 'var(--border)') : 'var(--border)';
+  const isOwner = doc && doc.employee_id === profile.id;
+  const canEditDoc = isOwner || canManageConfidentialDocs(profile);
+
+  return `<div class="doc-card" style="border-color:${borderColor}">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
       <div style="display:flex;align-items:center;gap:10px">
         <div class="doc-icon-wrap" style="background:${dt.bg}">${icon}</div>
         <div>
           <div style="font-weight:600;font-size:.92rem">${label}</div>
-          ${doc?.doc_subtype?`<div style="font-size:.72rem;color:var(--muted);margin-top:1px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(doc.doc_subtype)}</div>`:''}
+          ${doc?.doc_subtype ? `<div style="font-size:.72rem;color:var(--muted);margin-top:1px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(doc.doc_subtype)}</div>` : ''}
         </div>
       </div>
       <span class="s-dot ${s.cls}" style="width:12px;height:12px;flex-shrink:0;margin-top:4px"></span>
     </div>
-    ${doc?`
+
+    ${doc ? `
       <div style="display:grid;gap:4px;font-size:.8rem">
-        ${doc.doc_number?`<div style="color:var(--muted)">Ref: <span style="color:var(--text);font-family:monospace">${esc(doc.doc_number)}</span></div>`:''}
+        ${doc.doc_number ? `<div style="color:var(--muted)">Ref: <span style="color:var(--text);font-family:monospace">${esc(doc.doc_number)}</span></div>` : ''}
         ${doc.expiry_date
-          ?`<div style="color:var(--muted)">Expiry: <strong style="color:${s.lvl<=1?'var(--error)':s.lvl<=3?'var(--warning)':'var(--text)'}">${fmtDate(doc.expiry_date)}</strong></div>`
-          :`<div style="color:var(--muted)">No expiry date recorded</div>`}
+          ? `<div style="color:var(--muted)">Expiry: <strong style="color:${s.lvl<=1?'var(--error)':s.lvl<=3?'var(--warning)':'var(--text)'}">${fmtDate(doc.expiry_date)}</strong></div>`
+          : `<div style="color:var(--muted)">No expiry date recorded</div>`}
         <div style="font-size:.75rem;margin-top:2px;color:${s.lvl<=1?'var(--error)':s.lvl<=3?'var(--warning)':'var(--muted)'};font-weight:${s.lvl<=1?600:400}">${s.label}</div>
-        ${doc.notes?`<div style="font-size:.73rem;color:var(--faint);margin-top:2px">Note: ${esc(doc.notes)}</div>`:''}
+        ${doc.notes ? `<div style="font-size:.73rem;color:var(--faint);margin-top:2px">Note: ${esc(doc.notes)}</div>` : ''}
       </div>
-      <div style="font-size:.74rem;color:${doc.file_path?'var(--success)':'var(--faint)'}">${doc.file_path?'✓ File attached':'No file attached'}</div>
+
+      <div style="font-size:.74rem;color:${doc.file_path ? 'var(--success)' : 'var(--faint)'}">${doc.file_path ? '✓ File attached' : 'No file attached'}</div>
+
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px">
-        ${doc.file_path?`<button class="btn btn-ghost" style="font-size:.75rem;padding:5px 11px" onclick="viewDocFile('${doc.id}')">View File</button>`:''}
-        <button class="btn btn-ghost" style="font-size:.75rem;padding:5px 11px" onclick="openEditDoc('${doc.id}')">Edit Details</button>
-        <button class="btn btn-primary" style="font-size:.75rem;padding:5px 11px" onclick="openUploadDoc('${type}',null)">Upload New</button>
+        ${doc.file_path && canEditDoc ? `<button class="btn btn-ghost" style="font-size:.75rem;padding:5px 11px" onclick="viewDocFile('${doc.id}')">View File</button>` : ''}
+        ${canEditDoc ? `<button class="btn btn-ghost" style="font-size:.75rem;padding:5px 11px" onclick="openEditDoc('${doc.id}')">Edit Details</button>` : ''}
+        ${canEditDoc ? `<button class="btn btn-primary" style="font-size:.75rem;padding:5px 11px" onclick="openUploadDoc('${type}',null)">Upload New</button>` : ''}
       </div>
-    `:`
+    ` : `
       <div style="color:var(--muted);font-size:.83rem;flex:1">No document on record.</div>
-      <button class="btn btn-primary" onclick="openUploadDoc('${type}',null)">+ Upload ${label}</button>
+      ${canManageConfidentialDocs(profile)
+        ? `<button class="btn btn-primary" onclick="openUploadDoc('${type}',null)">+ Upload ${label}</button>`
+        : `<button class="btn btn-primary" onclick="openUploadDoc('${type}',null)">+ Upload ${label}</button>`}
     `}
   </div>`;
 }
