@@ -17,7 +17,6 @@
 html{scroll-behavior:smooth}
 body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
 .hidden{display:none!important}
-/* HEADER */
 .app-header{position:sticky;top:0;z-index:40;background:rgba(15,17,23,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px}
 .header-inner{max-width:1400px;margin:0 auto;height:60px;display:flex;align-items:center;justify-content:space-between;gap:16px}
 .brand{display:flex;align-items:center;gap:10px}
@@ -27,12 +26,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .user-chip{display:flex;align-items:center;gap:7px;padding:5px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;font-size:.78rem}
 .user-dot{width:7px;height:7px;border-radius:50%;background:var(--success)}
-/* PAGE */
 .page{max-width:1400px;margin:0 auto;padding:24px}
-/* CARDS */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px}
 .card-title{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:12px}
-/* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:none;border-radius:8px;font-size:.82rem;font-weight:500;cursor:pointer;transition:.15s;white-space:nowrap}
 .btn:hover{opacity:.85;transform:translateY(-1px)}
 .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
@@ -41,7 +37,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .btn-warn{background:rgba(251,191,36,.12);color:var(--warning);border:1px solid rgba(251,191,36,.2)}
 .btn-danger{background:rgba(248,113,113,.12);color:var(--error);border:1px solid rgba(248,113,113,.2)}
 .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
-/* LOGIN */
 .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at 20% 50%,rgba(0,180,216,.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(74,222,128,.04) 0%,transparent 50%)}
 .login-box{width:100%;max-width:420px}
 .logo-row{text-align:center;margin-bottom:28px}
@@ -62,17 +57,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .msg.success{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.2);color:var(--success)}
 .spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle}
 @keyframes spin{to{transform:rotate(360deg)}}
-/* METRICS */
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
 .metric{padding:18px 20px}
 .metric .val{font-size:1.9rem;font-weight:700;letter-spacing:-.03em;line-height:1}
 .metric .lbl{font-size:.75rem;color:var(--muted);margin-top:4px}
-/* BADGES */
 .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:.72rem;font-weight:600}
 .badge-pending{background:rgba(139,146,165,.12);color:var(--muted)}
 .badge-progress{background:rgba(251,191,36,.12);color:var(--warning)}
 .badge-completed{background:rgba(74,222,128,.12);color:var(--success)}
-/* TABLE */
 .table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);margin-top:14px}
 table{width:100%;border-collapse:collapse;font-size:.82rem}
 thead th{padding:10px 12px;background:var(--surface2);color:var(--muted);font-weight:500;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
@@ -80,38 +72,31 @@ tbody td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:
 tbody tr:last-child td{border-bottom:none}
 tbody tr:hover{background:var(--surface2)}
 .actions-cell{display:flex;gap:5px;flex-wrap:wrap}
-/* PROGRESS */
 .prog-bar{height:5px;background:var(--surface3);border-radius:999px;overflow:hidden;width:80px;display:inline-block;vertical-align:middle;margin-right:6px}
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--success))}
-/* FILTERS */
 .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
 .filters input,.filters select{padding:7px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.82rem;outline:none;font-family:var(--font)}
 .filters input:focus,.filters select:focus{border-color:var(--primary)}
-/* MODAL */
 .modal-back{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:540px;width:100%;max-height:90vh;overflow-y:auto}
 .modal h3{font-size:1.05rem;margin-bottom:16px}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .form-grid .full{grid-column:1/-1}
 .modal-actions{display:flex;gap:8px;margin-top:20px;justify-content:flex-end}
-/* TOAST */
 #toast{position:fixed;bottom:20px;right:20px;background:#1a2535;border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-size:.83rem;z-index:200;opacity:0;transform:translateY(8px);transition:.3s;pointer-events:none}
 #toast.show{opacity:1;transform:translateY(0)}
-/* KNOWLEDGE */
 .kb-grid{display:grid;grid-template-columns:220px 1fr;gap:16px}
 .kb-nav{display:grid;gap:6px}
 .kb-btn{padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;text-align:left;cursor:pointer;transition:.15s;font-size:.82rem;color:var(--text);font-family:var(--font)}
 .kb-btn:hover{border-color:var(--primary)}
 .kb-btn.active{background:rgba(0,180,216,.1);border-color:var(--primary);color:var(--primary)}
 .kb-btn.done{background:rgba(74,222,128,.07);border-color:rgba(74,222,128,.25);color:var(--success)}
-/* MODULES */
 .module-list{display:grid;gap:6px}
 .mod-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;font-size:.83rem;cursor:pointer;transition:.15s}
 .mod-row:hover{border-color:var(--primary)}
 .mod-row.active{border-color:var(--primary);background:rgba(0,180,216,.07)}
 .mod-row.done{border-color:rgba(74,222,128,.3);background:rgba(74,222,128,.05)}
 .mod-row.locked{opacity:.4;cursor:not-allowed}
-/* QUIZ */
 .q-text{font-size:.95rem;font-weight:500;margin-bottom:16px;line-height:1.5}
 .options{display:grid;gap:8px}
 .opt{padding:11px 14px;background:var(--surface3);border:1px solid var(--border);border-radius:8px;text-align:left;cursor:pointer;font-size:.85rem;transition:.15s;color:var(--text);font-family:var(--font)}
@@ -124,28 +109,25 @@ tbody tr:hover{background:var(--surface2)}
 .feedback.bad{background:rgba(248,113,113,.1);color:var(--error)}
 .explain{background:rgba(251,191,36,.08);color:var(--warning);margin-top:8px;padding:10px 14px;border-radius:8px;font-size:.82rem;display:none}
 .explain.show{display:block}
-/* ─── DOCUMENTS ─────────────────────────────────────────── */
 .doc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
 .doc-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;transition:.18s}
 .doc-card:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.25)}
 .s-dot{width:11px;height:11px;border-radius:50%;display:inline-block;flex-shrink:0;margin-top:2px}
-.s-valid    {background:var(--success)}
-.s-warn     {background:var(--warning)}
-.s-critical {background:var(--error);box-shadow:0 0 6px rgba(248,113,113,.5)}
-.s-expired  {background:#ff3b3b;box-shadow:0 0 8px rgba(255,59,59,.6);animation:pulse 1.5s ease infinite}
-.s-missing  {background:var(--faint)}
+.s-valid{background:var(--success)}
+.s-warn{background:var(--warning)}
+.s-critical{background:var(--error);box-shadow:0 0 6px rgba(248,113,113,.5)}
+.s-expired{background:#ff3b3b;box-shadow:0 0 8px rgba(255,59,59,.6);animation:pulse 1.5s ease infinite}
+.s-missing{background:var(--faint)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 .doc-icon-wrap{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:1.3rem;flex-shrink:0}
 .alert-strip{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:9px;border:1px solid;font-size:.82rem;flex-wrap:wrap}
-.al-expired {border-color:rgba(248,113,113,.45);background:rgba(248,113,113,.08)}
-.al-critical{border-color:rgba(248,113,113,.3) ;background:rgba(248,113,113,.05)}
-.al-warn    {border-color:rgba(251,191,36,.35) ;background:rgba(251,191,36,.07)}
-.al-caution {border-color:rgba(251,191,36,.2)  ;background:rgba(251,191,36,.04)}
+.al-expired{border-color:rgba(248,113,113,.45);background:rgba(248,113,113,.08)}
+.al-critical{border-color:rgba(248,113,113,.3);background:rgba(248,113,113,.05)}
+.al-warn{border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.07)}
+.al-caution{border-color:rgba(251,191,36,.2);background:rgba(251,191,36,.04)}
 .upload-drop{border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:.2s;color:var(--muted);font-size:.85rem;line-height:1.6}
 .upload-drop:hover,.upload-drop.dragover{border-color:var(--primary);color:var(--primary);background:rgba(0,180,216,.04)}
 .upload-drop.file-chosen{border-color:var(--success);background:rgba(74,222,128,.06);color:var(--success)}
-.visa-changed{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.25);border-radius:8px;padding:8px 12px;font-size:.78rem;color:var(--warning);margin-top:4px}
-/* PRINT */
 @media print{
   @page{margin:0;size:A4 portrait}
   html,body{margin:0;padding:0;overflow:hidden}
@@ -163,14 +145,12 @@ tbody tr:hover{background:var(--surface2)}
 .letter-sigs{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:18px}
 .sig-line{border-top:1px solid #333;padding-top:5px;font-size:.82rem}
 .sig-block p{font-weight:600;margin-bottom:32px;font-size:.85rem}
-/* RESPONSIVE */
 @media(max-width:900px){.metrics{grid-template-columns:1fr 1fr}.kb-grid{grid-template-columns:1fr}}
 @media(max-width:600px){.metrics{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
 <div id="loginScreen" class="login-wrap">
   <div class="login-box">
     <div class="logo-row">
@@ -184,18 +164,14 @@ tbody tr:hover{background:var(--surface2)}
         <div class="field"><label>Password</label><input id="signin-pass" type="password" placeholder="Enter your password" autocomplete="current-password"/></div>
         <button class="login-btn" id="signin-btn" onclick="doSignIn()">Sign In</button>
         <div class="msg" id="signin-msg"></div>
-        <p style="text-align:center;margin-top:14px;font-size:.82rem">
-          <a href="#" onclick="showForgot();return false;" style="color:var(--primary)">Forgot your password?</a>
-        </p>
+        <p style="text-align:center;margin-top:14px;font-size:.82rem"><a href="#" onclick="showForgot();return false;" style="color:var(--primary)">Forgot your password?</a></p>
       </div>
       <div id="panel-forgot" style="display:none">
         <p style="color:var(--muted);font-size:.85rem;margin-bottom:16px">Enter your email and we will send you a reset link.</p>
         <div class="field"><label>Email Address</label><input id="forgot-email" type="email" placeholder="your@email.com"/></div>
         <button class="login-btn" id="forgot-btn" onclick="doForgotPassword()">Send Reset Link</button>
         <div class="msg" id="forgot-msg"></div>
-        <p style="text-align:center;margin-top:14px;font-size:.82rem">
-          <a href="#" onclick="showSignIn();return false;" style="color:var(--primary)">&larr; Back to Sign In</a>
-        </p>
+        <p style="text-align:center;margin-top:14px;font-size:.82rem"><a href="#" onclick="showSignIn();return false;" style="color:var(--primary)">&larr; Back to Sign In</a></p>
       </div>
       <div id="panel-reset" style="display:none">
         <p style="color:var(--muted);font-size:.85rem;margin-bottom:16px">Enter your new password below.</p>
@@ -205,13 +181,10 @@ tbody tr:hover{background:var(--surface2)}
         <div class="msg" id="reset-msg"></div>
       </div>
     </div>
-    <p style="text-align:center;margin-top:16px;font-size:.75rem;color:var(--muted)">
-      Contact your System Administrator if you need help signing in.
-    </p>
+    <p style="text-align:center;margin-top:16px;font-size:.75rem;color:var(--muted)">Contact your System Administrator if you need help signing in.</p>
   </div>
 </div>
 
-<!-- APP SCREEN -->
 <div id="appScreen" class="hidden">
   <header class="app-header">
     <div class="header-inner">
@@ -232,19 +205,16 @@ tbody tr:hover{background:var(--surface2)}
 </div>
 
 <script>
-// ── SUPABASE CONFIG ───────────────────────────────────────────
-const SUPABASE_URL      = 'https://jookdsjvbticdgvxagyt.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_1emkeuRvXdsF6S-yyxcUeQ_BdUBJ5PF';
-const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { autoRefreshToken:true, persistSession:true, detectSessionInUrl:true }
-});
+// ── SUPABASE ──────────────────────────────────────────────────
+const SUPABASE_URL='https://jookdsjvbticdgvxagyt.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable_1emkeuRvXdsF6S-yyxcUeQ_BdUBJ5PF';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
 
-// ── STATIC DATA ───────────────────────────────────────────────
-const DEPARTMENTS = ['Floor Morning','Processing','Meat','Logistics','Admin','Others'];
-const POSITIONS   = ['Employee','Supervisor','Logistics Driver','Location Manager','System Administrator'];
-const COMPANY     = { name:'Pezzano Enterprises Pty Ltd', address:'Unit 12 Purdy Pl, Canning Vale WA 6155', cert:'24/7 HACCP Certified' };
-const DECLARATION_POINTS = [
+// ── CONSTANTS ─────────────────────────────────────────────────
+const DEPARTMENTS=['Floor Morning','Processing','Meat','Logistics','Admin','Others'];
+const POSITIONS=['Employee','Supervisor','Logistics Driver','Location Manager','System Administrator'];
+const COMPANY={name:'Pezzano Enterprises Pty Ltd',address:'Unit 12 Purdy Pl, Canning Vale WA 6155',cert:'24/7 HACCP Certified'};
+const DECLARATION_POINTS=[
   'I confirm I have read and understood the full content of the Pezzano Enterprises Warehouse Staff Induction Manual.',
   'I understand my rights and obligations under the WHS Act 2020 WA.',
   'I agree to comply with all safety rules, food safety standards, and waste management procedures.',
@@ -252,39 +222,15 @@ const DECLARATION_POINTS = [
   'I have had the opportunity to ask questions and all my questions have been answered satisfactorily.'
 ];
 
-// ── DOCUMENT CONSTANTS ────────────────────────────────────────
-const DOC_TYPES = [
-  {id:'passport',         label:'Passport',               icon:'🛂', bg:'rgba(0,180,216,.12)'},
-  {id:'visa',             label:'Visa / Work Rights',     icon:'📋', bg:'rgba(74,222,128,.1)'},
-  {id:'forklift_license', label:'Forklift License (HRWL)',icon:'🚜', bg:'rgba(251,191,36,.1)'}
+const DOC_TYPES=[
+  {id:'passport',label:'Passport',icon:'🛂',bg:'rgba(0,180,216,.12)'},
+  {id:'visa',label:'Visa / Work Rights',icon:'📋',bg:'rgba(74,222,128,.1)'},
+  {id:'forklift_license',label:'Forklift License (HRWL)',icon:'🚜',bg:'rgba(251,191,36,.1)'}
 ];
+const VISA_TYPES=['482 – Skills in Demand (Temporary)','500 – Student Visa','485 – Temporary Graduate (TR)','417 – Working Holiday','462 – Work and Holiday','820/801 – Partner Visa','186 – Employer Nomination Scheme','189 – Skilled Independent','190 – Skilled Nominated','Permanent Resident (PR)','Australian Citizen (no expiry)','Other'];
+const FORKLIFT_CLASSES=['LF – Sit-on Counterbalance','LO – Order Picking (Low Level)','LP – Order Picking (High Level)','WP – Walkie Stacker / Reach','Multi-class (LF + LO)','Other'];
 
-const VISA_TYPES = [
-  '482 – Skills in Demand (Temporary)',
-  '500 – Student Visa',
-  '485 – Temporary Graduate (TR)',
-  '417 – Working Holiday',
-  '462 – Work and Holiday',
-  '820/801 – Partner Visa',
-  '186 – Employer Nomination Scheme',
-  '189 – Skilled Independent',
-  '190 – Skilled Nominated',
-  'Permanent Resident (PR)',
-  'Australian Citizen (no expiry)',
-  'Other'
-];
-
-const FORKLIFT_CLASSES = [
-  'LF – Sit-on Counterbalance',
-  'LO – Order Picking (Low Level)',
-  'LP – Order Picking (High Level)',
-  'WP – Walkie Stacker / Reach',
-  'Multi-class (LF + LO)',
-  'Other'
-];
-
-// ── KNOWLEDGE TOPICS ──────────────────────────────────────────
-const KNOWLEDGE_TOPICS = [
+const KNOWLEDGE_TOPICS=[
   {id:'welcome',title:'Welcome & Business Overview',cat:'About',
    summary:"Pezzano Enterprises is Perth's largest wholesale fruit and vegetables supplier, established in 1956.",
    points:["Pezzano Enterprises was established in 1956 and operates from Canning Vale, Perth WA. They serve over 1,000 establishments including restaurants, hotels, butcher shops, and supermarkets.","The company supplies premium fruits, vegetables, core juice, seafood, meat, dairy, and specialty items.","Core values: delivering quality fresh produce at competitive prices with reliable 7-day delivery while supporting local WA growers."],
@@ -314,7 +260,7 @@ const KNOWLEDGE_TOPICS = [
    summary:'Fire extinguisher types, PASS method, and evacuation procedures.',
    points:['Know the location of all fire extinguishers and exits in your work area.','PASS method: Pull the pin, Aim at the base of the fire, Squeeze the handle, Sweep side to side.','Extinguisher types: Water (Class A), CO2 (electrical), Dry powder (multi-purpose A, B, C).','Raise the alarm if you discover a fire. Evacuate using nearest safe exit. Do not use lifts.','Never re-enter a burning building. Close doors behind you to slow fire spread.'],
    facts:['PASS: Pull, Aim, Squeeze, Sweep','Emergency: 000','CO2 or dry powder for electrical fires — never water','Assembly point: front car park','Fire equipment access must remain clear'],
-   videos:[{title:'Fire Extinguisher Training — PASS Method 2023',embed:'https://www.youtube-nocookie.com/embed/yodLMfOZNvA'}]},
+   videos:[{title:'Fire Extinguisher Training — PASS Method',embed:'https://www.youtube-nocookie.com/embed/yodLMfOZNvA'}]},
   {id:'haccp',title:'Cold Chain & HACCP',cat:'Food Safety',
    summary:'Temperature control, FIFO rotation, hygiene standards, and cold-room safety.',
    points:['Pezzano operates under HACCP certification. All perishable goods must stay in safe temperature ranges.','FIFO (First In First Out) must always be used. Label all products clearly with receipt date.','Cross-contamination prevention: store different products separately. Clean all surfaces regularly.','Cold room work: wear thermal PPE. Know emergency door release. Never enter alone — buddy system.','Wash hands before handling food. Hair net required. No jewellery in food zones.'],
@@ -332,7 +278,6 @@ const KNOWLEDGE_TOPICS = [
    videos:[{title:'Warehouse Processes and Procedures',embed:'https://www.youtube-nocookie.com/embed/ZOL3uYZif6o'}]}
 ];
 
-// ── MODULES (abbreviated — same as original) ─────────────────
 function q(question,opts,a,why){return{q:question,opts,a,why};}
 const MODULES=[
   {id:'generalRules',title:'General Rules',icon:'📍',content:['Site speed limit 10 km/h. Sign in and out every shift.','Use pedestrian walkways, keep exits and aisles clear.','Only authorised persons may enter operational and cold storage areas.'],questions:[q('What must every worker do at the start and end of each shift?',['Sign in and sign out','Only text the supervisor','Nothing if rostered','Sign out only if leaving early'],0,'Workers must sign in and out every shift.'),q('What is the site speed limit?',['5 km/h','8 km/h','10 km/h','15 km/h'],2,'The site speed limit is 10 km/h.'),q('Where must pedestrians walk?',['Anywhere forklifts are not moving','Within marked pedestrian walkways','Across loading docks','Through racking aisles'],1,'Pedestrian walkways must be used at all times.'),q('Where can eating and drinking occur?',['On the warehouse floor','In the cold room','At the dock','In designated break areas only'],3,'Food and drink are restricted to designated break areas.'),q('What should you do if an emergency exit is blocked?',['Ignore it','Move or report the obstruction immediately','Leave it for night shift','Stack boxes beside it'],1,'Emergency exits must stay clear at all times.'),q('Who may enter cold storage and operational areas?',['Any employee','Authorised persons only','Visitors with a buddy','Anyone during day shift'],1,'Only authorised persons may enter these areas.'),q('What must visitors always do on site?',['Sign in at reception only','Walk wherever they like','Be escorted by an authorised person','Wait at the entrance'],2,'Visitors must be escorted at all times.'),q('What should you do when you notice a hazard?',['Walk past it','Report it to your supervisor immediately','Fix it yourself without telling anyone','Wait until end of shift'],1,'All hazards must be reported immediately to a supervisor.'),q('When is your ID required to be worn?',['Only for inspections','At all times on the warehouse floor','Only when management is present','Never'],1,'ID must be worn at all times on the warehouse floor.'),q('What is the correct action if you see someone working unsafely?',['Say nothing','Report it to your supervisor','Join in if it looks faster','Wait and see if anything happens'],1,'Unsafe behaviour must be reported to a supervisor immediately.')]},
@@ -340,31 +285,22 @@ const MODULES=[
   {id:'emergency',title:'Emergency & Chemicals',icon:'🚨',content:['DRSABCD: Danger, Response, Send, Airway, Breathing, CPR, Defibrillator.','Read the SDS before using any chemical and never mix chemicals.','Major spills require evacuation and immediate supervisor notification.'],questions:[q('What does D in DRSABCD mean?',['Decision','Danger','Doctor','Defence'],1,'Check for Danger first before approaching anyone.'),q('What is the emergency phone number?',['13 11 26','1300 307 877','000','08 9456 3677'],2,'000 is the Australian emergency number.'),q('What to do when the evacuation alarm sounds?',['Finish your task','Stop work and leave by nearest safe exit','Look for your bag','Wait for a text'],1,'Stop work and evacuate immediately using the nearest safe exit.'),q('Where is the assembly point?',['Lunch room','Front car park','Back dock','Manager office'],1,'The front car park is the designated assembly point.'),q('Can chemicals be poured down drains?',['Yes if diluted','No, never','Only sanitisers','Only at night'],1,'Pouring chemicals down drains is illegal and environmentally harmful.'),q('What must you read before handling any chemical?',['The product label only','The Safety Data Sheet (SDS)','The price list','The delivery docket'],1,'The SDS must be read before handling any chemical.'),q('What does the C in DRSABCD stand for?',['Call for help','Check the scene','CPR','Clear the area'],2,'C stands for CPR — Cardiopulmonary Resuscitation.'),q('Who is authorised to handle chemicals on site?',['Any employee','Authorised and trained staff only','Supervisors only','Anyone with gloves'],1,'Only authorised and trained staff may handle chemicals.'),q('What should you do if a large chemical spill occurs?',['Mop it up alone','Evacuate the area and notify your supervisor immediately','Ignore it if it smells okay','Pour water on it'],1,'Large spills require evacuation and immediate supervisor notification.'),q('Where must chemicals be stored?',['Near the food produce for easy access','In a designated storage area completely separate from food','In the lunchroom','In the loading dock'],1,'Chemicals must be stored in a designated area completely separate from food produce.')]},
   {id:'manual',title:'Manual Handling',icon:'📦',content:['Plan the lift, keep the load close, and avoid twisting.','Team lift or use mechanical assistance for heavier or awkward loads.','Report discomfort early and rotate repetitive tasks.'],questions:[q('What is the first step before lifting anything?',['Lift quickly','Plan the lift, path, and destination','Twist and test the weight','Ask someone to guess the weight'],1,'Always plan the lift, path, and destination before touching the load.'),q('What should stay straight during a lift?',['Arms','Back','Fingers','Neck only'],1,'Keep your back straight and core braced throughout the lift.'),q('What must be used for loads 25 kg or more?',['Back brace only','Mechanical lifting equipment','Faster lifting technique','One strong person'],1,'Mechanical equipment is mandatory for loads of 25 kg and above.'),q('When should discomfort be reported?',['At year end','Early, as soon as noticed','Only if severe','After sick leave'],1,'Early reporting helps prevent minor discomfort becoming serious injury.'),q('Where should the load be kept while lifting?',['At arm length','Close to your body at waist height','Above shoulder height','On one hip'],1,'Loads should be kept close to reduce strain on the back.'),q('At what weight is a team lift recommended?',['Over 10 kg','16 to 25 kg','Over 30 kg','Over 40 kg'],1,'Team lifting is recommended for loads between 16 and 25 kg.'),q('What should you NOT do when lifting a load?',['Keep feet apart','Bend hips and knees','Twist or lean sideways','Keep load close'],2,'Twisting or leaning sideways while lifting causes back injuries.'),q('What should you do if a load is too awkward to lift alone?',['Try your best alone','Ask for help or use a mechanical aid','Drag it along the floor','Throw it to the destination'],1,'Always ask for help or use a mechanical aid for awkward loads.'),q('How can repetitive strain injury be reduced?',['Work faster to finish sooner','Rotate tasks and take micro-breaks','Ignore the discomfort','Stretch only at home'],1,'Rotating tasks and taking micro-breaks reduces repetitive strain.'),q('What is the purpose of planning a lift?',['To look professional','To reduce injury risk by preparing before lifting','To slow down work','To impress the supervisor'],1,'Planning reduces the risk of injury by preparing the body and path before lifting.')]},
   {id:'forklift',title:'Forklift Safety',icon:'🚜',content:['Only licensed operators with a current HRWL may operate forklifts.','Pedestrians must stay out of forklift zones and make eye contact before crossing.','Travel with forks low, use horns at intersections, park safely.'],questions:[q('Who may operate a forklift on site?',['Any experienced worker','Only a licensed operator with current HRWL','Any supervisor','Visitors under instruction'],1,'Only licensed operators with a current HRWL may operate forklifts.'),q('What should pedestrians do before crossing a forklift path?',['Run across quickly','Make eye contact with the operator','Wave from behind','Assume they are seen'],1,'Eye contact confirms the operator is aware of the pedestrian.'),q('What must happen if a forklift is faulty?',['Keep using it slowly','Tag it out and report it immediately','Let another shift deal with it','Park it without reporting'],1,'Faulty forklifts must be tagged out and reported — never operated.'),q('How should forks be positioned while travelling?',['At shoulder height','Low, about 150-300 mm off the ground','Touching the ground','Raised above the load'],1,'Forks should travel low for stability and safety.'),q('How should a forklift be parked?',['Forks up, engine running','Forks down, brakes on, engine off, keys removed','Anywhere convenient','Blocking an aisle is fine if quick'],1,'Safe parking: forks fully down, brake on, engine off, keys removed.'),q('What is the speed limit in pedestrian and cold room zones?',['10 km/h','5 km/h','15 km/h','No limit'],1,'The speed limit in pedestrian and cold room zones is 5 km/h.'),q('What must be completed before operating a forklift each day?',['Nothing if it worked yesterday','A pre-start inspection and daily log','A phone call to the manager','A warmup drive'],1,'A pre-start inspection and daily log must be completed before every operation.'),q('Can a forklift carry passengers?',['Yes if they hold on','No passengers are permitted','Yes on the forks','Only supervisors'],1,'No passengers are permitted on forklifts under any circumstances.'),q('What should you never do around raised forks?',['Walk past them slowly','Walk or stand under raised forks','Use the horn','Lower them before parking'],1,'Never walk or stand under raised forks — they can fall without warning.'),q('What must a forklift operator do at every intersection?',['Speed up to clear it quickly','Sound the horn and proceed cautiously','Flash the lights only','Stop and get out'],1,'The horn must be sounded at every intersection and blind spot.')]},
-  {id:'fire',title:'Fire Safety',icon:'🔥',content:['Know the extinguisher types and what they are used for.','PASS: Pull, Aim, Squeeze, Sweep.','If in doubt, evacuate and raise the alarm.'],questions:[q('What does P in PASS stand for?',['Protect','Pull the pin','Push the handle','Pause'],1,'P = Pull the safety pin from the extinguisher.'),q('Where should you aim the extinguisher?',['Top of the flames','Base of the fire','The ceiling','Anywhere near smoke'],1,'Always aim at the base of the fire, not the flames.'),q('What to do if fire is larger than a waste bin?',['Fight it alone','Evacuate, raise the alarm, call 000','Use any water nearby','Wait for it to die down'],1,'Large fires require immediate evacuation and emergency response.'),q('Can sprinkler or extinguisher access be blocked?',['Yes if temporary','No, never under any circumstance','Only during deliveries','Outside working hours only'],1,'Fire equipment access must remain completely clear at all times.'),q('Should you re-enter a burning building?',['Yes if your belongings are inside','Only with a colleague','No, never re-enter','Only if the fire is small'],2,'Never re-enter a burning building under any circumstances.'),q('Which extinguisher type should NEVER be used on electrical fires?',['CO2','Dry powder','Water','Any type is fine'],2,'Water conducts electricity and must never be used on electrical fires.'),q('What does the S in PASS stand for?',['Stop the fire','Sweep from side to side','Spray upward','Stand back'],1,'S = Sweep the extinguisher from side to side at the base of the fire.'),q('What should you do when evacuating to slow fire spread?',['Open all windows','Close doors behind you','Leave all doors open','Turn off lights only'],1,'Closing doors when evacuating slows the spread of fire and smoke.'),q('When is it acceptable to fight a fire yourself?',['Always','Only when you are trained, fire is small, and exit is behind you','Only with a colleague present','Never'],1,'Only fight a fire if trained, using the correct extinguisher, the fire is small, and your exit is clear.'),q('What is the first action when you discover a fire?',['Grab an extinguisher immediately','Raise the alarm first, then assess','Call your supervisor on the phone','Check if anyone is watching'],1,'Always raise the alarm first before taking any other action.')]},
+  {id:'fire',title:'Fire Safety',icon:'🔥',content:['Know the extinguisher types and what they are used for.','PASS: Pull, Aim, Squeeze, Sweep.','If in doubt, evacuate and raise the alarm.'],questions:[q('What does P in PASS stand for?',['Protect','Pull the pin','Push the handle','Pause'],1,'P = Pull the safety pin from the extinguisher.'),q('Where should you aim the extinguisher?',['Top of the flames','Base of the fire','The ceiling','Anywhere near smoke'],1,'Always aim at the base of the fire, not the flames.'),q('What to do if fire is larger than a waste bin?',['Fight it alone','Evacuate, raise the alarm, call 000','Use any water nearby','Wait for it to die down'],1,'Large fires require immediate evacuation and emergency response.'),q('Can sprinkler or extinguisher access be blocked?',['Yes if temporary','No, never under any circumstance','Only during deliveries','Outside working hours only'],1,'Fire equipment access must remain completely clear at all times.'),q('Should you re-enter a burning building?',['Yes if your belongings are inside','Only with a colleague','No, never re-enter','Only if the fire is small'],2,'Never re-enter a burning building under any circumstances.'),q('Which extinguisher type should NEVER be used on electrical fires?',['CO2','Dry powder','Water','Any type is fine'],2,'Water conducts electricity and must never be used on electrical fires.'),q('What does the S in PASS stand for?',['Stop the fire','Sweep from side to side','Spray upward','Stand back'],1,'S = Sweep the extinguisher from side to side at the base of the fire.'),q('What should you do when evacuating to slow fire spread?',['Open all windows','Close doors behind you','Leave all doors open','Turn off lights only'],1,'Closing doors when evacuating slows the spread of fire and smoke.'),q('When is it acceptable to fight a fire yourself?',['Always','Only when trained, fire is small, and exit is behind you','Only with a colleague present','Never'],1,'Only fight a fire if trained, using the correct extinguisher, the fire is small, and your exit is clear.'),q('What is the first action when you discover a fire?',['Grab an extinguisher immediately','Raise the alarm first, then assess','Call your supervisor on the phone','Check if anyone is watching'],1,'Always raise the alarm first before taking any other action.')]},
   {id:'coldchain',title:'Cold Chain & HACCP',icon:'❄️',content:['HACCP: all perishable goods must remain in safe temperature ranges.','FIFO must always be used and temperature records must be accurate.','Cold-room: thermal PPE, tell someone before entering alone.'],questions:[q('What does HACCP stand for?',['Hazard Analysis and Critical Control Points','Heavy Area Cold Chain Process','Handling and Carrying Cold Produce','Health and Cleaning Control Plan'],0,'HACCP = Hazard Analysis and Critical Control Points.'),q('What stock rotation system must always be applied?',['LIFO','FIFO','Random rotation','Monthly sort only'],1,'FIFO — First In First Out — is mandatory for all perishable stock.'),q('Should you enter a cold room alone without telling anyone?',['Yes if it is a quick task','No, always use the buddy system','Only on day shift','Only if you have your phone'],1,'Workers must never enter a cold room alone — always use the buddy system.'),q('What should you know before working in a cold room for the first time?',['Where the tea is stored','The location of the emergency door release','How to play music','Where phones are charged'],1,'Emergency door release knowledge is essential before entering a cold room.'),q('What personal hygiene rule applies before food handling?',['Wash hands thoroughly','Wear jewellery','Taste the product for quality','Use bare hands to check freshness'],0,'Hand washing is required before handling any food product.'),q('What does FIFO mean in practice?',['Fill In Fresh Only','First In First Out — oldest stock leaves first','Fast Inventory For Operations','Freeze If Food is Old'],1,'FIFO means the oldest stock received must always be distributed first.'),q('What PPE is required for cold room work?',['Normal warehouse PPE only','Thermal insulated gloves, jacket, and boots','Just a warm jumper','No additional PPE needed'],1,'Thermal insulated gloves, jacket, and boots are required for cold room work.'),q('What should you do if you notice a temperature deviation in cold storage?',['Ignore it if only slight','Report it to your supervisor immediately','Try to fix the equipment yourself','Check again tomorrow'],1,'Temperature deviations must be reported to a supervisor immediately.'),q('What must be completed and signed every day in cold storage areas?',['Nothing extra required','Temperature logs must be recorded and signed daily','A hazard checklist only','A delivery manifest'],1,'Temperature logs must be completed and signed every day.'),q('What is cross-contamination and how is it prevented?',['Mixing different shift rosters — separate staff','Transfer of harmful bacteria between products — store separately and clean all surfaces','Stacking boxes too high','Running out of cold storage space'],1,'Cross-contamination is prevented by storing products separately and regularly cleaning all surfaces and equipment.')]},
   {id:'waste',title:'Waste Management',icon:'♻️',content:['Waste hierarchy: Refuse, Reduce, Reuse, Recycle, Recover, Dispose.','Cardboard is the largest waste stream — flatten for recycling.','Aisle build-up creates trip and fire hazards.'],questions:[q('Which comes before recycling in the waste hierarchy?',['Reuse','Dispose','Burn','Landfill'],0,'Reuse is always preferred over recycling in the waste hierarchy.'),q('What must be done to cardboard before disposal?',['Wet it down','Flatten it','Break it with a forklift','Mix it with plastic'],1,'All cardboard must be flattened before disposal to save space.'),q('Where should organic food waste go?',['General waste only','Compost or organic waste stream','Cardboard bin','Any outdoor bin'],1,'Organic waste must go to the compost or organic waste stream.'),q('What hazard is caused by cardboard pile-ups in aisles?',['No hazard','Fire and trip hazard','Only noise hazard','Only paperwork delays'],1,'Cardboard pile-ups in aisles create both fire and trip hazards.'),q('What is the most sustainable option for a good-condition box?',['Burn it','Reuse it','Throw it away','Cut it up for packing'],1,'Reusing a good-condition box is always the most sustainable option.'),q('What is the correct order of the waste hierarchy?',['Dispose, Recycle, Reduce','Refuse, Reduce, Reuse, Recycle, Recover, Dispose','Recycle, Reuse, Refuse','Reduce, Dispose, Recover'],1,'The correct hierarchy is: Refuse, Reduce, Reuse, Recycle, Recover, Dispose.'),q('What must be removed from cardboard before recycling?',['Nothing','All packing materials, tape, and staples','Only tape','Only staples'],1,'All packing materials, tape, and staples must be removed before cardboard can be recycled.'),q('Where should reusable crates be returned?',['Anywhere in the warehouse','To the wash station','To the office','To the loading dock'],1,'Reusable crates must always be returned to the designated wash station.'),q('What should never be poured into stormwater drains?',['Water','Chemicals or liquid food waste','Rainwater only','Cardboard pulp'],1,'Chemicals and liquid food waste must never enter stormwater drains.'),q('How does proper waste management support HACCP?',['It does not','It reduces contamination risk and supports food safety compliance','Only if inspectors are visiting','Only for cold storage'],1,'Proper waste management reduces contamination risk and is essential for maintaining HACCP food safety compliance.')]},
-  {id:'warehouse',title:'Warehouse Operations',icon:'📋',content:['Inspect incoming stock for temperature compliance and damage before acceptance.','Accurate labelling and FIFO support traceability and stock integrity.','Safe, accurate, quality-focused work matters more than speed alone.'],questions:[q('What should happen when incoming deliveries arrive?',['Unload without checking','Inspect for temperature compliance and product quality before signing','Sign everything first','Leave it outside'],1,'All incoming deliveries must be inspected before acceptance and signing.'),q('What stock system helps prevent spoilage?',['Random pick','FIFO — First In First Out','Last in first out','Top shelf only'],1,'FIFO ensures the oldest stock is distributed first, reducing spoilage.'),q('Why must airflow in cold rooms stay unobstructed?',['For easier walking','To maintain correct product temperature','To improve phone signal','To dry cardboard'],1,'Blocked airflow can cause temperatures to rise and spoil products.'),q('What should happen if product damage is found?',['Hide it to avoid paperwork','Report and segregate it according to procedure','Pack it anyway if minor','Send it to the customer first'],1,'Damaged product must always be reported and segregated correctly.'),q('What defines high-level warehouse performance?',['Speed only','Safe, accurate, quality-focused work','Working alone without interruptions','Skipping checks to save time'],1,'High performance means balancing safety, quality, and accuracy — not just speed.'),q('When must the temperature of cold products be recorded?',['At end of shift','Immediately upon arrival and before acceptance','Only if they look warm','Once a week'],1,'Cold product temperatures must be recorded immediately on arrival before acceptance.'),q('What documents must be completed for each delivery?',['Nothing extra needed','Delivery sheets, temperature logs, and inspection reports','Only a signature','Only a temperature log'],1,'All required documentation — delivery sheets, temperature logs, inspection reports — must be completed accurately.'),q('When can cold chain products be removed from temperature-controlled areas?',['Anytime for convenience','Only at the moment of loading for dispatch','Two hours before dispatch','When the dock is busy'],1,'Cold chain products must remain in temperature-controlled areas until the moment of loading.'),q('What is the right to refuse unsafe work?',['It does not exist','Workers have the legal right to refuse work they believe is unsafe, without penalty','Only managers have this right','Only if you have been injured before'],1,'All workers have the legal right and duty to refuse work they genuinely believe is unsafe.'),q('Who should you contact if WHS concerns are not resolved on site?',['Nobody — accept the situation','WorkSafe WA on 1300 307 877','The media','A customer'],1,'WorkSafe WA (1300 307 877) can be contacted if site WHS concerns are not addressed promptly.')]},
+  {id:'warehouse',title:'Warehouse Operations',icon:'📋',content:['Inspect incoming stock for temperature compliance and damage before acceptance.','Accurate labelling and FIFO support traceability and stock integrity.','Safe, accurate, quality-focused work matters more than speed alone.'],questions:[q('What should happen when incoming deliveries arrive?',['Unload without checking','Inspect for temperature compliance and product quality before signing','Sign everything first','Leave it outside'],1,'All incoming deliveries must be inspected before acceptance and signing.'),q('What stock system helps prevent spoilage?',['Random pick','FIFO — First In First Out','Last in first out','Top shelf only'],1,'FIFO ensures the oldest stock is distributed first, reducing spoilage.'),q('Why must airflow in cold rooms stay unobstructed?',['For easier walking','To maintain correct product temperature','To improve phone signal','To dry cardboard'],1,'Blocked airflow can cause temperatures to rise and spoil products.'),q('What should happen if product damage is found?',['Hide it to avoid paperwork','Report and segregate it according to procedure','Pack it anyway if minor','Send it to the customer first'],1,'Damaged product must always be reported and segregated correctly.'),q('What defines high-level warehouse performance?',['Speed only','Safe, accurate, quality-focused work','Working alone without interruptions','Skipping checks to save time'],1,'High performance means balancing safety, quality, and accuracy — not just speed.'),q('When must the temperature of cold products be recorded?',['At end of shift','Immediately upon arrival and before acceptance','Only if they look warm','Once a week'],1,'Cold product temperatures must be recorded immediately on arrival before acceptance.'),q('What documents must be completed for each delivery?',['Nothing extra needed','Delivery sheets, temperature logs, and inspection reports','Only a signature','Only a temperature log'],1,'All required documentation must be completed accurately.'),q('When can cold chain products be removed from temperature-controlled areas?',['Anytime for convenience','Only at the moment of loading for dispatch','Two hours before dispatch','When the dock is busy'],1,'Cold chain products must remain in temperature-controlled areas until the moment of loading.'),q('What is the right to refuse unsafe work?',['It does not exist','Workers have the legal right to refuse work they believe is unsafe, without penalty','Only managers have this right','Only if you have been injured before'],1,'All workers have the legal right and duty to refuse work they genuinely believe is unsafe.'),q('Who should you contact if WHS concerns are not resolved on site?',['Nobody — accept the situation','WorkSafe WA on 1300 307 877','The media','A customer'],1,'WorkSafe WA (1300 307 877) can be contacted if site WHS concerns are not addressed promptly.')]},
   {id:'housekeeping',title:'Housekeeping & Hygiene',icon:'🧼',content:['Clean, tidy, dry, obstruction-free work areas reduce injury and contamination risk.','Spills and waste must be cleaned or reported immediately.','Food-handling: hand washing, illness reporting, no unnecessary jewellery.'],questions:[q('What is the best housekeeping approach in a warehouse?',['Clean at month end','Clean as you go throughout every shift','Only clean visible areas','Leave it for the cleaning crew'],1,'Clean-as-you-go keeps the workplace safe and hygienic at all times.'),q('What should happen to spills immediately?',['Leave a sign and walk away','Clean or report them immediately','Ignore small ones','Cover with cardboard and deal with later'],1,'All spills must be cleaned or reported immediately to prevent slips and contamination.'),q('What must you do before handling food?',['Put on jewellery','Wash your hands thoroughly with soap and water','Taste the product to check it is fresh','Use your phone to check the task'],1,'Thorough hand washing is essential before handling any food product.'),q('What should you do if you have vomiting or diarrhoea before a shift?',['Work the shift anyway','Report illness to your supervisor before starting work','Only tell a workmate','Wait three days and see if it gets better'],1,'Workers must report illness to their supervisor before starting work to protect food safety.'),q('Is bare-hand contact with ready-to-eat products allowed?',['Yes, always','No, use gloves or tongs at all times','Only for supervisors','Only if your hands look clean'],1,'Ready-to-eat foods must never be touched with bare hands — always use gloves or tongs.'),q('What is the clean-as-you-go standard?',['Clean only your workstation at end of shift','Clean spills, waste, and mess immediately throughout the shift','Clean when inspectors arrive','Ask someone else to clean'],1,'Clean-as-you-go means addressing spills, waste, and mess immediately throughout your shift.'),q('What jewellery rules apply in food handling areas?',['All jewellery is permitted','No unnecessary jewellery — plain band rings only if covered','Jewellery is encouraged','Only earrings are allowed'],1,'No unnecessary jewellery should be worn in food handling areas to prevent contamination.'),q('How often must work area floors be kept clear of obstructions?',['Once per shift','At all times throughout the shift','Only during inspections','At start and end of shift only'],1,'Work area floors must be kept clear of obstructions at all times.'),q('What must you do after handling waste or cleaning chemicals?',['Nothing extra','Wash your hands thoroughly before returning to food handling','Use hand sanitiser only','Remove gloves and continue'],1,'Hands must be thoroughly washed after handling waste or cleaning chemicals before returning to food work.'),q('Why is illness reporting before a shift so important?',['It is not important','An ill worker can contaminate food and spread illness to colleagues and customers','Only important for management','Required only for serious illness'],1,'Illness reporting protects food safety, colleagues, and customers from contamination and the spread of disease.')]},
   {id:'incident',title:'Incident Reporting',icon:'⚠️',content:['All incidents, hazards, and near misses must be reported immediately to a supervisor.','Early reporting supports corrective action and prevents repeat incidents.'],questions:[q('What must be reported immediately?',['Only serious injuries requiring hospitalisation','All incidents, near misses, and hazards','Only broken equipment','Only customer complaints'],1,'All incidents, near misses, and hazards must be reported immediately without exception.'),q('Why should near misses be reported?',['They do not matter since no one was hurt','They help identify risks and prevent future injuries','Only managers need to know','They are reported at yearly reviews only'],1,'Near misses reveal risks before someone is actually hurt — reporting them prevents future incidents.'),q('When should a hazard be reported?',['When convenient','Immediately, as soon as it is identified','Only after someone is injured','At the monthly WHS meeting'],1,'Hazards must be reported as soon as they are identified to prevent injury.'),q('Who is the first point of contact for reporting incidents?',['Any available customer','Your direct supervisor','Social media','Payroll department'],1,'Your direct supervisor is always the first point of escalation for incident reporting.'),q('What supports the best corrective action after an incident?',['Delayed reporting to gather facts','Clear, accurate, and timely reporting','No documentation to keep it simple','Guessing what happened'],1,'Clear and timely reporting allows hazards to be controlled and corrected effectively.'),q('What is a near miss?',['An incident where injury did occur','An event that could have caused injury but did not','A customer complaint','A damaged product'],1,'A near miss is an event that could have resulted in injury, illness, or damage — but did not.'),q('What information should an incident report include?',['Just your name','What happened, when, where, who was involved, and what action was taken','Only the time of the incident','Only what was damaged'],1,'A complete incident report includes what happened, when, where, who was involved, and what action was taken.'),q('Can a worker be penalised for reporting a safety concern?',['Yes if it causes production delays','No, workers are protected when reporting genuine safety concerns','Only if they report too often','Yes if management disagrees'],1,'Workers are legally protected from adverse action when reporting genuine WHS concerns.'),q('What happens if incidents and hazards are not reported?',['Nothing changes','Risks remain unaddressed and future injuries are more likely','Only paperwork is delayed','The supervisor handles it without you'],1,'Unreported hazards remain unaddressed, making future injuries or incidents more likely.'),q('What is the benefit of early reporting of discomfort or minor injuries?',['None — only serious injuries matter','Early treatment prevents minor issues becoming serious or permanent injuries','It is only required for insurance','Discomfort does not need reporting'],1,'Early reporting allows early treatment, preventing minor discomfort from developing into serious or permanent injury.')]},
   {id:'rights',title:'Rights & Responsibilities',icon:'⚖️',content:['The induction is mandatory before any work starts.','Workers have the right and duty to refuse unsafe work.','Non-compliance may lead to disciplinary action including termination.'],questions:[q('When must the induction be completed?',['After the first shift','Before commencing any work','Within three months of starting','Only for permanent staff'],1,'The induction is mandatory and must be completed before any work commences.'),q('What right do workers have regarding unsafe work?',['No rights — follow all instructions','The right and duty to refuse work they believe is unsafe','Only managers can refuse tasks','Must continue until told otherwise by a supervisor'],1,'Every worker has both the right and the duty to refuse work they genuinely believe is unsafe.'),q('What may happen if safety rules are consistently ignored?',['Nothing — it is a personal choice','Disciplinary action up to and including termination of employment','Only a verbal reminder','An automatic promotion review'],1,'Non-compliance with safety rules may result in disciplinary action including termination.'),q('If on-site WHS issues are not addressed, who can workers contact?',['No one outside the business','WorkSafe WA on 1300 307 877','The lunch room committee','A customer representative'],1,'WorkSafe WA is the external escalation point for unresolved WHS issues.'),q('Who can refuse unsafe work?',['Only supervisors and managers','Any worker who genuinely believes the work is unsafe','Visitors only','Only HR representatives'],1,'All workers — at every level — have the right and duty to refuse unsafe work.'),q('What is the employer\'s primary duty under WHS legislation?',['To maximise productivity at all costs','To provide and maintain a safe workplace so far as reasonably practicable','To document all work activities','To set speed targets for all staff'],1,'Employers must provide and maintain a safe workplace so far as reasonably practicable under WHS law.'),q('What is a worker\'s primary duty under WHS legislation?',['To follow all instructions without question','To take reasonable care for their own safety and that of others','To report only major injuries','To maximise output every shift'],1,'Workers must take reasonable care for their own health and safety and that of others around them.'),q('What does the WHS Act 2020 WA protect?',['Only full-time permanent employees','All workers including casuals, contractors, and labour hire','Only workers who have completed induction','Only workers over 18'],1,'The WHS Act 2020 WA protects all workers including casuals, contractors, and labour hire workers.'),q('Is the induction a one-time legal obligation or ongoing?',['One-time only at the start of employment','It is completed once but safety responsibilities are ongoing every shift','Only updated every five years','Only relevant for the first month'],1,'The induction is completed once, but the safety responsibilities it covers apply every single shift.'),q('What should you do if you are asked to perform a task you believe is unsafe?',['Do it anyway to avoid conflict','Refuse the task, explain your concern, and report it to your supervisor','Quit immediately','Do it but complain afterwards'],1,'Refuse the unsafe task, clearly explain your concern, and report it to your supervisor. You are protected when you do this.')]}
 ];
 
 // ── STATE ─────────────────────────────────────────────────────
-let profile        = null;
-let allEmployees   = [];
-let moduleProgress = {};
-let knowledgeViewed= [];
-let view           = 'dashboard';
-let activeModule   = 0;
-let activeQuestion = 0;
-let activeKbTopic  = 'welcome';
-let filters        = {search:'',dept:'',status:'',position:''};
-// Document state
-let myDocs         = [];
-let allDocAlerts   = [];
-let docFilters     = {search:'',type:'',level:''};
+let profile=null,allEmployees=[],moduleProgress={},knowledgeViewed=[];
+let view='dashboard',activeModule=0,activeQuestion=0,activeKbTopic='welcome';
+let filters={search:'',dept:'',status:'',position:''};
+let myDocs=[],allDocAlerts=[],docFilters={search:'',type:'',level:''};
 
-// ── HELPERS ───────────────────────────────────────────────────
+// ── HELPERS ── (defined ONCE here, never redefined below) ─────
 function esc(v){return String(v??'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));}
 function fmtDate(d){return d?new Date(d).toLocaleDateString('en-AU'):'—';}
 function isManager(p){return p&&['locationManager','sysAdmin'].includes(p.role);}
@@ -375,75 +311,38 @@ function toast(msg,dur=2800){const t=document.getElementById('toast');t.textCont
 function closeModal(){document.getElementById('modalRoot').innerHTML='';}
 function showMsg(id,text,type){const el=document.getElementById(id);if(!el)return;el.textContent=text;el.className='msg '+type;el.style.display='block';}
 function setLoading(btnId,loading,label='Sign In'){const btn=document.getElementById(btnId);if(!btn)return;btn.disabled=loading;btn.innerHTML=loading?'<span class="spinner"></span>Signing in\u2026':label;}
+function docTypeLabel(id){return DOC_TYPES.find(t=>t.id===id)?.label||id;}
+function docTypeIcon(id){return DOC_TYPES.find(t=>t.id===id)?.icon||'📄';}
 
-// ── DOCUMENT HELPERS ──────────────────────────────────────────
 function expiryStatus(dateStr){
   if(!dateStr)return{label:'No expiry date set',cls:'s-missing',alertCls:'',lvl:5,days:null};
   const today=new Date();today.setHours(0,0,0,0);
   const exp=new Date(dateStr);exp.setHours(0,0,0,0);
   const days=Math.floor((exp-today)/86400000);
-  if(days<0)  return{label:`Expired ${Math.abs(days)}d ago`,          cls:'s-expired', alertCls:'al-expired', lvl:0,days};
-  if(days<=30) return{label:`⚠ Expires in ${days}d — CRITICAL`,       cls:'s-critical',alertCls:'al-critical',lvl:1,days};
-  if(days<=90) return{label:`Expires in ${days}d — within 3 months`,  cls:'s-warn',    alertCls:'al-warn',    lvl:2,days};
-  if(days<=180)return{label:`Expires in ${days}d — within 6 months`,  cls:'s-warn',    alertCls:'al-caution', lvl:3,days};
+  if(days<0)  return{label:`Expired ${Math.abs(days)}d ago`,        cls:'s-expired', alertCls:'al-expired', lvl:0,days};
+  if(days<=30) return{label:`⚠ Expires in ${days}d — CRITICAL`,     cls:'s-critical',alertCls:'al-critical',lvl:1,days};
+  if(days<=90) return{label:`Expires in ${days}d — within 3 months`,cls:'s-warn',    alertCls:'al-warn',    lvl:2,days};
+  if(days<=180)return{label:`Expires in ${days}d — within 6 months`,cls:'s-warn',    alertCls:'al-caution', lvl:3,days};
   return{label:`Valid — expires ${fmtDate(dateStr)}`,cls:'s-valid',alertCls:'',lvl:4,days};
 }
 
-function docTypeLabel(id){return DOC_TYPES.find(t=>t.id===id)?.label||id;}
-function docTypeIcon(id){return DOC_TYPES.find(t=>t.id===id)?.icon||'📄';}
-
 async function loadMyDocs(){
-  try{
-    const{data,error}=await sb.from('employee_documents').select('*').eq('employee_id',profile.id).order('uploaded_at',{ascending:false});
-    if(!error)myDocs=data||[];
-  }catch(e){myDocs=[];}
+  try{const{data,error}=await sb.from('employee_documents').select('*').eq('employee_id',profile.id).order('uploaded_at',{ascending:false});if(!error)myDocs=data||[];}catch(e){myDocs=[];}
 }
-
 async function loadAllDocAlerts(){
   try{
-    const { data: rpcData, error: rpcErr } = await sb.rpc('getdocumentalerts');
-    if(!rpcErr){
-      allDocAlerts = rpcData || [];
-      return;
-    }
-
-    const cutoff = new Date(Date.now() + 180*24*60*60*1000).toISOString().slice(0,10);
-    const { data } = await sb.from('employee_documents')
-      .select('*, employees!inner(full_name,employee_code,department,position)')
-      .not('expiry_date','is',null)
-      .lte('expiry_date', cutoff)
-      .order('expiry_date');
-
-    allDocAlerts = (data || []).map(d => ({
-      ...d,
-      full_name: d.employees?.full_name,
-      employee_code: d.employees?.employee_code,
-      department: d.employees?.department,
-      employee_position: d.employees?.position
-    }));
-  }catch(e){
-    allDocAlerts = [];
-  }
+    const{data:rpcData,error:rpcErr}=await sb.rpc('get_document_alerts');
+    if(!rpcErr){allDocAlerts=rpcData||[];return;}
+    const cutoff=new Date(Date.now()+180*24*60*60*1000).toISOString().slice(0,10);
+    const{data}=await sb.from('employee_documents').select('*, employees!inner(full_name,employee_code,department,position)').not('expiry_date','is',null).lte('expiry_date',cutoff).order('expiry_date');
+    allDocAlerts=(data||[]).map(d=>({...d,full_name:d.employees?.full_name,employee_code:d.employees?.employee_code,department:d.employees?.department,employee_position:d.employees?.position}));
+  }catch(e){allDocAlerts=[];}
 }
 
 // ── LOGIN ─────────────────────────────────────────────────────
-function showSignIn(){
-  document.getElementById('panel-signin').style.display='block';
-  document.getElementById('panel-forgot').style.display='none';
-  document.getElementById('panel-reset').style.display='none';
-}
-function showForgot(){
-  document.getElementById('panel-signin').style.display='none';
-  document.getElementById('panel-forgot').style.display='block';
-  document.getElementById('panel-reset').style.display='none';
-  const email=document.getElementById('signin-email').value;
-  if(email)document.getElementById('forgot-email').value=email;
-}
-function showReset(){
-  document.getElementById('panel-signin').style.display='none';
-  document.getElementById('panel-forgot').style.display='none';
-  document.getElementById('panel-reset').style.display='block';
-}
+function showSignIn(){document.getElementById('panel-signin').style.display='block';document.getElementById('panel-forgot').style.display='none';document.getElementById('panel-reset').style.display='none';}
+function showForgot(){document.getElementById('panel-signin').style.display='none';document.getElementById('panel-forgot').style.display='block';document.getElementById('panel-reset').style.display='none';const e=document.getElementById('signin-email').value;if(e)document.getElementById('forgot-email').value=e;}
+function showReset(){document.getElementById('panel-signin').style.display='none';document.getElementById('panel-forgot').style.display='none';document.getElementById('panel-reset').style.display='block';}
 
 async function doSignIn(){
   const email=document.getElementById('signin-email').value.trim().toLowerCase();
@@ -493,15 +392,12 @@ async function doResetPassword(){
   finally{setLoading('reset-btn',false,'Update Password');}
 }
 
-// Password reset & session check on load
+sb.auth.onAuthStateChange(async(event,session)=>{if(event==='PASSWORD_RECOVERY')showReset();});
+
 (async()=>{
-  sb.auth.onAuthStateChange(async(event,session)=>{
-    if(event==='PASSWORD_RECOVERY')showReset();
-  });
-  const hashParams=new URLSearchParams(window.location.hash.replace('#',''));
-  const type=hashParams.get('type'),accessToken=hashParams.get('access_token');
-  if(type==='recovery'&&accessToken){
-    const{error}=await sb.auth.setSession({access_token:accessToken,refresh_token:hashParams.get('refresh_token')||''});
+  const hash=new URLSearchParams(window.location.hash.replace('#',''));
+  if(hash.get('type')==='recovery'&&hash.get('access_token')){
+    const{error}=await sb.auth.setSession({access_token:hash.get('access_token'),refresh_token:hash.get('refresh_token')||''});
     if(!error){showReset();return;}
   }
   const{data:{session}}=await sb.auth.getSession();
@@ -518,7 +414,7 @@ document.addEventListener('keydown',e=>{
   }
 });
 
-// ── INIT APP ──────────────────────────────────────────────────
+// ── INIT ──────────────────────────────────────────────────────
 async function initApp(){
   const{data:{session}}=await sb.auth.getSession();
   if(!session){showLogin();return;}
@@ -529,11 +425,7 @@ async function initApp(){
   moduleProgress={};
   if(progRows)progRows.forEach(r=>{moduleProgress[r.module_id]={answers:r.answers||{},completed:r.completed};});
   knowledgeViewed=profile.knowledge_viewed||[];
-  if(isManager(profile)){
-    const{data}=await sb.rpc('get_dashboard_data');
-    allEmployees=data||[];
-  }
-  // Load documents
+  if(isManager(profile)){const{data}=await sb.rpc('get_dashboard_data');allEmployees=data||[];}
   await loadMyDocs();
   if(isManager(profile))await loadAllDocAlerts();
   document.getElementById('userLabel').textContent=`${profile.full_name} · ${profile.employee_code}`;
@@ -542,47 +434,31 @@ async function initApp(){
   renderView();
 }
 
-function showLogin(){
-  document.getElementById('loginScreen').classList.remove('hidden');
-  document.getElementById('appScreen').classList.add('hidden');
-  showSignIn();
-}
-function showApp(){
-  document.getElementById('loginScreen').classList.add('hidden');
-  document.getElementById('appScreen').classList.remove('hidden');
-}
-async function doSignOut(){
-  await sb.auth.signOut();
-  profile=null;allEmployees=[];moduleProgress={};knowledgeViewed=[];myDocs=[];allDocAlerts=[];
-  showLogin();
-}
+function showLogin(){document.getElementById('loginScreen').classList.remove('hidden');document.getElementById('appScreen').classList.add('hidden');showSignIn();}
+function showApp(){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('appScreen').classList.remove('hidden');}
+async function doSignOut(){await sb.auth.signOut();profile=null;allEmployees=[];moduleProgress={};knowledgeViewed=[];myDocs=[];allDocAlerts=[];showLogin();}
 
 // ── RENDER ROUTER ─────────────────────────────────────────────
 function renderView(){
   const app=document.getElementById('app');
-  if(view==='dashboard')    app.innerHTML=renderDashboard();
-  else if(view==='mgr')     app.innerHTML=renderManagerDashboard();
-  else if(view==='kb')      app.innerHTML=renderKnowledgeGate();
-  else if(view==='module')  app.innerHTML=renderModule();
-  else if(view==='decl')    app.innerHTML=renderDeclaration();
-  else if(view==='done')    app.innerHTML=renderCompletion();
-  else if(view==='docs')    app.innerHTML=renderDocsView();
+  if(view==='dashboard')       app.innerHTML=renderDashboard();
+  else if(view==='mgr')        app.innerHTML=renderManagerDashboard();
+  else if(view==='kb')         app.innerHTML=renderKnowledgeGate();
+  else if(view==='module')     app.innerHTML=renderModule();
+  else if(view==='decl')       app.innerHTML=renderDeclaration();
+  else if(view==='done')       app.innerHTML=renderCompletion();
+  else if(view==='docs')       app.innerHTML=renderDocsView();
   else if(view==='docsAlerts') app.innerHTML=renderDocsAlerts();
 }
 
-// ── EMPLOYEE DASHBOARD ────────────────────────────────────────
+// ── EMPLOYEE / LOCATION MANAGER DASHBOARD ─────────────────────
 function renderDashboard(){
   if(isSysAdmin(profile))return renderManagerDashboard();
   const pct=profile.progress_pct||0;
   const done=MODULES.filter(m=>moduleProgress[m.id]?.completed).length;
-
-  // Quick doc status for the dashboard widget
   const getLatestDoc=(type)=>myDocs.filter(d=>d.doc_type===type).sort((a,b)=>new Date(b.uploaded_at)-new Date(a.uploaded_at))[0];
-  const passport=getLatestDoc('passport');
-  const visa=getLatestDoc('visa');
-  const forklift=getLatestDoc('forklift_license');
-  const docAlertCount=myDocs.filter(d=>{if(!d.expiry_date)return false;return expiryStatus(d.expiry_date).lvl<=3;}).length;
-
+  const passport=getLatestDoc('passport'),visa=getLatestDoc('visa'),forklift=getLatestDoc('forklift_license');
+  const docAlertCount=myDocs.filter(d=>d.expiry_date&&expiryStatus(d.expiry_date).lvl<=3).length;
   return`<div style="max-width:820px">
   ${isManager(profile)?`<div style="margin-bottom:16px;display:flex;gap:8px;align-items:center">
     <button class="btn btn-primary" onclick="view='mgr';renderView()">📊 Manager Dashboard</button>
@@ -605,24 +481,19 @@ function renderDashboard(){
       ${[['Start Date',fmtDate(profile.start_date)],['Induction Date',fmtDate(profile.induction_date)],['Location',profile.work_location],['Department',profile.department],['Position',profile.position],['Employee Code',profile.employee_code]].map(([l,v])=>`<div><div style="color:var(--muted);font-size:.72rem;margin-bottom:2px">${l}</div><div style="font-weight:500">${esc(String(v||'—'))}</div></div>`).join('')}
     </div>
   </div>
-
-  <!-- DOCUMENTS QUICK-STATUS CARD -->
   <div class="card" style="margin-bottom:16px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
       <div class="card-title" style="margin:0">My Documents</div>
       <button class="btn btn-primary" style="font-size:.78rem" onclick="view='docs';renderView()">Manage Documents →</button>
     </div>
-    ${docAlertCount>0?`<div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:8px;padding:9px 13px;font-size:.82rem;color:var(--warning);margin-bottom:12px">⚠ ${docAlertCount} document${docAlertCount>1?'s':''} need${docAlertCount===1?'s':''} attention — expiring soon or expired</div>`:''}
+    ${docAlertCount>0?`<div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:8px;padding:9px 13px;font-size:.82rem;color:var(--warning);margin-bottom:12px">⚠ ${docAlertCount} document${docAlertCount>1?'s':''} need attention — expiring soon or expired</div>`:''}
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-      ${['passport','visa','forklift_license'].map(type=>{
-        const d=[passport,visa,forklift][['passport','visa','forklift_license'].indexOf(type)];
+      ${['passport','visa','forklift_license'].map((type,idx)=>{
+        const d=[passport,visa,forklift][idx];
         const s=d?expiryStatus(d.expiry_date):{label:'Not uploaded',cls:'s-missing',lvl:5};
         const dt=DOC_TYPES.find(t=>t.id===type);
         return`<div style="padding:12px;background:var(--surface2);border:1px solid ${s.lvl<=1?'rgba(248,113,113,.4)':s.lvl<=3?'rgba(251,191,36,.35)':'var(--border)'};border-radius:10px;cursor:pointer" onclick="view='docs';renderView()">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-            <span style="font-size:1.1rem">${dt.icon}</span>
-            <span class="s-dot ${s.cls}"></span>
-          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="font-size:1.1rem">${dt.icon}</span><span class="s-dot ${s.cls}"></span></div>
           <div style="font-size:.78rem;font-weight:600;color:var(--text);margin-bottom:2px">${dt.label}</div>
           ${d?.doc_subtype?`<div style="font-size:.7rem;color:var(--muted)">${esc(d.doc_subtype)}</div>`:''}
           <div style="font-size:.7rem;color:${s.lvl<=1?'var(--error)':s.lvl<=3?'var(--warning)':'var(--muted)'};margin-top:4px">${d?s.label:'Tap to upload'}</div>
@@ -630,30 +501,22 @@ function renderDashboard(){
       }).join('')}
     </div>
   </div>
-
   <div class="card">
     <div class="card-title">Induction</div>
     ${profile.completion_status==='completed'
       ?`<p style="color:var(--success);font-size:.9rem;margin-bottom:12px">✓ Induction complete. Your completion letter is ready.</p><button class="btn btn-success" onclick="printLetter()">Print Completion Letter</button>`
-      :`<div style="display:flex;gap:8px;flex-wrap:wrap">
-         <button class="btn btn-primary" onclick="resumeInduction()">${pct===0?'Start Induction':'Resume Induction'}</button>
-         <button class="btn btn-ghost" onclick="view='kb';renderView()">Review Knowledge Topics</button>
-       </div>`}
+      :`<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" onclick="resumeInduction()">${pct===0?'Start Induction':'Resume Induction'}</button><button class="btn btn-ghost" onclick="view='kb';renderView()">Review Knowledge Topics</button></div>`}
   </div></div>`;
 }
 
 // ── MANAGER DASHBOARD ─────────────────────────────────────────
 function renderManagerDashboard(){
   const rows=filteredEmployees();
-  const total=allEmployees.length;
-  const completed=allEmployees.filter(e=>e.completion_status==='completed').length;
-  const inprog=allEmployees.filter(e=>e.completion_status==='in_progress').length;
+  const total=allEmployees.length,completed=allEmployees.filter(e=>e.completion_status==='completed').length,inprog=allEmployees.filter(e=>e.completion_status==='in_progress').length;
   const pct=total?Math.round(completed/total*100):0;
   const urgentDocCount=allDocAlerts.filter(d=>expiryStatus(d.expiry_date).lvl<=1).length;
   return`
-  ${!isSysAdmin(profile)?`<div style="margin-bottom:16px">
-    <button class="btn btn-ghost" onclick="view='dashboard';renderView()">← My Induction</button>
-  </div>`:''}
+  ${isManager(profile)&&!isSysAdmin(profile)?`<div style="margin-bottom:16px"><button class="btn btn-ghost" onclick="view='dashboard';renderView()">← My Induction</button></div>`:''}
   <div class="metrics">
     <div class="metric card"><div class="val">${total}</div><div class="lbl">Total Staff</div></div>
     <div class="metric card"><div class="val" style="color:var(--primary)">${pct}%</div><div class="lbl">Overall Completion</div></div>
@@ -669,328 +532,184 @@ function renderManagerDashboard(){
       <div class="card-title" style="margin:0">Staff Tracking</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn btn-ghost" onclick="exportExcel()">Export Excel</button>
-        <button class="btn btn-warn" onclick="view='docsAlerts';renderView()">📋 Document Alerts${allDocAlerts.length?` (${allDocAlerts.length})`:''}</button>
-        <button class="btn btn-warn" onclick="bulkPrint()">Bulk Print Letters</button>
+        <button class="btn btn-warn" onclick="view='docsAlerts';renderView()">📋 Doc Alerts${allDocAlerts.length?` (${allDocAlerts.length})`:''}</button>
+        <button class="btn btn-warn" onclick="bulkPrint()">Bulk Print</button>
         ${isSysAdmin(profile)?`<button class="btn btn-primary" onclick="openCreate()">+ Add Staff</button>`:''}
         ${isSysAdmin(profile)?`<button class="btn btn-ghost" onclick="openAudit()">Audit Log</button>`:''}
       </div>
     </div>
     <div class="filters">
-      <input placeholder="Search name, code, phone…" value="${esc(filters.search)}" oninput="filters.search=this.value;renderView()">
-      <select onchange="filters.dept=this.value;renderView()"><option value="">All departments</option>${DEPARTMENTS.map(d=>`<option value="${d}" ${filters.dept===d?'selected':''}>${d}</option>`).join('')}</select>
-      <select onchange="filters.status=this.value;renderView()"><option value="">All status</option><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="completed">Completed</option></select>
-      <select onchange="filters.position=this.value;renderView()"><option value="">All positions</option>${POSITIONS.map(p=>`<option value="${p}" ${filters.position===p?'selected':''}>${p}</option>`).join('')}</select>
+      <input placeholder="Search name, code, phone…" value="${esc(filters.search)}" oninput="filters.search=this.value;refreshTable()">
+      <select onchange="filters.dept=this.value;refreshTable()"><option value="">All departments</option>${DEPARTMENTS.map(d=>`<option value="${d}" ${filters.dept===d?'selected':''}>${d}</option>`).join('')}</select>
+      <select onchange="filters.status=this.value;refreshTable()"><option value="">All status</option><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="completed">Completed</option></select>
+      <select onchange="filters.position=this.value;refreshTable()"><option value="">All positions</option>${POSITIONS.map(p=>`<option value="${p}" ${filters.position===p?'selected':''}>${p}</option>`).join('')}</select>
     </div>
-    <div class="table-wrap"><table>
-      <thead><tr><th>Code</th><th>Name</th><th>Dept</th><th>Position</th><th>Start Date</th><th>Status</th><th>Progress</th><th>Actions</th></tr></thead>
-      <tbody>${rows.length?rows.map(e=>`<tr>
-        <td style="font-family:monospace;font-size:.78rem">${esc(e.employee_code)}</td>
-        <td><div style="font-weight:500">${esc(e.full_name)}</div><div style="font-size:.72rem;color:var(--muted)">${esc(e.phone||'')}</div></td>
-        <td>${esc(e.department)}</td><td>${esc(e.position)}</td>
-        <td style="font-size:.78rem">${fmtDate(e.start_date)}</td>
-        <td><span class="badge ${statusBadge(e.completion_status)}">${fmtStatus(e.completion_status)}</span></td>
-        <td><div style="display:flex;align-items:center;gap:6px"><div class="prog-bar"><div class="prog-fill" style="width:${e.progress_pct}%"></div></div><span style="font-size:.75rem">${e.progress_pct}%</span></div></td>
-        <td><div class="actions-cell">
-          <button class="btn btn-ghost" onclick="viewDetail('${e.id}')">View</button>
-          <button class="btn btn-ghost" onclick="changeDept('${e.id}')">Dept</button>
-          ${isSysAdmin(profile)?`<button class="btn btn-warn" style="font-size:.75rem" onclick="openEdit('${e.id}')">⚙ Edit</button>`:''}
-          ${e.completion_status==='completed'?`<button class="btn btn-success" onclick="printLetterFor('${e.id}')">Letter</button>`:''}
-          ${isSysAdmin(profile)?`<button class="btn btn-danger" style="font-size:.75rem" onclick="deleteEmp('${e.id}')">Del</button>`:''}
-        </div></td>
-      </tr>`).join(''):`<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:32px">No records found.</td></tr>`}
-      </tbody>
-    </table></div>
+    <div id="tblWrap">${buildTableHtml()}</div>
   </div>`;
 }
 
-function filteredEmployees(){
-  return allEmployees.filter(e=>
-    (!filters.search||[e.full_name,e.employee_code,e.phone||'',e.department,e.position].join(' ').toLowerCase().includes(filters.search.toLowerCase()))&&
-    (!filters.dept||e.department===filters.dept)&&
-    (!filters.status||e.completion_status===filters.status)&&
-    (!filters.position||e.position===filters.position)
-  );
+function buildTableHtml(){
+  const rows=filteredEmployees();
+  return`<div class="table-wrap"><table>
+    <thead><tr><th>Code</th><th>Name</th><th>Dept</th><th>Position</th><th>Start Date</th><th>Status</th><th>Progress</th><th>Actions</th></tr></thead>
+    <tbody>${rows.length?rows.map(e=>`<tr>
+      <td style="font-family:monospace;font-size:.78rem">${esc(e.employee_code)}</td>
+      <td><div style="font-weight:500">${esc(e.full_name)}</div><div style="font-size:.72rem;color:var(--muted)">${esc(e.phone||'')}</div></td>
+      <td>${esc(e.department)}</td><td>${esc(e.position)}</td>
+      <td style="font-size:.78rem">${fmtDate(e.start_date)}</td>
+      <td><span class="badge ${statusBadge(e.completion_status)}">${fmtStatus(e.completion_status)}</span></td>
+      <td><div style="display:flex;align-items:center;gap:6px"><div class="prog-bar"><div class="prog-fill" style="width:${e.progress_pct}%"></div></div><span style="font-size:.75rem">${e.progress_pct}%</span></div></td>
+      <td><div class="actions-cell">
+        <button class="btn btn-ghost" onclick="viewDetail('${e.id}')">View</button>
+        <button class="btn btn-ghost" onclick="changeDept('${e.id}')">Dept</button>
+        ${isSysAdmin(profile)?`<button class="btn btn-warn" style="font-size:.75rem" onclick="openEdit('${e.id}')">⚙ Edit</button>`:''}
+        ${e.completion_status==='completed'?`<button class="btn btn-success" onclick="printLetterFor('${e.id}')">Letter</button>`:''}
+        ${isSysAdmin(profile)?`<button class="btn btn-danger" style="font-size:.75rem" onclick="deleteEmp('${e.id}')">Del</button>`:''}
+      </div></td>
+    </tr>`).join(''):`<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:32px">No records found.</td></tr>`}
+    </tbody>
+  </table></div>`;
 }
 
-// ─────────────────────────────────────────────────────────────
-// ── DOCUMENTS VIEW (Employee) ─────────────────────────────────
-// ─────────────────────────────────────────────────────────────
-function isManager(profile){
-  return ['locationManager', 'sysAdmin'].includes(profile?.role);
-}
+function refreshTable(){const w=document.getElementById('tblWrap');if(w)w.innerHTML=buildTableHtml();}
+function filteredEmployees(){return allEmployees.filter(e=>(!filters.search||[e.full_name,e.employee_code,e.phone||'',e.department,e.position].join(' ').toLowerCase().includes(filters.search.toLowerCase()))&&(!filters.dept||e.department===filters.dept)&&(!filters.status||e.completion_status===filters.status)&&(!filters.position||e.position===filters.position));}
 
-function isSysAdmin(profile){
-  return profile?.role === 'sysAdmin';
-}
-
-function canManageConfidentialDocs(profile){
-  return profile?.position === 'System Administrator';
-}
-  function renderDocsView(){
+// ── DOCUMENTS VIEW ────────────────────────────────────────────
+function renderDocsView(){
   const getLatest=(type)=>myDocs.filter(d=>d.doc_type===type).sort((a,b)=>new Date(b.uploaded_at)-new Date(a.uploaded_at))[0];
-  const passport  = getLatest('passport');
-  const visa      = getLatest('visa');
-  const forklift  = getLatest('forklift_license');
-
-  const alertDocs = myDocs.filter(d=>{
-    if(!d.expiry_date)return false;
-    return expiryStatus(d.expiry_date).lvl<=3;
-  }).sort((a,b)=>new Date(a.expiry_date)-new Date(b.expiry_date));
-
-  // Visa history (detect if visa has changed)
-  const visaDocs = myDocs.filter(d=>d.doc_type==='visa').sort((a,b)=>new Date(b.uploaded_at)-new Date(a.uploaded_at));
-  const visaChanged = visaDocs.length>1 && visaDocs[0].doc_subtype!==visaDocs[1].doc_subtype;
-
+  const passport=getLatest('passport'),visa=getLatest('visa'),forklift=getLatest('forklift_license');
+  const alertDocs=myDocs.filter(d=>d.expiry_date&&expiryStatus(d.expiry_date).lvl<=3).sort((a,b)=>new Date(a.expiry_date)-new Date(b.expiry_date));
+  const visaDocs=myDocs.filter(d=>d.doc_type==='visa').sort((a,b)=>new Date(b.uploaded_at)-new Date(a.uploaded_at));
+  const visaChanged=visaDocs.length>1&&visaDocs[0].doc_subtype!==visaDocs[1].doc_subtype;
   return`<div style="max-width:960px">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
     <button class="btn btn-ghost" onclick="view='dashboard';renderView()">← Back</button>
-    <div>
-      <div style="font-size:1.15rem;font-weight:700">My Documents</div>
-      <div style="font-size:.78rem;color:var(--muted)">${esc(profile.full_name)} · ${esc(profile.employee_code)}</div>
-    </div>
-   ${canManageConfidentialDocs(profile)?`<button class="btn btn-warn" style="margin-left:auto" onclick="view='docsAlerts';renderView()">⚠ Team Document Alerts</button>`:''}
+    <div><div style="font-size:1.15rem;font-weight:700">My Documents</div><div style="font-size:.78rem;color:var(--muted)">${esc(profile.full_name)} · ${esc(profile.employee_code)}</div></div>
+    ${isManager(profile)?`<button class="btn btn-warn" style="margin-left:auto" onclick="view='docsAlerts';renderView()">⚠ Team Document Alerts</button>`:''}
   </div>
-
   ${alertDocs.length?`<div class="card" style="margin-bottom:16px;border-color:rgba(251,191,36,.4)">
     <div class="card-title" style="color:var(--warning)">⚠ Action Required</div>
     <div style="display:grid;gap:7px">
-      ${alertDocs.map(d=>{
-        const s=expiryStatus(d.expiry_date);
-        return`<div class="alert-strip ${s.alertCls}">
-          <span class="s-dot ${s.cls}"></span>
-          <strong style="flex-shrink:0">${docTypeIcon(d.doc_type)} ${docTypeLabel(d.doc_type)}</strong>
-          ${d.doc_subtype?`<span style="color:var(--muted);font-size:.8rem">${esc(d.doc_subtype)}</span>`:''}
-          <span style="margin-left:auto;font-size:.78rem;font-weight:500;white-space:nowrap">${s.label}</span>
-          <button class="btn btn-ghost" style="padding:4px 10px;font-size:.72rem;flex-shrink:0" onclick="openEditDoc('${d.id}')">Update Expiry</button>
-        </div>`;
-      }).join('')}
+      ${alertDocs.map(d=>{const s=expiryStatus(d.expiry_date);return`<div class="alert-strip ${s.alertCls}"><span class="s-dot ${s.cls}"></span><strong style="flex-shrink:0">${docTypeIcon(d.doc_type)} ${docTypeLabel(d.doc_type)}</strong>${d.doc_subtype?`<span style="color:var(--muted);font-size:.8rem">${esc(d.doc_subtype)}</span>`:''}<span style="margin-left:auto;font-size:.78rem;font-weight:500;white-space:nowrap">${s.label}</span><button class="btn btn-ghost" style="padding:4px 10px;font-size:.72rem;flex-shrink:0" onclick="openEditDoc('${d.id}')">Update Expiry</button></div>`;}).join('')}
     </div>
   </div>`:''}
-
-  ${visaChanged?`<div class="visa-changed">🔄 Visa change detected — your current visa is <strong>${esc(visaDocs[0].doc_subtype)}</strong>, previously <strong>${esc(visaDocs[1].doc_subtype)}</strong>. Ensure your employer has the updated documentation.</div><br>`:''}
-
-  <!-- THREE DOCUMENT CARDS -->
+  ${visaChanged?`<div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.25);border-radius:8px;padding:8px 12px;font-size:.78rem;color:var(--warning);margin-bottom:14px">🔄 Visa change detected — current: <strong>${esc(visaDocs[0].doc_subtype)}</strong>, previously: <strong>${esc(visaDocs[1].doc_subtype)}</strong></div>`:''}
   <div class="doc-grid" style="margin-bottom:20px">
     ${renderDocCard('passport','🛂','Passport',passport)}
     ${renderDocCard('visa','📋','Visa / Work Rights',visa)}
     ${renderDocCard('forklift_license','🚜','Forklift License (HRWL)',forklift)}
   </div>
-
-  <!-- FULL HISTORY TABLE -->
-  ${myDocs.length ? `<div class="card">
-  <div class="card-title">Document History (all uploads)</div>
-  <div class="table-wrap"><table>
-    <thead><tr><th>Type</th><th>Subtype / Class</th><th>Ref Number</th><th>Expiry Date</th><th>Status</th><th>File</th><th>Uploaded</th><th>Actions</th></tr></thead>
-    <tbody>${myDocs.map(d=>{
-      const s = expiryStatus(d.expiry_date);
-      const isOwner = d.employee_id === profile.id;
-      const canEditDoc = isOwner || canManageConfidentialDocs(profile);
-
-      return `<tr>
+  ${myDocs.length?`<div class="card">
+    <div class="card-title">Document History</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Type</th><th>Subtype</th><th>Ref No.</th><th>Expiry</th><th>Status</th><th>File</th><th>Uploaded</th><th>Actions</th></tr></thead>
+      <tbody>${myDocs.map(d=>{const s=expiryStatus(d.expiry_date);return`<tr>
         <td><span style="font-size:1rem;margin-right:5px">${docTypeIcon(d.doc_type)}</span>${docTypeLabel(d.doc_type)}</td>
-        <td style="font-size:.8rem;max-width:180px">${esc(d.doc_subtype||'—')}</td>
+        <td style="font-size:.8rem">${esc(d.doc_subtype||'—')}</td>
         <td style="font-family:monospace;font-size:.78rem">${esc(d.doc_number||'—')}</td>
         <td style="font-size:.82rem;font-weight:500;color:${s.lvl<=1?'var(--error)':s.lvl<=3?'var(--warning)':'var(--text)'}">${d.expiry_date?fmtDate(d.expiry_date):'—'}</td>
         <td><span style="display:inline-flex;align-items:center;gap:5px"><span class="s-dot ${s.cls}"></span><span style="font-size:.74rem">${s.lvl===0?'Expired':s.lvl===1?'Critical':s.lvl<=3?'Warning':'Valid'}</span></span></td>
         <td>${d.file_path?`<span style="color:var(--success);font-size:.78rem">✓ Attached</span>`:`<span style="color:var(--faint);font-size:.78rem">None</span>`}</td>
         <td style="font-size:.74rem;color:var(--muted)">${new Date(d.uploaded_at).toLocaleDateString('en-AU')}</td>
         <td><div class="actions-cell">
-          ${d.file_path && canEditDoc ? `<button class="btn btn-ghost" style="font-size:.72rem;padding:4px 9px" onclick="viewDocFile('${d.id}')">View</button>` : ''}
-          ${canEditDoc ? `<button class="btn btn-ghost" style="font-size:.72rem;padding:4px 9px" onclick="openEditDoc('${d.id}')">Edit</button>` : ''}
-          ${canEditDoc ? `<button class="btn btn-danger" style="font-size:.72rem;padding:4px 9px" onclick="deleteDoc('${d.id}')">Del</button>` : ''}
+          ${d.file_path?`<button class="btn btn-ghost" style="font-size:.72rem;padding:4px 9px" onclick="viewDocFile('${d.id}')">View</button>`:''}
+          <button class="btn btn-ghost" style="font-size:.72rem;padding:4px 9px" onclick="openEditDoc('${d.id}')">Edit</button>
+          <button class="btn btn-danger" style="font-size:.72rem;padding:4px 9px" onclick="deleteDoc('${d.id}')">Del</button>
         </div></td>
-      </tr>`;
-    }).join('')}</tbody>
-  </table></div>
-</div>` : `<div class="card" style="text-align:center;padding:36px;color:var(--muted)">
-  <div style="font-size:2rem;margin-bottom:10px">📁</div>
-  <div style="font-weight:600;color:var(--text);margin-bottom:6px">No documents uploaded yet</div>
-  <p style="font-size:.85rem">Use the cards above to upload your passport, visa, and forklift license.</p>
-</div>`}
-
-function renderDocCard(type, icon, label, doc){
-  const dt = DOC_TYPES.find(t => t.id === type);
-  const s = doc ? expiryStatus(doc.expiry_date) : { label:'Not uploaded', cls:'s-missing', alertCls:'', lvl:5 };
-  const borderColor = doc ? (s.lvl<=1 ? 'rgba(248,113,113,.45)' : s.lvl<=3 ? 'rgba(251,191,36,.4)' : 'var(--border)') : 'var(--border)';
-  const isOwner = !!doc && doc.employee_id === profile.id;
-  const canManage = isOwner || canManageConfidentialDocs(profile);
-
-  return `<div class="doc-card" style="border-color:${borderColor}">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div class="doc-icon-wrap" style="background:${dt.bg}">${icon}</div>
-        <div>
-          <div style="font-weight:600;font-size:.92rem">${label}</div>
-          ${doc?.doc_subtype ? `<div style="font-size:.72rem;color:var(--muted);margin-top:1px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(doc.doc_subtype)}</div>` : ''}
-        </div>
-      </div>
-      <span class="s-dot ${s.cls}" style="width:12px;height:12px;flex-shrink:0;margin-top:4px"></span>
-    </div>
-
-    ${doc ? `
-      <div style="display:grid;gap:4px;font-size:.8rem">
-        ${doc.doc_number ? `<div style="color:var(--muted)">Ref: <span style="color:var(--text);font-family:monospace">${esc(doc.doc_number)}</span></div>` : ''}
-        ${doc.expiry_date
-          ? `<div style="color:var(--muted)">Expiry: <strong style="color:${s.lvl<=1?'var(--error)':s.lvl<=3?'var(--warning)':'var(--text)'}">${fmtDate(doc.expiry_date)}</strong></div>`
-          : `<div style="color:var(--muted)">No expiry date recorded</div>`}
-        <div style="font-size:.75rem;margin-top:2px;color:${s.lvl<=1?'var(--error)':s.lvl<=3?'var(--warning)':'var(--muted)'};font-weight:${s.lvl<=1?600:400}">${s.label}</div>
-        ${doc.notes ? `<div style="font-size:.73rem;color:var(--faint);margin-top:2px">Note: ${esc(doc.notes)}</div>` : ''}
-      </div>
-
-      <div style="font-size:.74rem;color:${doc.file_path ? 'var(--success)' : 'var(--faint)'}">${doc.file_path ? '✓ File attached' : 'No file attached'}</div>
-
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px">
-        ${doc.file_path && canManage ? `<button class="btn btn-ghost" style="font-size:.75rem;padding:5px 11px" onclick="viewDocFile('${doc.id}')">View File</button>` : ''}
-        ${canManage ? `<button class="btn btn-ghost" style="font-size:.75rem;padding:5px 11px" onclick="openEditDoc('${doc.id}')">Edit Details</button>` : ''}
-        ${canManage ? `<button class="btn btn-primary" style="font-size:.75rem;padding:5px 11px" onclick="openUploadDoc('${type}',null)">Upload New</button>` : ''}
-      </div>
-    ` : `
-      <div style="color:var(--muted);font-size:.83rem;flex:1">No document on record.</div>
-      <button class="btn btn-primary" onclick="openUploadDoc('${type}',null)">+ Upload ${label}</button>
-    `}
+      </tr>`;}).join('')}</tbody>
+    </table></div>
+  </div>`:`<div class="card" style="text-align:center;padding:36px;color:var(--muted)"><div style="font-size:2rem;margin-bottom:10px">📁</div><div style="font-weight:600;color:var(--text);margin-bottom:6px">No documents uploaded yet</div><p style="font-size:.85rem">Use the cards above to upload your passport, visa, and forklift license.</p></div>`}
   </div>`;
 }
 
-// ─────────────────────────────────────────────────────────────
-// ── MANAGER DOCUMENT ALERTS VIEW ─────────────────────────────
-// ─────────────────────────────────────────────────────────────
+function renderDocCard(type,icon,label,doc){
+  const dt=DOC_TYPES.find(t=>t.id===type);
+  const s=doc?expiryStatus(doc.expiry_date):{label:'Not uploaded',cls:'s-missing',alertCls:'',lvl:5};
+  const borderColor=doc?(s.lvl<=1?'rgba(248,113,113,.45)':s.lvl<=3?'rgba(251,191,36,.4)':'var(--border)'):'var(--border)';
+  return`<div class="doc-card" style="border-color:${borderColor}">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="doc-icon-wrap" style="background:${dt.bg}">${icon}</div>
+        <div><div style="font-weight:600;font-size:.92rem">${label}</div>${doc?.doc_subtype?`<div style="font-size:.72rem;color:var(--muted);margin-top:1px">${esc(doc.doc_subtype)}</div>`:''}</div>
+      </div>
+      <span class="s-dot ${s.cls}" style="width:12px;height:12px;flex-shrink:0;margin-top:4px"></span>
+    </div>
+    ${doc?`<div style="display:grid;gap:4px;font-size:.8rem">
+      ${doc.doc_number?`<div style="color:var(--muted)">Ref: <span style="color:var(--text);font-family:monospace">${esc(doc.doc_number)}</span></div>`:''}
+      ${doc.expiry_date?`<div style="color:var(--muted)">Expiry: <strong style="color:${s.lvl<=1?'var(--error)':s.lvl<=3?'var(--warning)':'var(--text)'}">${fmtDate(doc.expiry_date)}</strong></div>`:`<div style="color:var(--muted)">No expiry date recorded</div>`}
+      <div style="font-size:.75rem;margin-top:2px;color:${s.lvl<=1?'var(--error)':s.lvl<=3?'var(--warning)':'var(--muted)'};font-weight:${s.lvl<=1?600:400}">${s.label}</div>
+      ${doc.notes?`<div style="font-size:.73rem;color:var(--faint);margin-top:2px">Note: ${esc(doc.notes)}</div>`:''}
+    </div>
+    <div style="font-size:.74rem;color:${doc.file_path?'var(--success)':'var(--faint)'}">${doc.file_path?'✓ File attached':'No file attached'}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px">
+      ${doc.file_path?`<button class="btn btn-ghost" style="font-size:.75rem;padding:5px 11px" onclick="viewDocFile('${doc.id}')">View File</button>`:''}
+      <button class="btn btn-ghost" style="font-size:.75rem;padding:5px 11px" onclick="openEditDoc('${doc.id}')">Edit Details</button>
+      <button class="btn btn-primary" style="font-size:.75rem;padding:5px 11px" onclick="openUploadDoc('${type}',null)">Upload New</button>
+    </div>`:`<div style="color:var(--muted);font-size:.83rem;flex:1">No document on record.</div>
+    <button class="btn btn-primary" onclick="openUploadDoc('${type}',null)">+ Upload ${label}</button>`}
+  </div>`;
+}
+
+// ── DOCUMENT ALERTS VIEW ──────────────────────────────────────
 function renderDocsAlerts(){
-  // Apply filters
-  let docs=[...allDocAlerts];
-  if(docFilters.search)docs=docs.filter(d=>[d.full_name,d.employee_code,d.department].join(' ').toLowerCase().includes(docFilters.search.toLowerCase()));
-  if(docFilters.type)docs=docs.filter(d=>d.doc_type===docFilters.type);
-  if(docFilters.level){
-    const lv=parseInt(docFilters.level);
-    docs=docs.filter(d=>expiryStatus(d.expiry_date).lvl===lv);
-  }
-
   const all=allDocAlerts;
-  const expired  = all.filter(d=>expiryStatus(d.expiry_date).lvl===0);
-  const critical = all.filter(d=>expiryStatus(d.expiry_date).lvl===1);
-  const warning  = all.filter(d=>expiryStatus(d.expiry_date).lvl===2||expiryStatus(d.expiry_date).lvl===3);
-
+  const expired=all.filter(d=>expiryStatus(d.expiry_date).lvl===0);
+  const critical=all.filter(d=>expiryStatus(d.expiry_date).lvl===1);
+  const warning=all.filter(d=>[2,3].includes(expiryStatus(d.expiry_date).lvl));
   return`<div style="max-width:1200px">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
     <button class="btn btn-ghost" onclick="view='mgr';renderView()">← Manager Dashboard</button>
-    <div>
-      <div style="font-size:1.15rem;font-weight:700">Team Document Alerts</div>
-      <div style="font-size:.78rem;color:var(--muted)">Documents expiring within 6 months across all staff</div>
-    </div>
+    <div><div style="font-size:1.15rem;font-weight:700">Team Document Alerts</div><div style="font-size:.78rem;color:var(--muted)">Documents expiring within 6 months across all staff</div></div>
     <button class="btn btn-ghost" style="margin-left:auto" onclick="loadAllDocAlerts().then(()=>renderView())">⟳ Refresh</button>
   </div>
-
   <div class="metrics" style="margin-bottom:20px">
     <div class="metric card"><div class="val" style="color:var(--error)">${expired.length}</div><div class="lbl">Expired</div></div>
-    <div class="metric card"><div class="val" style="color:var(--error)">${critical.length}</div><div class="lbl">Critical (&lt;30 days)</div></div>
-    <div class="metric card"><div class="val" style="color:var(--warning)">${warning.length}</div><div class="lbl">Warning (&lt;6 months)</div></div>
+    <div class="metric card"><div class="val" style="color:var(--error)">${critical.length}</div><div class="lbl">Critical (&lt;30d)</div></div>
+    <div class="metric card"><div class="val" style="color:var(--warning)">${warning.length}</div><div class="lbl">Warning</div></div>
     <div class="metric card"><div class="val">${all.length}</div><div class="lbl">Total Alerts</div></div>
   </div>
-
-  ${all.length===0?`<div class="card" style="text-align:center;padding:48px">
-    <div style="font-size:2.5rem;margin-bottom:14px">✅</div>
-    <div style="font-size:1.1rem;font-weight:600;margin-bottom:6px">All clear</div>
-    <p style="color:var(--muted);font-size:.85rem">No team documents are expiring within the next 6 months.</p>
-  </div>`:``}
-
-  ${expired.length?`<div class="card" style="margin-bottom:14px;border-color:rgba(248,113,113,.5)">
-    <div class="card-title" style="color:var(--error)">🔴 Expired Documents — Immediate Action Required</div>
-    ${renderDocAlertTable(expired)}
-  </div>`:''}
-
-  ${critical.length?`<div class="card" style="margin-bottom:14px;border-color:rgba(248,113,113,.35)">
-    <div class="card-title" style="color:var(--error)">🟠 Critical — Expiring within 30 days</div>
-    ${renderDocAlertTable(critical)}
-  </div>`:''}
-
-  ${warning.length?`<div class="card" style="margin-bottom:14px;border-color:rgba(251,191,36,.35)">
-    <div class="card-title" style="color:var(--warning)">🟡 Warning — Expiring within 6 months</div>
-    ${renderDocAlertTable(warning)}
-  </div>`:''}
-
-  ${all.length>0?`<div class="card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-      <div class="card-title" style="margin:0">All Alerts — Filtered View</div>
-      <div class="filters" style="margin:0">
-        <input placeholder="Search name, code, dept…" value="${esc(docFilters.search)}" oninput="docFilters.search=this.value;renderView()">
-        <select onchange="docFilters.type=this.value;renderView()">
-          <option value="">All types</option>
-          ${DOC_TYPES.map(t=>`<option value="${t.id}" ${docFilters.type===t.id?'selected':''}>${t.label}</option>`).join('')}
-        </select>
-        <select onchange="docFilters.level=this.value;renderView()">
-          <option value="">All levels</option>
-          <option value="0" ${docFilters.level==='0'?'selected':''}>Expired</option>
-          <option value="1" ${docFilters.level==='1'?'selected':''}>Critical (&lt;30d)</option>
-          <option value="2" ${docFilters.level==='2'?'selected':''}>3-month warning</option>
-          <option value="3" ${docFilters.level==='3'?'selected':''}>6-month warning</option>
-        </select>
-      </div>
-    </div>
-    ${renderDocAlertTable(docs)}
-  </div>`:''}
+  ${all.length===0?`<div class="card" style="text-align:center;padding:48px"><div style="font-size:2.5rem;margin-bottom:14px">✅</div><div style="font-size:1.1rem;font-weight:600;margin-bottom:6px">All clear</div><p style="color:var(--muted);font-size:.85rem">No team documents are expiring within the next 6 months.</p></div>`:''}
+  ${expired.length?`<div class="card" style="margin-bottom:14px;border-color:rgba(248,113,113,.5)"><div class="card-title" style="color:var(--error)">🔴 Expired — Immediate Action Required</div>${renderDocAlertTable(expired)}</div>`:''}
+  ${critical.length?`<div class="card" style="margin-bottom:14px;border-color:rgba(248,113,113,.35)"><div class="card-title" style="color:var(--error)">🟠 Critical — Expiring within 30 days</div>${renderDocAlertTable(critical)}</div>`:''}
+  ${warning.length?`<div class="card" style="margin-bottom:14px;border-color:rgba(251,191,36,.35)"><div class="card-title" style="color:var(--warning)">🟡 Warning — Expiring within 6 months</div>${renderDocAlertTable(warning)}</div>`:''}
   </div>`;
 }
 
 function renderDocAlertTable(docs){
   if(!docs.length)return`<p style="color:var(--muted);font-size:.83rem;padding:8px 0">No records match this filter.</p>`;
   return`<div class="table-wrap"><table>
-    <thead><tr><th>Name</th><th>Code</th><th>Dept</th><th>Document Type</th><th>Subtype / Class</th><th>Ref No.</th><th>Expiry Date</th><th>Status</th><th>File</th></tr></thead>
-    <tbody>${docs.map(d=>{
-      const s=expiryStatus(d.expiry_date);
-      return`<tr>
-        <td style="font-weight:500">${esc(d.full_name||'—')}</td>
-        <td style="font-family:monospace;font-size:.75rem">${esc(d.employee_code||'—')}</td>
-        <td style="font-size:.8rem">${esc(d.department||'—')}</td>
-        <td><span style="font-size:.95rem">${docTypeIcon(d.doc_type)}</span> ${docTypeLabel(d.doc_type)}</td>
-        <td style="font-size:.78rem;max-width:170px">${esc(d.doc_subtype||'—')}</td>
-        <td style="font-family:monospace;font-size:.75rem">${esc(d.doc_number||'—')}</td>
-        <td style="font-weight:600;color:${s.lvl<=1?'var(--error)':'var(--warning)'}">${fmtDate(d.expiry_date)}</td>
-        <td><span style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap">
-          <span class="s-dot ${s.cls}"></span>
-          <span style="font-size:.73rem">${s.lvl===0?'EXPIRED':s.lvl===1?'CRITICAL':s.lvl===2?'3-month':'6-month'}</span>
-        </span></td>
-        <td>${d.file_path
-          ?`<button class="btn btn-ghost" style="font-size:.72rem;padding:3px 8px" onclick="viewDocFileDirect('${esc(d.file_path)}')">View</button>`
-          :`<span style="color:var(--faint);font-size:.75rem">None</span>`
-        }</td>
-      </tr>`;
-    }).join('')}</tbody>
+    <thead><tr><th>Name</th><th>Code</th><th>Dept</th><th>Document Type</th><th>Subtype</th><th>Ref No.</th><th>Expiry Date</th><th>Status</th></tr></thead>
+    <tbody>${docs.map(d=>{const s=expiryStatus(d.expiry_date);return`<tr>
+      <td style="font-weight:500">${esc(d.full_name||'—')}</td>
+      <td style="font-family:monospace;font-size:.75rem">${esc(d.employee_code||'—')}</td>
+      <td style="font-size:.8rem">${esc(d.department||'—')}</td>
+      <td><span style="font-size:.95rem">${docTypeIcon(d.doc_type)}</span> ${docTypeLabel(d.doc_type)}</td>
+      <td style="font-size:.78rem">${esc(d.doc_subtype||'—')}</td>
+      <td style="font-family:monospace;font-size:.75rem">${esc(d.doc_number||'—')}</td>
+      <td style="font-weight:600;color:${s.lvl<=1?'var(--error)':'var(--warning)'}">${fmtDate(d.expiry_date)}</td>
+      <td><span style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap"><span class="s-dot ${s.cls}"></span><span style="font-size:.73rem">${s.lvl===0?'EXPIRED':s.lvl===1?'CRITICAL':s.lvl===2?'3-month':'6-month'}</span></span></td>
+    </tr>`;}).join('')}</tbody>
   </table></div>`;
 }
 
-// ─────────────────────────────────────────────────────────────
-// ── UPLOAD MODAL ──────────────────────────────────────────────
-// ─────────────────────────────────────────────────────────────
-function openUploadDoc(type, existingId){
+// ── UPLOAD / EDIT / DELETE DOCS ───────────────────────────────
+function openUploadDoc(type,existingId){
   const dt=DOC_TYPES.find(t=>t.id===type)||DOC_TYPES[0];
-  const existing=existingId?myDocs.find(d=>d.id===existingId):null;
-
   const subtypeField=type==='visa'
-    ?`<div class="field full"><label>Visa Type / Status</label><select id="up_subtype">${VISA_TYPES.map(v=>`<option value="${v}" ${existing?.doc_subtype===v?'selected':''}>${v}</option>`).join('')}</select></div>`
+    ?`<div class="field full"><label>Visa Type</label><select id="up_subtype">${VISA_TYPES.map(v=>`<option>${v}</option>`).join('')}</select></div>`
     :type==='forklift_license'
-    ?`<div class="field full"><label>License Class</label><select id="up_subtype">${FORKLIFT_CLASSES.map(c=>`<option value="${c}" ${existing?.doc_subtype===c?'selected':''}>${c}</option>`).join('')}</select></div>`
+    ?`<div class="field full"><label>License Class</label><select id="up_subtype">${FORKLIFT_CLASSES.map(c=>`<option>${c}</option>`).join('')}</select></div>`
     :'';
-
-  // For Australian Citizen visa, flag that no expiry is needed
-  const citizenNote=type==='visa'?`<div id="citizen_note" style="display:none;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);border-radius:7px;padding:8px 12px;font-size:.78rem;color:var(--success);margin-bottom:8px">✓ Australian Citizens do not require a visa expiry date.</div>`:'';
-
   document.getElementById('modalRoot').innerHTML=`<div class="modal-back" onclick="if(event.target===this)closeModal()"><div class="modal">
     <h3>${dt.icon} Upload ${dt.label}</h3>
-    <div style="background:rgba(0,180,216,.07);border:1px solid rgba(0,180,216,.2);border-radius:8px;padding:10px 13px;margin-bottom:16px;font-size:.8rem;color:var(--muted)">
-      This will add a new record. Previous records are kept in document history.
-    </div>
     <div class="form-grid">
       ${subtypeField}
-      <div class="field"><label>Reference / Document Number</label><input id="up_number" placeholder="${type==='passport'?'e.g. PA1234567':type==='forklift_license'?'License number':'Optional'}" value="${esc(existing?.doc_number||'')}"></div>
-      <div class="field"><label>Expiry Date ${type==='visa'?'(leave blank for PR/Citizen)':''}</label><input id="up_expiry" type="date" value="${existing?.expiry_date||''}" ${type==='visa'?'onchange="checkVisaExpiry(this)"':''}></div>
-      <div class="field full"><label>Notes (optional)</label><input id="up_notes" placeholder="e.g. renewal in progress, awaiting replacement" value="${esc(existing?.notes||'')}"></div>
+      <div class="field"><label>Reference / Document Number</label><input id="up_number" placeholder="Optional"></div>
+      <div class="field"><label>Expiry Date</label><input id="up_expiry" type="date"></div>
+      <div class="field full"><label>Notes (optional)</label><input id="up_notes" placeholder="e.g. renewal in progress"></div>
       <div class="field full">
         <label>Document File (PDF, JPG, PNG — max 10 MB)</label>
-        ${citizenNote}
-        <div class="upload-drop" id="upload_drop"
-          onclick="document.getElementById('up_file').click()"
-          ondragover="event.preventDefault();this.classList.add('dragover')"
-          ondragleave="this.classList.remove('dragover')"
-          ondrop="handleFileDrop(event)">
+        <div class="upload-drop" id="upload_drop" onclick="document.getElementById('up_file').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleFileDrop(event)">
           <div style="font-size:1.4rem;margin-bottom:6px">📎</div>
           <div>Click to choose file or drag &amp; drop</div>
           <div style="font-size:.73rem;margin-top:4px;color:var(--faint)">PDF, JPG, PNG — max 10 MB</div>
@@ -1004,114 +723,63 @@ function openUploadDoc(type, existingId){
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
     </div>
   </div></div>`;
-
-  // Setup drag-drop
-  const drop=document.getElementById('upload_drop');
-  if(drop){
-    drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('dragover');});
-    drop.addEventListener('dragleave',()=>drop.classList.remove('dragover'));
-    drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('dragover');const f=e.dataTransfer.files[0];if(f){const dt2=new DataTransfer();dt2.items.add(f);document.getElementById('up_file').files=dt2.files;showChosenFile(document.getElementById('up_file'));}});
-  }
-}
-
-function checkVisaExpiry(input){
-  // Not needed functionally but kept for hook
 }
 
 function showChosenFile(input){
-  const f=input.files[0]; if(!f)return;
+  const f=input.files[0];if(!f)return;
   const drop=document.getElementById('upload_drop');
-  drop.classList.remove('dragover');
   drop.classList.add('file-chosen');
   drop.innerHTML=`<div style="font-size:1.4rem;margin-bottom:6px">✓</div><div style="font-weight:500">${esc(f.name)}</div><div style="font-size:.73rem;margin-top:4px">${(f.size/1024/1024).toFixed(2)} MB</div>`;
 }
 
 function handleFileDrop(event){
   event.preventDefault();
-  const drop=document.getElementById('upload_drop');
-  if(drop)drop.classList.remove('dragover');
+  const drop=document.getElementById('upload_drop');if(drop)drop.classList.remove('dragover');
   const f=event.dataTransfer.files[0];
-  if(f){
-    const dt=new DataTransfer();dt.items.add(f);
-    const input=document.getElementById('up_file');
-    if(input){input.files=dt.files;showChosenFile(input);}
-  }
+  if(f){const dt=new DataTransfer();dt.items.add(f);const input=document.getElementById('up_file');if(input){input.files=dt.files;showChosenFile(input);}}
 }
 
 async function uploadDocument(docType){
-  const btn=document.getElementById('up_btn');
-  btn.disabled=true;btn.textContent='Saving…';
-
-  const subtype  =document.getElementById('up_subtype')?.value||null;
-  const number   =document.getElementById('up_number')?.value.trim()||null;
-  const expiry   =document.getElementById('up_expiry')?.value||null;
-  const notes    =document.getElementById('up_notes')?.value.trim()||null;
+  const btn=document.getElementById('up_btn');btn.disabled=true;btn.textContent='Saving…';
+  const subtype=document.getElementById('up_subtype')?.value||null;
+  const number=document.getElementById('up_number')?.value.trim()||null;
+  const expiry=document.getElementById('up_expiry')?.value||null;
+  const notes=document.getElementById('up_notes')?.value.trim()||null;
   const fileInput=document.getElementById('up_file');
-  const file     =fileInput?.files[0]||null;
-
+  const file=fileInput?.files[0]||null;
   let filePath=null,fileName=null;
-
   if(file){
-    if(file.size>10*1024*1024){
-      showMsg('up_msg','File too large. Maximum is 10 MB.','error');
-      btn.disabled=false;btn.textContent='Save Document';return;
-    }
+    if(file.size>10*1024*1024){showMsg('up_msg','File too large. Maximum is 10 MB.','error');btn.disabled=false;btn.textContent='Save Document';return;}
     const ext=file.name.split('.').pop();
-    fileName=file.name;
-    filePath=`${profile.id}/${docType}/${Date.now()}.${ext}`;
+    fileName=file.name;filePath=`${profile.id}/${docType}/${Date.now()}.${ext}`;
     const{error:storErr}=await sb.storage.from('employee-documents').upload(filePath,file,{upsert:false,contentType:file.type});
     if(storErr){
-      // Storage might not be set up yet — save record without file
-      console.warn('Storage error:',storErr.message);
-      filePath=null;fileName=null;
-      if(!confirm('File upload failed (storage may not be configured). Save the document details without a file?')){
-        btn.disabled=false;btn.textContent='Save Document';return;
-      }
+      console.warn('Storage error:',storErr.message);filePath=null;fileName=null;
+      if(!confirm('File upload failed (storage may not be configured). Save document details without a file?')){btn.disabled=false;btn.textContent='Save Document';return;}
     }
   }
-
-  const{error}=await sb.from('employee_documents').insert({
-    employee_id: profile.id,
-    doc_type: docType,
-    doc_subtype: subtype,
-    doc_number: number,
-    expiry_date: expiry||null,
-    file_path: filePath,
-    file_name: fileName,
-    notes: notes,
-    uploaded_by: profile.id
-  });
-
-  if(error){
-    showMsg('up_msg','Error saving: '+error.message,'error');
-    btn.disabled=false;btn.textContent='Save Document';return;
-  }
-
-  await loadMyDocs();
-  closeModal();
-  toast('✓ Document saved successfully.');
-  renderView();
+  const{error}=await sb.from('employee_documents').insert({employee_id:profile.id,doc_type:docType,doc_subtype:subtype,doc_number:number,expiry_date:expiry||null,file_path:filePath,file_name:fileName,notes,uploaded_by:profile.id});
+  if(error){showMsg('up_msg','Error saving: '+error.message,'error');btn.disabled=false;btn.textContent='Save Document';return;}
+  await loadMyDocs();closeModal();toast('✓ Document saved successfully.');renderView();
 }
 
-// ── EDIT DOC ──────────────────────────────────────────────────
 function openEditDoc(docId){
   const doc=myDocs.find(d=>d.id===docId);if(!doc)return;
   const type=doc.doc_type;
   const subtypeField=type==='visa'
-    ?`<div class="field full"><label>Visa Type / Status</label><select id="ed_subtype">${VISA_TYPES.map(v=>`<option value="${v}" ${doc.doc_subtype===v?'selected':''}>${v}</option>`).join('')}</select></div>`
+    ?`<div class="field full"><label>Visa Type</label><select id="ed_subtype">${VISA_TYPES.map(v=>`<option value="${v}" ${doc.doc_subtype===v?'selected':''}>${v}</option>`).join('')}</select></div>`
     :type==='forklift_license'
     ?`<div class="field full"><label>License Class</label><select id="ed_subtype">${FORKLIFT_CLASSES.map(c=>`<option value="${c}" ${doc.doc_subtype===c?'selected':''}>${c}</option>`).join('')}</select></div>`
     :'';
   document.getElementById('modalRoot').innerHTML=`<div class="modal-back" onclick="if(event.target===this)closeModal()"><div class="modal">
     <h3>✏️ Edit Document Details</h3>
-    <p style="color:var(--muted);font-size:.82rem;margin-bottom:16px">${docTypeIcon(type)} ${docTypeLabel(type)} · Uploaded ${new Date(doc.uploaded_at).toLocaleDateString('en-AU')}</p>
+    <p style="color:var(--muted);font-size:.82rem;margin-bottom:16px">${docTypeIcon(type)} ${docTypeLabel(type)}</p>
     <div class="form-grid">
       ${subtypeField}
-      <div class="field"><label>Reference / Document Number</label><input id="ed_number" value="${esc(doc.doc_number||'')}"></div>
+      <div class="field"><label>Reference Number</label><input id="ed_number" value="${esc(doc.doc_number||'')}"></div>
       <div class="field"><label>Expiry Date</label><input id="ed_expiry" type="date" value="${doc.expiry_date||''}"></div>
       <div class="field full"><label>Notes</label><input id="ed_notes" value="${esc(doc.notes||'')}"></div>
     </div>
-    <p style="font-size:.74rem;color:var(--faint);margin-top:12px">To replace the attached file, use "Upload New" from the document card. This only updates the details.</p>
     <div id="ed_msg" class="msg"></div>
     <div class="modal-actions">
       <button class="btn btn-primary" onclick="saveEditDoc('${docId}')">Save Changes</button>
@@ -1122,43 +790,33 @@ function openEditDoc(docId){
 
 async function saveEditDoc(docId){
   const subtype=document.getElementById('ed_subtype')?.value||null;
-  const number =document.getElementById('ed_number').value.trim()||null;
-  const expiry =document.getElementById('ed_expiry').value||null;
-  const notes  =document.getElementById('ed_notes').value.trim()||null;
+  const number=document.getElementById('ed_number').value.trim()||null;
+  const expiry=document.getElementById('ed_expiry').value||null;
+  const notes=document.getElementById('ed_notes').value.trim()||null;
   const{error}=await sb.from('employee_documents').update({doc_subtype:subtype,doc_number:number,expiry_date:expiry||null,notes}).eq('id',docId);
   if(error){showMsg('ed_msg','Error: '+error.message,'error');return;}
-  await loadMyDocs();
-  closeModal();toast('Document updated.');renderView();
+  await loadMyDocs();closeModal();toast('Document updated.');renderView();
 }
 
-// ── DELETE DOC ────────────────────────────────────────────────
 async function deleteDoc(docId){
   const doc=myDocs.find(d=>d.id===docId);
   if(!doc||!confirm(`Delete this ${docTypeLabel(doc.doc_type)} record? This cannot be undone.`))return;
-  if(doc.file_path){
-    try{await sb.storage.from('employee-documents').remove([doc.file_path]);}catch(e){}
-  }
+  if(doc.file_path){try{await sb.storage.from('employee-documents').remove([doc.file_path]);}catch(e){}}
   await sb.from('employee_documents').delete().eq('id',docId);
-  await loadMyDocs();
-  toast('Document deleted.');renderView();
+  await loadMyDocs();toast('Document deleted.');renderView();
 }
 
-// ── VIEW FILE ─────────────────────────────────────────────────
 async function viewDocFile(docId){
   const doc=myDocs.find(d=>d.id===docId);
   if(!doc?.file_path){toast('No file attached to this record.');return;}
-  await viewDocFileDirect(doc.file_path);
-}
-
-async function viewDocFileDirect(filePath){
   try{
-    const{data,error}=await sb.storage.from('employee-documents').createSignedUrl(filePath,300);
+    const{data,error}=await sb.storage.from('employee-documents').createSignedUrl(doc.file_path,300);
     if(error){toast('Could not open file: '+error.message);return;}
     window.open(data.signedUrl,'_blank');
   }catch(e){toast('Error opening file.');}
 }
 
-// ── RESUME INDUCTION ──────────────────────────────────────────
+// ── INDUCTION FLOW ────────────────────────────────────────────
 function resumeInduction(){
   const allViewed=KNOWLEDGE_TOPICS.every(t=>knowledgeViewed.includes(t.id));
   if(!allViewed){view='kb';renderView();return;}
@@ -1166,7 +824,6 @@ function resumeInduction(){
   activeModule=first===-1?0:first;activeQuestion=0;view='module';renderView();
 }
 
-// ── KNOWLEDGE GATE ────────────────────────────────────────────
 function renderKnowledgeGate(){
   const topic=KNOWLEDGE_TOPICS.find(t=>t.id===activeKbTopic)||KNOWLEDGE_TOPICS[0];
   const allDone=KNOWLEDGE_TOPICS.every(t=>knowledgeViewed.includes(t.id));
@@ -1194,10 +851,7 @@ function renderKnowledgeGate(){
 }
 
 async function confirmTopic(id){
-  if(!knowledgeViewed.includes(id)){
-    knowledgeViewed.push(id);
-    await sb.from('employees').update({knowledge_viewed:knowledgeViewed}).eq('id',profile.id);
-  }
+  if(!knowledgeViewed.includes(id)){knowledgeViewed.push(id);await sb.from('employees').update({knowledge_viewed:knowledgeViewed}).eq('id',profile.id);}
   const next=KNOWLEDGE_TOPICS.find(t=>!knowledgeViewed.includes(t.id));
   if(next)activeKbTopic=next.id;
   renderView();
@@ -1208,7 +862,6 @@ function startModules(){
   activeModule=first===-1?0:first;activeQuestion=0;view='module';renderView();
 }
 
-// ── MODULE VIEW ───────────────────────────────────────────────
 function renderModule(){
   const mod=MODULES[activeModule];
   const mp=moduleProgress[mod.id]||{answers:{},completed:false};
@@ -1216,13 +869,11 @@ function renderModule(){
   const saved=mp.answers[activeQuestion];
   const completedSet=new Set(MODULES.filter(m=>moduleProgress[m.id]?.completed).map(m=>m.id));
   return`<div style="display:grid;grid-template-columns:200px 1fr;gap:16px;align-items:start">
-    <aside>
-      <div class="card" style="padding:14px">
-        <div class="card-title">Modules</div>
-        <div class="module-list">${MODULES.map((m,i)=>{const unlocked=i===0||completedSet.has(MODULES[i-1].id);const done=completedSet.has(m.id);return`<div class="mod-row ${i===activeModule?'active':''} ${done?'done':''} ${!unlocked?'locked':''}" onclick="${unlocked?`switchModule(${i})`:''}">${m.icon} ${esc(m.title)}${done?' <span style="margin-left:auto;font-size:.7rem;color:var(--success)">✓</span>':''}</div>`;}).join('')}</div>
-        <button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="view='dashboard';renderView()">← Dashboard</button>
-      </div>
-    </aside>
+    <aside><div class="card" style="padding:14px">
+      <div class="card-title">Modules</div>
+      <div class="module-list">${MODULES.map((m,i)=>{const unlocked=i===0||completedSet.has(MODULES[i-1].id);const done=completedSet.has(m.id);return`<div class="mod-row ${i===activeModule?'active':''} ${done?'done':''} ${!unlocked?'locked':''}" onclick="${unlocked?`switchModule(${i})`:''}">${m.icon} ${esc(m.title)}${done?' <span style="margin-left:auto;font-size:.7rem;color:var(--success)">✓</span>':''}</div>`;}).join('')}</div>
+      <button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="view='dashboard';renderView()">← Dashboard</button>
+    </div></aside>
     <div style="display:grid;gap:14px">
       <div class="card" style="background:linear-gradient(135deg,rgba(0,180,216,.06),transparent)">
         <div style="font-size:.72rem;color:var(--muted);margin-bottom:4px">Module ${activeModule+1} of ${MODULES.length}</div>
@@ -1245,18 +896,14 @@ function renderModule(){
 }
 
 function switchModule(i){
-  activeModule=i;
+  activeModule=i;activeQuestion=0;
   const saved=moduleProgress[MODULES[i].id];
-  if(saved&&saved.answers){
-    const answered=Object.keys(saved.answers).map(Number).sort((a,b)=>a-b);
-    activeQuestion=answered.length?Math.min(answered[answered.length-1]+1,MODULES[i].questions.length-1):0;
-  }else{activeQuestion=0;}
+  if(saved&&saved.answers){const answered=Object.keys(saved.answers).map(Number).sort((a,b)=>a-b);activeQuestion=answered.length?Math.min(answered[answered.length-1]+1,MODULES[i].questions.length-1):0;}
   view='module';renderView();
 }
 
 async function answerQ(idx){
-  const mod=MODULES[activeModule];
-  const q=mod.questions[activeQuestion];
+  const mod=MODULES[activeModule];const q=mod.questions[activeQuestion];
   if(!moduleProgress[mod.id])moduleProgress[mod.id]={answers:{},completed:false};
   moduleProgress[mod.id].answers[activeQuestion]=idx;
   await sb.rpc('save_module_progress',{p_employee_id:profile.id,p_module_id:mod.id,p_answers:moduleProgress[mod.id].answers,p_completed:false});
@@ -1275,10 +922,7 @@ async function answerQ(idx){
 
 async function tryAgain(){
   const mod=MODULES[activeModule];
-  if(moduleProgress[mod.id]){
-    delete moduleProgress[mod.id].answers[activeQuestion];
-    await sb.rpc('save_module_progress',{p_employee_id:profile.id,p_module_id:mod.id,p_answers:moduleProgress[mod.id].answers,p_completed:!!moduleProgress[mod.id].completed});
-  }
+  if(moduleProgress[mod.id]){delete moduleProgress[mod.id].answers[activeQuestion];await sb.rpc('save_module_progress',{p_employee_id:profile.id,p_module_id:mod.id,p_answers:moduleProgress[mod.id].answers,p_completed:!!moduleProgress[mod.id].completed});}
   renderView();
 }
 
@@ -1287,25 +931,19 @@ async function nextQ(){
   if(activeQuestion<mod.questions.length-1){activeQuestion++;renderView();return;}
   const mp=moduleProgress[mod.id]||{answers:{},completed:false};
   const allCorrect=mod.questions.every((q,i)=>mp.answers[i]===q.a);
-  if(!allCorrect){
-    const first=mod.questions.findIndex((q,i)=>mp.answers[i]!==q.a);
-    activeQuestion=first>=0?first:0;
-    alert('Please answer all questions correctly to complete this module. Returning to the first unanswered question.');
-    renderView();return;
-  }
+  if(!allCorrect){const first=mod.questions.findIndex((q,i)=>mp.answers[i]!==q.a);activeQuestion=first>=0?first:0;alert('Please answer all questions correctly to complete this module.');renderView();return;}
   mp.completed=true;moduleProgress[mod.id]=mp;
   await sb.rpc('save_module_progress',{p_employee_id:profile.id,p_module_id:mod.id,p_answers:mp.answers,p_completed:true});
   const doneCount=Object.values(moduleProgress).filter(m=>m.completed).length;
-  const newPct=Math.round((doneCount/MODULES.length)*100);
   const completedNow=doneCount===MODULES.length;
-  await sb.from('employees').update({progress_pct:completedNow?100:newPct,completion_status:completedNow?'completed':'in_progress'}).eq('id',profile.id);
-  profile.progress_pct=completedNow?100:newPct;profile.completion_status=completedNow?'completed':'in_progress';
+  const newPct=completedNow?100:Math.round((doneCount/MODULES.length)*100);
+  await sb.from('employees').update({progress_pct:newPct,completion_status:completedNow?'completed':'in_progress'}).eq('id',profile.id);
+  profile.progress_pct=newPct;profile.completion_status=completedNow?'completed':'in_progress';
   toast(`✓ Module "${mod.title}" completed!`);
   if(activeModule<MODULES.length-1){activeModule++;activeQuestion=0;renderView();}
   else{view='decl';renderView();}
 }
 
-// ── DECLARATION ───────────────────────────────────────────────
 function renderDeclaration(){
   return`<div style="max-width:760px">
   <button class="btn btn-ghost" style="margin-bottom:16px" onclick="view='module';renderView()">← Back</button>
@@ -1332,16 +970,14 @@ async function submitDeclaration(){
   const ddate=document.getElementById('d_date').value;
   if(!esig||!sname||!ssig){alert('Please fill in all signature fields.');return;}
   const completedCount=Object.values(moduleProgress).filter(m=>m.completed).length;
-  if(completedCount<MODULES.length){alert(`Please complete all ${MODULES.length} modules before submitting. You have completed ${completedCount} of ${MODULES.length}.`);return;}
+  if(completedCount<MODULES.length){alert(`Please complete all ${MODULES.length} modules first. You have completed ${completedCount} of ${MODULES.length}.`);return;}
   await sb.from('employees').update({completion_status:'completed',completion_date:ddate,employee_signature:esig,supervisor_name:sname,supervisor_signature:ssig,progress_pct:100}).eq('id',profile.id);
   Object.assign(profile,{completion_status:'completed',completion_date:ddate,employee_signature:esig,supervisor_name:sname,supervisor_signature:ssig,progress_pct:100});
   view='done';renderView();
 }
 
-// ── COMPLETION ────────────────────────────────────────────────
 function renderCompletion(){
-  return`<div style="max-width:640px;text-align:center;margin:40px auto">
-  <div class="card">
+  return`<div style="max-width:640px;text-align:center;margin:40px auto"><div class="card">
     <div style="font-size:3rem;margin-bottom:12px">🎉</div>
     <div style="font-size:1.4rem;font-weight:700;margin-bottom:8px">Induction Complete!</div>
     <p style="color:var(--muted);margin-bottom:20px">${esc(profile.full_name)} has successfully completed the Pezzano Enterprises Warehouse Staff Induction.</p>
@@ -1352,7 +988,6 @@ function renderCompletion(){
   </div></div>`;
 }
 
-// ── LETTER ────────────────────────────────────────────────────
 function buildLetter(emp){
   return`<div class="letter">
   <div class="letter-header">
@@ -1374,7 +1009,7 @@ function buildLetter(emp){
 function printLetter(){printLetterFor(profile.id);}
 function printLetterFor(id){
   const emp=id===profile.id?profile:allEmployees.find(e=>e.id===id);
-  if(!emp||emp.completion_status!=='completed'){alert('Completion letter is only available after full completion.');return;}
+  if(!emp||emp.completion_status!=='completed'){alert('Completion letter only available after full completion.');return;}
   const area=document.getElementById('printArea');area.style.display='block';area.innerHTML=buildLetter(emp);window.print();area.style.display='none';
 }
 function bulkPrint(){
@@ -1383,7 +1018,6 @@ function bulkPrint(){
   const area=document.getElementById('printArea');area.style.display='block';area.innerHTML=done.map(buildLetter).join('<div style="page-break-after:always"></div>');window.print();area.style.display='none';
 }
 
-// ── EXCEL ─────────────────────────────────────────────────────
 function exportExcel(){
   const rows=filteredEmployees().map(e=>({'Code':e.employee_code,'Name':e.full_name,'Phone':e.phone,'Dept':e.department,'Position':e.position,'Start':fmtDate(e.start_date),'Status':fmtStatus(e.completion_status),'Progress':e.progress_pct+'%','Completion':fmtDate(e.completion_date)}));
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows.length?rows:[{Message:'No records'}]),'Induction');XLSX.writeFile(wb,'pezzano-induction.xlsx');
@@ -1395,7 +1029,7 @@ function viewDetail(id){
   document.getElementById('modalRoot').innerHTML=`<div class="modal-back" onclick="if(event.target===this)closeModal()"><div class="modal">
   <h3>${esc(e.full_name)}</h3>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.83rem;margin-bottom:16px">
-    ${[['Code',e.employee_code],['Phone',e.phone],['Age',e.age],['Dept',e.department],['Position',e.position],['Location',e.work_location],['Start',fmtDate(e.start_date)],['Induction',fmtDate(e.induction_date)],['Status',fmtStatus(e.completion_status)],['Progress',e.progress_pct+'%']].map(([l,v])=>`<div><div style="color:var(--muted);font-size:.7rem">${l}</div><div style="font-weight:500">${esc(String(v||'—'))}</div></div>`).join('')}
+    ${[['Code',e.employee_code],['Phone',e.phone],['Email',e.email||'—'],['Age',e.age],['Dept',e.department],['Position',e.position],['Location',e.work_location],['Start',fmtDate(e.start_date)],['Induction',fmtDate(e.induction_date)],['Status',fmtStatus(e.completion_status)],['Progress',e.progress_pct+'%']].map(([l,v])=>`<div><div style="color:var(--muted);font-size:.7rem">${l}</div><div style="font-weight:500;word-break:break-all">${esc(String(v||'—'))}</div></div>`).join('')}
   </div>
   <div class="modal-actions">${e.completion_status==='completed'?`<button class="btn btn-success" onclick="printLetterFor('${e.id}');closeModal()">Print Letter</button>`:''}<button class="btn btn-ghost" onclick="closeModal()">Close</button></div>
   </div></div>`;
@@ -1411,36 +1045,46 @@ function changeDept(id){
   </div></div>`;
 }
 async function saveDept(id){
-  const newDept=document.getElementById('newDept').value;const e=allEmployees.find(x=>x.id===id);
-  await sb.from('employees').update({department:newDept}).eq('id',id);
-  e.department=newDept;closeModal();renderView();toast('Department updated.');
+  const dept=document.getElementById('newDept').value;
+  await sb.from('employees').update({department:dept}).eq('id',id);
+  const e=allEmployees.find(x=>x.id===id);if(e)e.department=dept;
+  closeModal();refreshTable();toast('Department updated.');
 }
 
 function openEdit(id){
-  if(!isSysAdmin(profile))return;const e=allEmployees.find(x=>x.id===id);if(!e)return;
+  if(!isSysAdmin(profile))return;
+  const e=allEmployees.find(x=>x.id===id);if(!e)return;
   document.getElementById('modalRoot').innerHTML=`<div class="modal-back" onclick="if(event.target===this)closeModal()"><div class="modal">
   <h3>⚙ Edit Staff Details</h3>
-  <p style="color:var(--muted);font-size:.78rem;margin-bottom:14px">Start date and induction date are locked and cannot be changed.</p>
+  <p style="color:var(--muted);font-size:.78rem;margin-bottom:14px">Start date and induction date are locked.</p>
   <div class="form-grid">
     <div class="field"><label>Full Name</label><input id="e_name" value="${esc(e.full_name)}"></div>
     <div class="field"><label>Phone</label><input id="e_phone" value="${esc(e.phone||'')}"></div>
     <div class="field"><label>Age</label><input id="e_age" type="number" min="15" max="100" value="${esc(String(e.age||''))}"></div>
     <div class="field"><label>Position</label><select id="e_pos">${POSITIONS.map(p=>`<option value="${p}" ${e.position===p?'selected':''}>${p}</option>`).join('')}</select></div>
+    <div class="field"><label>Role</label><select id="e_role"><option value="employee" ${e.role==='employee'?'selected':''}>Employee</option><option value="locationManager" ${e.role==='locationManager'?'selected':''}>Location Manager</option><option value="sysAdmin" ${e.role==='sysAdmin'?'selected':''}>System Administrator</option></select></div>
     <div class="field full"><label>Department</label><select id="e_dept">${DEPARTMENTS.map(d=>`<option value="${d}" ${e.department===d?'selected':''}>${d}</option>`).join('')}</select></div>
-    <div class="field full"><label>Email Address</label><input id="e_email" type="email" value="${esc(e.email||'')}" placeholder="employee@email.com"></div>
+    <div class="field full"><label>Email Address</label><input id="e_email" type="email" value="${esc(e.email||'')}" placeholder="employee@email.com">
+      <span style="font-size:.72rem;color:var(--warning);margin-top:4px;display:block">⚠ Changing email updates their login email automatically.</span>
+    </div>
     <div class="field"><label>Start Date (locked)</label><input value="${fmtDate(e.start_date)}" readonly></div>
     <div class="field"><label>Induction Date (locked)</label><input value="${fmtDate(e.induction_date)}" readonly></div>
   </div>
-  <div class="modal-actions"><button class="btn btn-primary" onclick="saveEdit('${id}')">Save</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button></div>
+  <div id="edit_msg" style="display:none;margin-top:10px;padding:10px;border-radius:8px;font-size:.82rem"></div>
+  <div class="modal-actions"><button class="btn btn-primary" id="edit_save_btn" onclick="saveEdit('${id}')">Save Changes</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button></div>
   </div></div>`;
 }
+
 async function saveEdit(id){
+  const btn=document.getElementById('edit_save_btn');btn.disabled=true;btn.textContent='Saving…';
   const name=document.getElementById('e_name').value.trim();
   const phone=document.getElementById('e_phone').value.trim();
   const age=parseInt(document.getElementById('e_age').value)||null;
   const pos=document.getElementById('e_pos').value;
+  const role=document.getElementById('e_role').value;
   const dept=document.getElementById('e_dept').value;
   const email=document.getElementById('e_email').value.trim().toLowerCase();
+  const msgEl=document.getElementById('edit_msg');
   const e=allEmployees.find(x=>x.id===id);
   const emailChanged=email&&email!==(e.email||'');
   try{
@@ -1448,14 +1092,17 @@ async function saveEdit(id){
       const{error:rpcErr}=await sb.rpc('admin_update_email',{p_emp_id:id,p_new_email:email});
       if(rpcErr)throw rpcErr;
     }
-    const{error:editErr}=await sb.rpc('admin_edit_employee',{p_emp_id:id,p_full_name:name,p_phone:phone,p_age:age,p_position:pos,p_department:dept});
-    if(editErr)throw editErr;
-    if(e)Object.assign(e,{full_name:name,phone,age,position:pos,department:dept,email:emailChanged?email:e.email});
-    closeModal();renderView();toast('Staff record updated.');
+    // Update role + other fields
+    const{error:updErr}=await sb.from('employees').update({full_name:name,phone,age,position:pos,department:dept,role,email:email||e.email}).eq('id',id);
+    if(updErr)throw updErr;
+    if(e)Object.assign(e,{full_name:name,phone,age,position:pos,department:dept,role,email:emailChanged?email:e.email});
+    closeModal();refreshTable();toast('Staff record updated.');
   }catch(err){
     const msg=err?.message||'Unknown error';
-    if(msg.includes('duplicate key')||msg.includes('unique constraint'))alert('That email address is already in use by another account.');
-    else alert('Error saving: '+msg);
+    msgEl.style.display='block';msgEl.style.background='rgba(248,113,113,.1)';msgEl.style.color='var(--error)';
+    if(msg.includes('duplicate key')||msg.includes('unique constraint'))msgEl.textContent='That email is already in use by another account.';
+    else msgEl.textContent='Error: '+msg;
+    btn.disabled=false;btn.textContent='Save Changes';
   }
 }
 
@@ -1464,7 +1111,7 @@ function openCreate(){
   document.getElementById('modalRoot').innerHTML=`<div class="modal-back" onclick="if(event.target===this)closeModal()"><div class="modal">
   <h3>Add New Staff Member</h3>
   <div style="background:rgba(74,222,128,.07);border:1px solid rgba(74,222,128,.2);border-radius:8px;padding:12px;margin-bottom:16px;font-size:.82rem;color:var(--success)">
-    The system will automatically create a login. Employee logs in with their <strong>email</strong> and <strong>Employee Code</strong> as the initial password.
+    Employee logs in with their <strong>email</strong> and <strong>Employee Code</strong> as the initial password.
   </div>
   <div class="form-grid">
     <div class="field"><label>Full Name</label><input id="c_name" placeholder="Full legal name"></div>
@@ -1473,12 +1120,13 @@ function openCreate(){
     <div class="field full"><label>Work Email</label><input id="c_email" type="email" placeholder="employee@email.com"></div>
     <div class="field"><label>Position</label><select id="c_pos">${POSITIONS.map(p=>`<option>${p}</option>`).join('')}</select></div>
     <div class="field"><label>Department</label><select id="c_dept">${DEPARTMENTS.map(d=>`<option>${d}</option>`).join('')}</select></div>
-    <div class="field"><label>Role</label><select id="c_role"><option value="employee">Employee</option><option value="locationManager">Location Manager</option><option value="sysAdmin">System Administrator</option></select></div>
+    <div class="field"><label>Portal Role</label><select id="c_role"><option value="employee">Employee</option><option value="locationManager">Location Manager</option><option value="sysAdmin">System Administrator</option></select></div>
   </div>
   <div id="c_msg" style="display:none;margin-top:10px;padding:10px;border-radius:8px;font-size:.82rem"></div>
   <div class="modal-actions"><button class="btn btn-primary" id="c_btn" onclick="createEmployee()">Add Staff Record</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button></div>
   </div></div>`;
 }
+
 async function createEmployee(){
   const btn=document.getElementById('c_btn');btn.disabled=true;btn.textContent='Creating…';
   const{data,error}=await sb.rpc('create_employee',{
@@ -1493,24 +1141,19 @@ async function createEmployee(){
   const msg=document.getElementById('c_msg');
   if(error){
     msg.style.display='block';msg.style.background='rgba(248,113,113,.1)';msg.style.color='var(--error)';
-    msg.innerHTML='<strong>Error:</strong> '+error.message+(error.message.includes('No auth user')?'<br><br>Go to Supabase Dashboard → Authentication → Users → Add user first.':'');
+    msg.innerHTML='<strong>Error:</strong> '+error.message+(error.message.includes('No auth user')?'<br><br>Create the auth user in Supabase Dashboard → Authentication → Users first.':'');
     btn.disabled=false;btn.textContent='Add Staff Record';return;
   }
   msg.style.display='block';msg.style.background='rgba(74,222,128,.1)';msg.style.color='var(--success)';
-  msg.innerHTML=`✓ Staff record created!<br><br>
-    <strong>Give these login details to the employee:</strong><br>
-    🔗 Portal: <strong>https://pezzano-portal.vercel.app</strong><br>
-    📧 Email: <strong>${document.getElementById('c_email').value.trim()}</strong><br>
-    🔑 Password: <strong>${data.employee_code}</strong> (their Employee Code)<br>
-    📁 Employee Code: <strong>${data.employee_code}</strong>`;
-  const{data:fresh}=await sb.rpc('get_dashboard_data');allEmployees=fresh||[];renderView();
+  msg.innerHTML=`✓ Staff record created!<br><br><strong>Login details:</strong><br>🔗 Portal: <strong>https://pezzano-portal.vercel.app</strong><br>📧 Email: <strong>${document.getElementById('c_email').value.trim()}</strong><br>🔑 Password: <strong>${data.employee_code}</strong>`;
+  const{data:fresh}=await sb.rpc('get_dashboard_data');allEmployees=fresh||[];refreshTable();
 }
 
 async function deleteEmp(id){
   const e=allEmployees.find(x=>x.id===id);if(!e)return;
   if(!confirm(`Delete ${e.full_name}? This cannot be undone.`))return;
   await sb.rpc('admin_delete_employee',{p_emp_id:id});
-  allEmployees=allEmployees.filter(x=>x.id!==id);renderView();toast('Record deleted.');
+  allEmployees=allEmployees.filter(x=>x.id!==id);refreshTable();toast('Record deleted.');
 }
 
 async function openAudit(){
@@ -1526,72 +1169,5 @@ async function openAudit(){
   </div></div>`;
 }
 </script>
-
-<!--
-═══════════════════════════════════════════════════════════
-  SUPABASE SQL — Run this in SQL Editor to enable documents
-═══════════════════════════════════════════════════════════
-
--- 1. Create employee_documents table
-CREATE TABLE IF NOT EXISTS employee_documents (
-  id           UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  employee_id  UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
-  doc_type     TEXT NOT NULL CHECK (doc_type IN ('passport','visa','forklift_license')),
-  doc_subtype  TEXT,
-  doc_number   TEXT,
-  expiry_date  DATE,
-  file_path    TEXT,
-  file_name    TEXT,
-  notes        TEXT,
-  uploaded_at  TIMESTAMPTZ DEFAULT NOW(),
-  uploaded_by  UUID REFERENCES employees(id)
-);
-
--- 2. Row-Level Security
-ALTER TABLE employee_documents ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "employees_own_docs" ON employee_documents
-  FOR ALL USING (employee_id = current_employee_id());
-
-CREATE POLICY "managers_all_docs" ON employee_documents
-  FOR ALL USING (current_employee_role() IN ('locationManager','sysAdmin'));
-
--- 3. Indexes
-CREATE INDEX IF NOT EXISTS idx_docs_employee ON employee_documents(employee_id);
-CREATE INDEX IF NOT EXISTS idx_docs_expiry   ON employee_documents(expiry_date);
-CREATE INDEX IF NOT EXISTS idx_docs_type     ON employee_documents(doc_type);
-
--- 4. RPC: get_document_alerts (for managers — all docs expiring in 6 months)
-CREATE OR REPLACE FUNCTION get_document_alerts()
-RETURNS TABLE (
-  id UUID, employee_id UUID, doc_type TEXT, doc_subtype TEXT,
-  doc_number TEXT, expiry_date DATE, file_path TEXT, file_name TEXT,
-  notes TEXT, uploaded_at TIMESTAMPTZ,
-  full_name TEXT, employee_code TEXT, department TEXT, position TEXT
-) SECURITY DEFINER AS $$
-  SELECT
-    ed.id, ed.employee_id, ed.doc_type, ed.doc_subtype,
-    ed.doc_number, ed.expiry_date, ed.file_path, ed.file_name,
-    ed.notes, ed.uploaded_at,
-    e.full_name, e.employee_code, e.department, e.position
-  FROM employee_documents ed
-  JOIN employees e ON e.id = ed.employee_id
-  WHERE ed.expiry_date IS NOT NULL
-    AND ed.expiry_date <= (CURRENT_DATE + INTERVAL '6 months')
-  ORDER BY ed.expiry_date ASC;
-$$ LANGUAGE sql;
-
-GRANT EXECUTE ON FUNCTION get_document_alerts() TO authenticated;
-
--- 5. Storage bucket (run in Storage tab OR SQL)
--- In Supabase Dashboard → Storage → New Bucket
--- Name: employee-documents
--- Public: OFF (private)
--- Then add policies:
---   "employees upload own" → INSERT where bucket='employee-documents' and auth.uid()::text = (storage.foldername(name))[1]
---   "employees read own"   → SELECT where bucket='employee-documents' and auth.uid()::text = (storage.foldername(name))[1]
---   "managers read all"    → SELECT where bucket='employee-documents' (for managers via service role or separate policy)
-
--->
 </body>
 </html>
