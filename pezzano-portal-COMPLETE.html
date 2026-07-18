@@ -129,6 +129,11 @@ tbody tr:hover{background:var(--surface2)}
 .upload-drop{border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:.2s;color:var(--muted);font-size:.85rem;line-height:1.6}
 .upload-drop:hover,.upload-drop.dragover{border-color:var(--primary);color:var(--primary);background:rgba(0,180,216,.04)}
 .upload-drop.file-chosen{border-color:var(--success);background:rgba(74,222,128,.06);color:var(--success)}
+.prod-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.prod-thumb{width:100%;height:150px;object-fit:cover;background:var(--surface3);display:block}
+.prod-thumb-ph{width:100%;height:150px;background:var(--surface3);display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:.75rem}
+.prod-body{padding:12px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.essential-tag{display:inline-flex;align-items:center;gap:4px;font-size:.68rem;background:rgba(0,180,216,.12);color:var(--primary);padding:2px 8px;border-radius:999px;font-weight:600;width:fit-content}
 @media print{
   @page{margin:0;size:A4 portrait}
   html,body{margin:0!important;padding:0!important;height:auto!important;overflow:visible!important}
@@ -237,6 +242,17 @@ const DOC_TYPES=[
 const VISA_TYPES=['482 – Skills in Demand (Temporary)','500 – Student Visa','485 – Temporary Graduate (TR)','417 – Working Holiday','462 – Work and Holiday','820/801 – Partner Visa','186 – Employer Nomination Scheme','189 – Skilled Independent','190 – Skilled Nominated','Permanent Resident (PR)','Australian Citizen (no expiry)','Other'];
 const FORKLIFT_CLASSES=['LF – Sit-on Counterbalance','LO – Order Picking (Low Level)','LP – Order Picking (High Level)','WP – Walkie Stacker / Reach','Multi-class (LF + LO)','Other'];
 
+// Suggested product sub-categories per department — free text, editable per upload.
+// Used only to pre-fill the category dropdown; not enforced server-side.
+const PRODUCT_CATEGORY_SUGGESTIONS={
+  'Floor Morning':['Fruit','Vegetables','Herbs','Mixed Cases'],
+  'Processing':['Trimmed Produce','Value-Add Packs','Juice Stock'],
+  'Meat':['Beef','Lamb','Poultry','Pork','Offcuts'],
+  'Logistics':['Pallet Standards','Crate Types','Load Configuration'],
+  'Admin':['Documentation','Signage'],
+  'Others':['General']
+};
+
 const KNOWLEDGE_TOPICS=[
   {id:'welcome',title:'Welcome & Business Overview',cat:'About',
    summary:"Pezzano Enterprises is Perth's largest wholesale fruit and vegetables supplier, established in 1956.",
@@ -311,6 +327,13 @@ let filters={search:'',dept:'',status:'',position:''};
 let myDocs=[],allDocAlerts=[],adminViewDocs=[],adminViewEmpId=null;
 let docFilters={search:'',type:'',level:''};
 
+// Product training state
+let productPhotos=[];              // full library the current user can read (RLS allows all authenticated to read)
+let productConfirmed=[];           // product_ids the current staff member has confirmed (own dept only)
+let activeProductCategory='';      // sub-category filter while in the induction gate
+let adminProductDept=null;         // which department SysAdmin/Manager is currently managing
+let libraryDeptFilter='mine';      // 'mine' or a specific department name, for the browse-all-departments library
+
 // ── HELPERS ───────────────────────────────────────────────────
 function esc(v){return String(v??'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));}
 function fmtDate(d){return d?new Date(d).toLocaleDateString('en-AU'):'—';}
@@ -324,6 +347,16 @@ function showMsg(id,text,type){const el=document.getElementById(id);if(!el)retur
 function setLoading(btnId,loading,label='Sign In'){const btn=document.getElementById(btnId);if(!btn)return;btn.disabled=loading;btn.innerHTML=loading?'<span class="spinner"></span>Signing in\u2026':label;}
 function docTypeLabel(id){return DOC_TYPES.find(t=>t.id===id)?.label||id;}
 function docTypeIcon(id){return DOC_TYPES.find(t=>t.id===id)?.icon||'📄';}
+
+// A Location Manager can manage products only for their own department.
+// SysAdmin can manage any department.
+function canManageProductsFor(dept){
+  if(isSysAdmin(profile))return true;
+  return profile&&profile.role==='locationManager'&&profile.department===dept;
+}
+function departmentsManagerCanEdit(){
+  return isSysAdmin(profile)?DEPARTMENTS.slice():(profile&&profile.role==='locationManager'?[profile.department]:[]);
+}
 
 function expiryStatus(dateStr){
   if(!dateStr)return{label:'No expiry date set',cls:'s-missing',alertCls:'',lvl:5,days:null};
@@ -378,6 +411,46 @@ async function loadEmployeeDocs(empId){
     const{data,error}=await sb.from('employee_documents').select('*').eq('employee_id',empId).order('uploaded_at',{ascending:false});
     if(!error){adminViewDocs=data||[];adminViewEmpId=empId;}
   }catch(e){adminViewDocs=[];}
+}
+
+// ── PRODUCT TRAINING: LOAD ──────────────────────────────────────
+async function loadProductPhotos(){
+  try{
+    const{data,error}=await sb.from('product_photos').select('*').order('department').order('category').order('name');
+    if(!error)productPhotos=data||[];
+  }catch(e){productPhotos=[];}
+}
+async function loadProductConfirmations(){
+  if(!profile||isSysAdmin(profile))return;
+  try{
+    const{data,error}=await sb.from('product_confirmations').select('product_id').eq('employee_id',profile.id);
+    if(!error)productConfirmed=(data||[]).map(r=>r.product_id);
+  }catch(e){productConfirmed=[];}
+}
+function myDeptEssentials(){
+  if(!profile)return[];
+  return productPhotos.filter(p=>p.department===profile.department&&p.is_essential);
+}
+async function getSignedProductUrl(path){
+  if(!path)return null;
+  try{
+    const{data,error}=await sb.storage.from('product-photos').createSignedUrl(path,3600);
+    if(error)return null;
+    return data.signedUrl;
+  }catch(e){return null;}
+}
+// After any product-photo grid renders, fill in signed image URLs asynchronously.
+async function hydrateProductThumbs(){
+  const els=document.querySelectorAll('[data-img-path]');
+  for(const el of els){
+    const path=el.getAttribute('data-img-path');
+    if(!path)continue;
+    const url=await getSignedProductUrl(path);
+    if(url){
+      if(el.tagName==='IMG')el.src=url;
+      else el.style.backgroundImage=`url('${url}')`;
+    }
+  }
 }
 
 // ── LOGIN ─────────────────────────────────────────────────────
@@ -478,6 +551,10 @@ async function initApp(){
     allEmployees=data||[];
     await loadAllDocAlerts();
   }
+  // Product training library — everyone can read; only non-sysAdmin track their own confirmations
+  await loadProductPhotos();
+  if(!isSysAdmin(profile))await loadProductConfirmations();
+  if(isManager(profile))adminProductDept=isSysAdmin(profile)?DEPARTMENTS[0]:profile.department;
   document.getElementById('userLabel').textContent=`${profile.full_name} · ${profile.employee_code}`;
   showApp();
   view='dashboard';
@@ -486,7 +563,7 @@ async function initApp(){
 
 function showLogin(){document.getElementById('loginScreen').classList.remove('hidden');document.getElementById('appScreen').classList.add('hidden');showSignIn();}
 function showApp(){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('appScreen').classList.remove('hidden');}
-async function doSignOut(){await sb.auth.signOut();profile=null;allEmployees=[];moduleProgress={};knowledgeViewed=[];myDocs=[];allDocAlerts=[];adminViewDocs=[];adminViewEmpId=null;showLogin();}
+async function doSignOut(){await sb.auth.signOut();profile=null;allEmployees=[];moduleProgress={};knowledgeViewed=[];myDocs=[];allDocAlerts=[];adminViewDocs=[];adminViewEmpId=null;productPhotos=[];productConfirmed=[];showLogin();}
 
 // ── RENDER ROUTER ─────────────────────────────────────────────
 function renderView(){
@@ -494,12 +571,16 @@ function renderView(){
   if(view==='dashboard')        app.innerHTML=renderDashboard();
   else if(view==='mgr')         app.innerHTML=renderManagerDashboard();
   else if(view==='kb')          app.innerHTML=renderKnowledgeGate();
+  else if(view==='productGate') app.innerHTML=renderProductGate();
   else if(view==='module')      app.innerHTML=renderModule();
   else if(view==='decl')        app.innerHTML=renderDeclaration();
   else if(view==='done')        app.innerHTML=renderCompletion();
   else if(view==='docs')        app.innerHTML=renderDocsView();
   else if(view==='docsAlerts')  app.innerHTML=renderDocsAlerts();
   else if(view==='empDocs')     app.innerHTML=renderEmpDocsView();
+  else if(view==='products')    app.innerHTML=renderProductManager();
+  else if(view==='library')     app.innerHTML=renderProductLibrary();
+  hydrateProductThumbs();
 }
 
 // ── EMPLOYEE / LOCATION MANAGER DASHBOARD ─────────────────────
@@ -511,6 +592,8 @@ function renderDashboard(){
   const getLatestDoc=(type)=>myDocs.filter(d=>d.doc_type===type).sort((a,b)=>new Date(b.uploaded_at)-new Date(a.uploaded_at))[0];
   const passport=getLatestDoc('passport'),visa=getLatestDoc('visa'),forklift=getLatestDoc('forklift_license');
   const docAlertCount=myDocs.filter(d=>d.expiry_date&&expiryStatus(d.expiry_date).lvl<=3).length;
+  const essentials=myDeptEssentials();
+  const essentialsDone=essentials.filter(p=>productConfirmed.includes(p.id)).length;
   return`<div style="max-width:820px">
   ${isManager(profile)?`<div style="margin-bottom:16px;display:flex;gap:8px;align-items:center">
     <button class="btn btn-primary" onclick="view='mgr';renderView()">📊 Manager Dashboard</button>
@@ -533,6 +616,14 @@ function renderDashboard(){
       ${[['Start Date',fmtDate(profile.start_date)],['Induction Date',fmtDate(profile.induction_date)],['Location',profile.work_location],['Department',profile.department],['Position',profile.position],['Employee Code',profile.employee_code]].map(([l,v])=>`<div><div style="color:var(--muted);font-size:.72rem;margin-bottom:2px">${l}</div><div style="font-weight:500">${esc(String(v||'—'))}</div></div>`).join('')}
     </div>
   </div>
+  ${productPhotos.length?`<div class="card" style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div class="card-title" style="margin:0">Product Training — ${esc(profile.department)}</div>
+      <button class="btn btn-info" style="font-size:.78rem" onclick="view='library';renderView()">📦 Browse Library →</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);margin-bottom:6px"><span>Essential items confirmed</span><strong style="color:var(--text)">${essentialsDone}/${essentials.length}</strong></div>
+    <div style="height:8px;background:var(--surface3);border-radius:999px;overflow:hidden"><div style="height:100%;width:${essentials.length?Math.round(essentialsDone/essentials.length*100):0}%;background:linear-gradient(90deg,var(--primary),var(--success));transition:.4s"></div></div>
+  </div>`:''}
   <div class="card" style="margin-bottom:16px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
       <div class="card-title" style="margin:0">My Documents</div>
@@ -593,6 +684,7 @@ function renderManagerDashboard(){
         <button class="btn btn-ghost" onclick="exportExcel()">📥 Export Excel</button>
         <button class="btn btn-warn" onclick="view='docsAlerts';renderView()">📋 Doc Alerts${allDocAlerts.length?` (${allDocAlerts.length})`:''}</button>
         <button class="btn btn-warn" onclick="bulkPrint()">🖨 Bulk Print Letters</button>
+        ${departmentsManagerCanEdit().length?`<button class="btn btn-info" onclick="view='products';renderView()">📦 Product Training</button>`:''}
         ${isSysAdmin(profile)?`<button class="btn btn-primary" onclick="openCreate()">+ Add Staff</button>`:''}
         ${isSysAdmin(profile)?`<button class="btn btn-ghost" onclick="openAudit()">Audit Log</button>`:''}
       </div>
@@ -1054,6 +1146,7 @@ function openUploadDoc(type,existingId){
 function showChosenFile(input){
   const f=input.files[0];if(!f)return;
   const drop=document.getElementById('upload_drop');
+  if(!drop)return;
   drop.classList.add('file-chosen');
   drop.innerHTML=`<div style="font-size:1.4rem;margin-bottom:6px">✓</div><div style="font-weight:500">${esc(f.name)}</div><div style="font-size:.73rem;margin-top:4px">${(f.size/1024/1024).toFixed(2)} MB</div>`;
 }
@@ -1148,10 +1241,292 @@ async function viewDocFile(docId){
   }catch(e){toast('Error opening file.');}
 }
 
+// ── PRODUCT TRAINING: MANAGER / SYSADMIN UPLOAD SCREEN ────────
+function renderProductManager(){
+  const editableDepts=departmentsManagerCanEdit();
+  if(!editableDepts.length){view='mgr';return renderManagerDashboard();}
+  if(!adminProductDept||!editableDepts.includes(adminProductDept))adminProductDept=editableDepts[0];
+  const inDept=productPhotos.filter(p=>p.department===adminProductDept);
+  const cats=[...new Set(inDept.map(p=>p.category))];
+  return`<div style="max-width:1100px">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+    <button class="btn btn-ghost" onclick="view='mgr';renderView()">← Staff Management</button>
+    <div><div style="font-size:1.15rem;font-weight:700">Product Training Library</div><div style="font-size:.78rem;color:var(--muted)">${inDept.length} products &middot; ${inDept.filter(p=>p.is_essential).length} marked essential</div></div>
+    <button class="btn btn-primary" style="margin-left:auto" onclick="openProductUpload()">+ Add Product Photo</button>
+  </div>
+  ${editableDepts.length>1?`<div class="filters">${editableDepts.map(d=>`<button class="btn ${d===adminProductDept?'btn-primary':'btn-ghost'}" style="font-size:.78rem" onclick="adminProductDept='${esc(d)}';renderView()">${esc(d)} (${productPhotos.filter(p=>p.department===d).length})</button>`).join('')}</div>`
+   :`<p style="font-size:.8rem;color:var(--muted);margin-bottom:14px">Managing: <strong style="color:var(--text)">${esc(adminProductDept)}</strong></p>`}
+  ${cats.length?`<div class="filters" style="margin-top:0">${cats.map(c=>`<span class="badge badge-pending">${esc(c)} (${inDept.filter(p=>p.category===c).length})</span>`).join('')}</div>`:''}
+  <div class="doc-grid">
+    ${inDept.length?inDept.map(p=>`<div class="prod-card">
+      <img class="prod-thumb" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)}" onerror="this.style.display='none'">
+      <div class="prod-body">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="font-weight:600;font-size:.9rem">${esc(p.name)}</div>
+          ${p.is_essential?`<span class="essential-tag">★ Essential</span>`:''}
+        </div>
+        <div style="font-size:.72rem;color:var(--muted)">${esc(p.category)}</div>
+        <div style="font-size:.78rem;color:var(--muted);flex:1">${esc(p.description||'No description')}</div>
+        ${p.reject_image_path?`<div style="font-size:.72rem;color:var(--warning)">Has reject example ✓</div>`:`<div style="font-size:.72rem;color:var(--faint)">No reject example</div>`}
+        <div style="display:flex;gap:6px;margin-top:4px">
+          <button class="btn btn-ghost" style="font-size:.75rem" onclick="editProduct('${p.id}')">Edit</button>
+          <button class="btn btn-danger" style="font-size:.75rem" onclick="deleteProduct('${p.id}')">Delete</button>
+        </div>
+      </div>
+    </div>`).join(''):`<p style="color:var(--muted)">No products in ${esc(adminProductDept)} yet. Use "+ Add Product Photo" to start building the library.</p>`}
+  </div></div>`;
+}
+
+function categoryOptionsFor(dept){
+  const suggested=PRODUCT_CATEGORY_SUGGESTIONS[dept]||[];
+  const existing=[...new Set(productPhotos.filter(p=>p.department===dept).map(p=>p.category))];
+  return[...new Set([...suggested,...existing])];
+}
+
+function openProductUpload(){
+  if(!canManageProductsFor(adminProductDept)){toast('You can only manage products for your own department.');return;}
+  const editableDepts=departmentsManagerCanEdit();
+  const cats=categoryOptionsFor(adminProductDept);
+  document.getElementById('modalRoot').innerHTML=`<div class="modal-back" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>📦 Add Product Photo</h3>
+    <div class="form-grid">
+      ${editableDepts.length>1?`<div class="field full"><label>Department</label><select id="p_dept">${editableDepts.map(d=>`<option ${d===adminProductDept?'selected':''}>${d}</option>`).join('')}</select></div>`
+        :`<div class="field full"><label>Department</label><input value="${esc(adminProductDept)}" readonly></div>`}
+      <div class="field full"><label>Product Name</label><input id="p_name" placeholder="e.g. Cavendish Bananas"></div>
+      <div class="field"><label>Category</label><select id="p_cat" onchange="document.getElementById('p_newcat').style.display=this.value==='__new__'?'block':'none'">${cats.map(c=>`<option>${esc(c)}</option>`).join('')}<option value="__new__">+ New category…</option></select></div>
+      <div class="field" id="p_newcat" style="display:none"><label>New Category Name</label><input id="p_newcat_input" placeholder="e.g. Stonefruit"></div>
+      <div class="field full" style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="p_essential" style="width:auto"> <label style="margin:0" for="p_essential">Mark as essential — required for new-starter induction in this department</label>
+      </div>
+      <div class="field full"><label>Description / Quality Standard</label><textarea id="p_desc" rows="3" placeholder="What good stock looks like: size, colour, grading notes, packing count, storage requirements…"></textarea></div>
+      <div class="field full">
+        <label>Acceptable / Standard Photo</label>
+        <div class="upload-drop" id="p_drop_good" onclick="document.getElementById('p_file_good').click()">📎 Click to choose the "acceptable" photo (JPG/PNG, max 10MB)</div>
+        <input type="file" id="p_file_good" accept=".jpg,.jpeg,.png" style="display:none" onchange="showChosenFileInto(this,'p_drop_good')">
+      </div>
+      <div class="field full">
+        <label>Reject / Below-standard Photo (optional — enables a comparison question)</label>
+        <div class="upload-drop" id="p_drop_reject" onclick="document.getElementById('p_file_reject').click()">📎 Click to choose a "reject example" photo</div>
+        <input type="file" id="p_file_reject" accept=".jpg,.jpeg,.png" style="display:none" onchange="showChosenFileInto(this,'p_drop_reject')">
+      </div>
+      <div class="field full" id="p_rejectnote_wrap"><label>Why the reject example fails standard</label><input id="p_reject_note" placeholder="e.g. overripe patches, split skins"></div>
+    </div>
+    <div id="p_msg" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="p_btn" onclick="saveProduct()">Save Product</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  </div></div>`;
+}
+
+function showChosenFileInto(input,dropId){
+  const f=input.files[0];if(!f)return;
+  const drop=document.getElementById(dropId);if(!drop)return;
+  drop.classList.add('file-chosen');
+  drop.innerHTML=`<div style="font-size:1.4rem;margin-bottom:6px">✓</div><div style="font-weight:500">${esc(f.name)}</div>`;
+}
+
+async function saveProduct(){
+  const btn=document.getElementById('p_btn');btn.disabled=true;btn.textContent='Saving…';
+  const deptEl=document.getElementById('p_dept');
+  const dept=deptEl?deptEl.value:adminProductDept;
+  if(!canManageProductsFor(dept)){showMsg('p_msg','You are not permitted to manage products for that department.','error');btn.disabled=false;btn.textContent='Save Product';return;}
+  const name=document.getElementById('p_name').value.trim();
+  let cat=document.getElementById('p_cat').value;
+  if(cat==='__new__')cat=document.getElementById('p_newcat_input').value.trim();
+  const essential=document.getElementById('p_essential').checked;
+  const desc=document.getElementById('p_desc').value.trim();
+  const goodFile=document.getElementById('p_file_good').files[0];
+  const rejectFile=document.getElementById('p_file_reject').files[0];
+  const rejectNote=document.getElementById('p_reject_note').value.trim()||null;
+  if(!name||!cat||!goodFile){showMsg('p_msg','Name, category, and the acceptable-standard photo are required.','error');btn.disabled=false;btn.textContent='Save Product';return;}
+  const ext=goodFile.name.split('.').pop();
+  const goodPath=`${dept}/${Date.now()}_good.${ext}`;
+  const{error:goodErr}=await sb.storage.from('product-photos').upload(goodPath,goodFile,{contentType:goodFile.type});
+  if(goodErr){showMsg('p_msg','Upload error: '+goodErr.message,'error');btn.disabled=false;btn.textContent='Save Product';return;}
+  let rejectPath=null;
+  if(rejectFile){
+    const rext=rejectFile.name.split('.').pop();
+    rejectPath=`${dept}/${Date.now()}_reject.${rext}`;
+    const{error:rejErr}=await sb.storage.from('product-photos').upload(rejectPath,rejectFile,{contentType:rejectFile.type});
+    if(rejErr){console.warn('Reject photo upload failed:',rejErr.message);rejectPath=null;}
+  }
+  const{error}=await sb.from('product_photos').insert({name,department:dept,category:cat,description:desc,image_path:goodPath,reject_image_path:rejectPath,reject_note:rejectPath?rejectNote:null,is_essential:essential,uploaded_by:profile.id});
+  if(error){showMsg('p_msg','Error: '+error.message,'error');btn.disabled=false;btn.textContent='Save Product';return;}
+  await loadProductPhotos();adminProductDept=dept;closeModal();toast('✓ Product added.');renderView();
+}
+
+function editProduct(id){
+  const p=productPhotos.find(x=>x.id===id);if(!p)return;
+  if(!canManageProductsFor(p.department)){toast('You can only edit products for your own department.');return;}
+  const cats=categoryOptionsFor(p.department);
+  document.getElementById('modalRoot').innerHTML=`<div class="modal-back" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>✏️ Edit Product</h3>
+    <div class="form-grid">
+      <div class="field full"><label>Product Name</label><input id="ep_name" value="${esc(p.name)}"></div>
+      <div class="field"><label>Category</label><select id="ep_cat" onchange="document.getElementById('ep_newcat').style.display=this.value==='__new__'?'block':'none'">${cats.map(c=>`<option value="${esc(c)}" ${p.category===c?'selected':''}>${esc(c)}</option>`).join('')}<option value="__new__">+ New category…</option></select></div>
+      <div class="field" id="ep_newcat" style="display:none"><label>New Category Name</label><input id="ep_newcat_input"></div>
+      <div class="field full" style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="ep_essential" style="width:auto" ${p.is_essential?'checked':''}> <label style="margin:0" for="ep_essential">Mark as essential for induction</label>
+      </div>
+      <div class="field full"><label>Description / Quality Standard</label><textarea id="ep_desc" rows="3">${esc(p.description||'')}</textarea></div>
+      <div class="field full"><label>Reject note</label><input id="ep_reject_note" value="${esc(p.reject_note||'')}" placeholder="Why the reject example fails standard"></div>
+    </div>
+    <div id="ep_msg" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="saveProductEdit('${id}')">Save Changes</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  </div></div>`;
+}
+
+async function saveProductEdit(id){
+  const p=productPhotos.find(x=>x.id===id);if(!p)return;
+  let cat=document.getElementById('ep_cat').value;
+  if(cat==='__new__')cat=document.getElementById('ep_newcat_input').value.trim();
+  const name=document.getElementById('ep_name').value.trim();
+  const essential=document.getElementById('ep_essential').checked;
+  const desc=document.getElementById('ep_desc').value.trim();
+  const rejectNote=document.getElementById('ep_reject_note').value.trim()||null;
+  const{error}=await sb.from('product_photos').update({name,category:cat,is_essential:essential,description:desc,reject_note:rejectNote}).eq('id',id);
+  if(error){showMsg('ep_msg','Error: '+error.message,'error');return;}
+  await loadProductPhotos();closeModal();toast('Product updated.');renderView();
+}
+
+async function deleteProduct(id){
+  const p=productPhotos.find(x=>x.id===id);if(!p)return;
+  if(!canManageProductsFor(p.department)){toast('You can only delete products for your own department.');return;}
+  if(!confirm(`Delete "${p.name}"? This cannot be undone.`))return;
+  try{await sb.storage.from('product-photos').remove([p.image_path,...(p.reject_image_path?[p.reject_image_path]:[])]);}catch(e){}
+  await sb.from('product_photos').delete().eq('id',id);
+  await loadProductPhotos();toast('Deleted.');renderView();
+}
+
+// ── PRODUCT TRAINING: STAFF-FACING INDUCTION GATE ──────────────
+// Curated "essential" items for the staff member's own department only.
+// This blocks progress to the quiz modules until all essentials are confirmed.
+function renderProductGate(){
+  const essentials=myDeptEssentials();
+  const cats=[...new Set(essentials.map(p=>p.category))];
+  if(!activeProductCategory||!cats.includes(activeProductCategory))activeProductCategory=cats[0]||'';
+  const inCat=essentials.filter(p=>p.category===activeProductCategory);
+  const doneCount=essentials.filter(p=>productConfirmed.includes(p.id)).length;
+  const allDone=essentials.every(p=>productConfirmed.includes(p.id));
+  return`<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+    <button class="btn btn-ghost" onclick="view='dashboard';renderView()">← Back</button>
+    <span style="font-size:.8rem;color:var(--muted)">${esc(profile.department)} essentials &middot; ${doneCount}/${essentials.length} confirmed</span>
+    ${allDone?`<button class="btn btn-success" onclick="startModules()">🚀 Continue to Quiz</button>`:''}
+  </div>
+  <div class="kb-grid">
+    <nav class="kb-nav">${cats.map(c=>`<button class="kb-btn ${c===activeProductCategory?'active':''}" onclick="activeProductCategory='${esc(c)}';renderView()">${esc(c)} (${essentials.filter(p=>p.category===c).length})</button>`).join('')}</nav>
+    <div style="display:grid;gap:14px">
+      ${inCat.map(p=>renderProductGradingCard(p)).join('')}
+    </div>
+  </div>`;
+}
+
+function renderProductGradingCard(p){
+  const confirmed=productConfirmed.includes(p.id);
+  if(p.reject_image_path){
+    // Comparison-style grading question: which photo meets standard?
+    const leftIsGood=(p.id.charCodeAt(0)%2===0); // stable pseudo-random left/right placement per item
+    const left=leftIsGood?{path:p.image_path,good:true}:{path:p.reject_image_path,good:false};
+    const right=leftIsGood?{path:p.reject_image_path,good:false}:{path:p.image_path,good:true};
+    return`<div class="card" data-product-id="${p.id}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px">
+        <p style="font-weight:600;font-size:1rem">${esc(p.name)}</p>
+        ${confirmed?`<span class="badge badge-completed">✅ Confirmed</span>`:''}
+      </div>
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:12px">Which photo meets our packing standard for ${esc(p.name)}?</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden">
+          <img class="prod-thumb" data-img-path="${esc(left.path)}" alt="Option A" style="height:150px">
+        </div>
+        <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden">
+          <img class="prod-thumb" data-img-path="${esc(right.path)}" alt="Option B" style="height:150px">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px" id="gradebtns-${p.id}">
+        <button class="btn ${confirmed?'btn-ghost':''}" style="flex:1" ${confirmed?'disabled':''} onclick="answerProductGrading('${p.id}',${left.good})">Photo A</button>
+        <button class="btn ${confirmed?'btn-ghost':''}" style="flex:1" ${confirmed?'disabled':''} onclick="answerProductGrading('${p.id}',${right.good})">Photo B</button>
+      </div>
+      <div id="gradefeedback-${p.id}" class="feedback ${confirmed?'show good':''}">${confirmed?'✓ Confirmed. '+esc(p.description||''):''}</div>
+    </div>`;
+  }
+  // No reject example — simpler standard + confirm card
+  return`<div class="card" data-product-id="${p.id}" style="display:flex;gap:16px;flex-wrap:wrap">
+    <img class="prod-thumb" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)}" style="width:180px;height:140px;border-radius:10px">
+    <div style="flex:1;min-width:200px">
+      <div style="font-weight:600;font-size:1rem;margin-bottom:6px">${esc(p.name)}</div>
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:12px">${esc(p.description||'No quality notes provided.')}</p>
+      ${confirmed?`<span class="badge badge-completed">✅ Confirmed</span>`:`<button class="btn btn-primary" onclick="confirmProductSimple('${p.id}')">✅ I understand this standard</button>`}
+    </div>
+  </div>`;
+}
+
+async function answerProductGrading(id,wasCorrect){
+  const btnWrap=document.getElementById(`gradebtns-${id}`);
+  if(btnWrap)btnWrap.querySelectorAll('button').forEach(b=>b.disabled=true);
+  const p=productPhotos.find(x=>x.id===id);
+  const fb=document.getElementById(`gradefeedback-${id}`);
+  if(fb){
+    fb.className='feedback show '+(wasCorrect?'good':'bad');
+    fb.innerHTML=wasCorrect?'✓ Correct. '+esc(p?.description||''):'Not quite — '+esc(p?.reject_note||'review the standard notes')+'. This has been saved; ask your supervisor if unsure.';
+  }
+  try{await sb.from('product_confirmations').insert({employee_id:profile.id,product_id:id,correct:wasCorrect});}catch(e){}
+  if(!productConfirmed.includes(id))productConfirmed.push(id);
+  // Refresh the essentials counter in the nav header without a full re-render jump
+  setTimeout(()=>renderView(),1200);
+}
+
+async function confirmProductSimple(id){
+  try{await sb.from('product_confirmations').insert({employee_id:profile.id,product_id:id,correct:true});}catch(e){}
+  if(!productConfirmed.includes(id))productConfirmed.push(id);
+  renderView();
+}
+
+// ── PRODUCT TRAINING: LIBRARY (browse anytime, own dept full + others summary) ──
+function renderProductLibrary(){
+  const myDept=profile.department;
+  const otherDepts=DEPARTMENTS.filter(d=>d!==myDept);
+  if(libraryDeptFilter!=='mine'&&!otherDepts.includes(libraryDeptFilter))libraryDeptFilter='mine';
+  const viewingOwn=libraryDeptFilter==='mine';
+  const dept=viewingOwn?myDept:libraryDeptFilter;
+  const items=productPhotos.filter(p=>p.department===dept);
+  return`<div style="max-width:1100px">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+    <button class="btn btn-ghost" onclick="view='dashboard';renderView()">← Back</button>
+    <div><div style="font-size:1.15rem;font-weight:700">Product Reference Library</div><div style="font-size:.78rem;color:var(--muted)">Your department shows full quality detail. Other departments are reference-only.</div></div>
+  </div>
+  <div class="filters">
+    <button class="btn ${viewingOwn?'btn-primary':'btn-ghost'}" onclick="libraryDeptFilter='mine';renderView()">${esc(myDept)} (mine)</button>
+    ${otherDepts.map(d=>`<button class="btn ${libraryDeptFilter===d?'btn-primary':'btn-ghost'}" style="font-size:.78rem" onclick="libraryDeptFilter='${esc(d)}';renderView()">${esc(d)}</button>`).join('')}
+  </div>
+  <div class="doc-grid">
+    ${items.length?items.map(p=>viewingOwn?`<div class="prod-card">
+      <img class="prod-thumb" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)}" onerror="this.style.display='none'">
+      <div class="prod-body">
+        <div style="display:flex;justify-content:space-between;gap:8px"><div style="font-weight:600;font-size:.9rem">${esc(p.name)}</div>${p.is_essential?`<span class="essential-tag">★</span>`:''}</div>
+        <div style="font-size:.72rem;color:var(--muted)">${esc(p.category)}</div>
+        <div style="font-size:.78rem;color:var(--muted)">${esc(p.description||'')}</div>
+      </div>
+    </div>`:`<div class="prod-card">
+      <img class="prod-thumb" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)}" onerror="this.style.display='none'">
+      <div class="prod-body">
+        <div style="font-weight:600;font-size:.9rem">${esc(p.name)}</div>
+        <div style="font-size:.72rem;color:var(--muted)">${esc(p.category)} &middot; reference only</div>
+      </div>
+    </div>`).join(''):`<p style="color:var(--muted)">No products recorded for ${esc(dept)} yet.</p>`}
+  </div></div>`;
+}
+
 // ── INDUCTION FLOW ────────────────────────────────────────────
 function resumeInduction(){
   const allViewed=KNOWLEDGE_TOPICS.every(t=>knowledgeViewed.includes(t.id));
   if(!allViewed){view='kb';renderView();return;}
+  const essentials=myDeptEssentials();
+  const allProductsConfirmed=essentials.every(p=>productConfirmed.includes(p.id));
+  if(essentials.length&&!allProductsConfirmed){view='productGate';renderView();return;}
   const first=MODULES.findIndex(m=>!moduleProgress[m.id]?.completed);
   activeModule=first===-1?0:first;activeQuestion=0;view='module';renderView();
 }
@@ -1162,7 +1537,7 @@ function renderKnowledgeGate(){
   return`<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
     <button class="btn btn-ghost" onclick="view='dashboard';renderView()">← Back</button>
     <span style="font-size:.8rem;color:var(--muted)">${knowledgeViewed.length}/${KNOWLEDGE_TOPICS.length} topics confirmed</span>
-    ${allDone?`<button class="btn btn-success" onclick="startModules()">🚀 Start Induction Quiz</button>`:''}
+    ${allDone?`<button class="btn btn-success" onclick="resumeInduction()">Continue →</button>`:''}
   </div>
   <div class="kb-grid">
     <nav class="kb-nav">${KNOWLEDGE_TOPICS.map(t=>`<button class="kb-btn ${t.id===activeKbTopic?'active':''} ${knowledgeViewed.includes(t.id)?'done':''}" onclick="activeKbTopic='${t.id}';renderView()">${knowledgeViewed.includes(t.id)?'✅ ':''}${esc(t.title)}<div style="font-size:.7rem;opacity:.6;margin-top:2px">${esc(t.cat)}</div></button>`).join('')}</nav>
@@ -1176,7 +1551,7 @@ function renderKnowledgeGate(){
       ${topic.videos.length?`<div style="position:relative;padding-bottom:56.25%;height:0;border-radius:10px;overflow:hidden;background:#000;margin-bottom:14px"><iframe src="${topic.videos[0].embed}?rel=0&modestbranding=1" title="${esc(topic.videos[0].title)}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>`:''}
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${knowledgeViewed.includes(topic.id)?`<span class="badge badge-completed">✅ Confirmed</span>`:`<button class="btn btn-primary" onclick="confirmTopic('${topic.id}')">✅ I have read and understood this topic</button>`}
-        ${allDone?`<button class="btn btn-success" onclick="startModules()">Start Quiz →</button>`:`<span style="font-size:.78rem;color:var(--muted);align-self:center">${KNOWLEDGE_TOPICS.length-knowledgeViewed.length} remaining</span>`}
+        ${allDone?`<button class="btn btn-success" onclick="resumeInduction()">Continue →</button>`:`<span style="font-size:.78rem;color:var(--muted);align-self:center">${KNOWLEDGE_TOPICS.length-knowledgeViewed.length} remaining</span>`}
       </div>
     </div>
   </div>`;
@@ -1190,6 +1565,8 @@ async function confirmTopic(id){
 }
 function startModules(){
   if(!KNOWLEDGE_TOPICS.every(t=>knowledgeViewed.includes(t.id))){alert('Please confirm all knowledge topics first.');return;}
+  const essentials=myDeptEssentials();
+  if(!essentials.every(p=>productConfirmed.includes(p.id))){alert('Please confirm all essential product items for your department first.');return;}
   const first=MODULES.findIndex(m=>!moduleProgress[m.id]?.completed);
   activeModule=first===-1?0:first;activeQuestion=0;view='module';renderView();
 }
@@ -1329,7 +1706,7 @@ function buildLetter(emp){
   <div class="letter-body">
     <p>To whom it may concern,</p>
     <p>This letter confirms that <strong>${esc(emp.full_name)}</strong> from the <strong>${esc(emp.department)}</strong> department, working as <strong>${esc(emp.position)}</strong>, successfully completed the Pezzano Enterprises Warehouse Staff Induction Program on <strong>${fmtDate(emp.completion_date)}</strong>.</p>
-    <p>The induction covered site rules, PPE, emergency procedures, chemical handling, manual handling, forklift safety, fire safety, cold chain and HACCP, waste management, warehouse operations, housekeeping, incident reporting, and WHS rights and responsibilities.</p>
+    <p>The induction covered site rules, PPE, emergency procedures, chemical handling, manual handling, forklift safety, fire safety, cold chain and HACCP, waste management, warehouse operations, housekeeping, incident reporting, WHS rights and responsibilities, and department-specific product quality standards.</p>
     <p>The employee completed all required modules at 100% and acknowledged all site safety and food-safety obligations.</p>
   </div>
   <div class="letter-details"><strong>Employee Details</strong><br>Name: ${esc(emp.full_name)} &nbsp;|&nbsp; Code: ${esc(emp.employee_code)} &nbsp;|&nbsp; Dept: ${esc(emp.department)}<br>Position: ${esc(emp.position)} &nbsp;|&nbsp; Location: ${esc(emp.work_location)}<br>Induction Date: ${fmtDate(emp.induction_date)} &nbsp;|&nbsp; Completion Date: ${fmtDate(emp.completion_date)}</div>
