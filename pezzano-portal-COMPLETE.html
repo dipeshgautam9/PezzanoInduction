@@ -134,6 +134,26 @@ tbody tr:hover{background:var(--surface2)}
 .prod-thumb-ph{width:100%;height:150px;background:var(--surface3);display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:.75rem}
 .prod-body{padding:12px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
 .essential-tag{display:inline-flex;align-items:center;gap:4px;font-size:.68rem;background:rgba(0,180,216,.12);color:var(--primary);padding:2px 8px;border-radius:999px;font-weight:600;width:fit-content}
+.qk-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px}
+.qk-section.qk-good{border-left:3px solid var(--success)}
+.qk-section.qk-bad{border-left:3px solid var(--error)}
+.qk-section-title{font-size:.95rem;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.qk-section-sub{font-size:.8rem;color:var(--muted);margin-bottom:14px}
+.media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:10px}
+.media-item{position:relative;background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.media-item img,.media-item video{width:100%;height:110px;object-fit:cover;display:block;background:var(--surface3)}
+.media-item-actions{display:flex;gap:4px;padding:6px;flex-wrap:wrap}
+.media-item-actions button{flex:1;font-size:.68rem;padding:4px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface3);color:var(--text);cursor:pointer}
+.media-item-actions button:hover{border-color:var(--primary);color:var(--primary)}
+.media-item-actions button.danger:hover{border-color:var(--error);color:var(--error)}
+.media-add-tile{border:2px dashed var(--border);border-radius:10px;height:110px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;cursor:pointer;color:var(--muted);font-size:.7rem;text-align:center;padding:8px}
+.media-add-tile:hover{border-color:var(--primary);color:var(--primary)}
+.video-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px}
+.video-item{width:220px}
+.video-item video{width:100%;border-radius:10px;background:var(--surface3);display:block}
+.readonly-banner{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35);color:var(--warning);border-radius:10px;padding:10px 14px;font-size:.82rem;margin-bottom:16px}
+.dl-btn{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;padding:5px 10px;border-radius:7px;border:1px solid var(--border);background:var(--surface3);color:var(--text);cursor:pointer}
+.dl-btn:hover{border-color:var(--primary);color:var(--primary)}
 @media print{
   @page{margin:0;size:A4 portrait}
   html,body{margin:0!important;padding:0!important;height:auto!important;overflow:visible!important}
@@ -333,6 +353,10 @@ let productConfirmed=[];           // product_ids the current staff member has c
 let activeProductCategory='';      // sub-category filter while in the induction gate
 let adminProductDept=null;         // which department SysAdmin/Manager is currently managing
 let libraryDeptFilter='mine';      // 'mine' or a specific department name, for the browse-all-departments library
+let productMedia=[];               // gallery items: extra good/bad photos + good/bad videos, per product
+let productDetailId=null;          // product currently open on the full product page
+let productDetailFrom='library';   // where to return to on "← Back" ('library' or 'products')
+const VIDEO_BUCKET='product-videos'; // separate storage bucket for video files (create this in Supabase)
 
 // ── HELPERS ───────────────────────────────────────────────────
 function esc(v){return String(v??'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));}
@@ -453,6 +477,100 @@ async function hydrateProductThumbs(){
   }
 }
 
+// ── PRODUCT QUALITY LIBRARY: MEDIA GALLERY (extra photos + videos) ──
+// product_media rows: {id, product_id, media_type:'good_photo'|'bad_photo'|'good_video'|'bad_video', file_path, sort_order, uploaded_by, created_at}
+async function loadProductMedia(){
+  try{
+    const{data,error}=await sb.from('product_media').select('*').order('sort_order');
+    if(!error)productMedia=data||[];
+  }catch(e){productMedia=[];}
+}
+function mediaFor(productId,type){
+  return productMedia.filter(m=>m.product_id===productId&&m.media_type===type).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+}
+function bucketForMediaType(type){return(type==='good_video'||type==='bad_video')?VIDEO_BUCKET:'product-photos';}
+async function hydrateProductVideos(){
+  const els=document.querySelectorAll('[data-vid-path]');
+  for(const el of els){
+    const path=el.getAttribute('data-vid-path');
+    if(!path)continue;
+    try{
+      const{data,error}=await sb.storage.from(VIDEO_BUCKET).createSignedUrl(path,3600);
+      if(!error&&data)el.src=data.signedUrl;
+    }catch(e){}
+  }
+}
+// Forces an actual file download (rather than navigating) using the given bucket/path.
+async function downloadMedia(bucket,path,filename){
+  if(!path)return;
+  try{
+    const{data,error}=await sb.storage.from(bucket).createSignedUrl(path,300);
+    if(error||!data){toast('Could not prepare download.');return;}
+    const resp=await fetch(data.signedUrl);
+    const blob=await resp.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=filename||path.split('/').pop();
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),4000);
+  }catch(e){toast('Download failed.');}
+}
+function employeeName(id){
+  if(!id)return'—';
+  if(profile&&id===profile.id)return profile.full_name||'You';
+  const e=allEmployees.find(x=>x.id===id);
+  return e?e.full_name:'Team member';
+}
+
+function openProductDetail(id,from){
+  productDetailId=id;productDetailFrom=from||'library';view='productDetail';renderView();
+}
+
+async function uploadGalleryItem(productId,mediaType,inputEl){
+  const file=inputEl.files[0];if(!file)return;
+  const p=productPhotos.find(x=>x.id===productId);if(!p)return;
+  if(!canManageProductsFor(p.department)){toast('You can only manage products for your own department.');inputEl.value='';return;}
+  const isVideo=mediaType==='good_video'||mediaType==='bad_video';
+  const maxMb=isVideo?45:10; // Supabase Free plan hard-caps uploads at 50MB — 45MB leaves a little headroom
+  if(file.size>maxMb*1024*1024){toast(`File too large — max ${maxMb}MB.`);inputEl.value='';return;}
+  const bucket=bucketForMediaType(mediaType);
+  const ext=file.name.split('.').pop();
+  const path=`${p.department}/${p.id}/${mediaType}_${Date.now()}.${ext}`;
+  toast(isVideo?'Uploading video…':'Uploading photo…',6000);
+  const{error:upErr}=await sb.storage.from(bucket).upload(path,file,{contentType:file.type});
+  if(upErr){toast('Upload failed: '+upErr.message,4000);inputEl.value='';return;}
+  const existing=mediaFor(productId,mediaType);
+  const nextOrder=existing.length?Math.max(...existing.map(m=>m.sort_order||0))+1:0;
+  const{error}=await sb.from('product_media').insert({product_id:productId,media_type:mediaType,file_path:path,sort_order:nextOrder,uploaded_by:profile.id});
+  if(error){toast('Could not save media record: '+error.message,4000);return;}
+  await loadProductMedia();toast('✓ Added to gallery.');renderView();
+}
+
+async function deleteGalleryItem(mediaId){
+  const m=productMedia.find(x=>x.id===mediaId);if(!m)return;
+  const p=productPhotos.find(x=>x.id===m.product_id);
+  if(!p||!canManageProductsFor(p.department)){toast('You can only manage products for your own department.');return;}
+  if(!confirm('Remove this item from the gallery?'))return;
+  try{await sb.storage.from(bucketForMediaType(m.media_type)).remove([m.file_path]);}catch(e){}
+  await sb.from('product_media').delete().eq('id',mediaId);
+  await loadProductMedia();toast('Removed.');renderView();
+}
+
+async function moveGalleryItem(mediaId,dir){
+  const m=productMedia.find(x=>x.id===mediaId);if(!m)return;
+  const p=productPhotos.find(x=>x.id===m.product_id);
+  if(!p||!canManageProductsFor(p.department))return;
+  const siblings=mediaFor(m.product_id,m.media_type);
+  const idx=siblings.findIndex(x=>x.id===mediaId);
+  const swapIdx=dir==='up'?idx-1:idx+1;
+  if(swapIdx<0||swapIdx>=siblings.length)return;
+  const other=siblings[swapIdx];
+  const a=m.sort_order||0,b=other.sort_order||0;
+  await sb.from('product_media').update({sort_order:b}).eq('id',m.id);
+  await sb.from('product_media').update({sort_order:a}).eq('id',other.id);
+  await loadProductMedia();renderView();
+}
+
 // ── LOGIN ─────────────────────────────────────────────────────
 function showSignIn(){document.getElementById('panel-signin').style.display='block';document.getElementById('panel-forgot').style.display='none';document.getElementById('panel-reset').style.display='none';}
 function showForgot(){document.getElementById('panel-signin').style.display='none';document.getElementById('panel-forgot').style.display='block';document.getElementById('panel-reset').style.display='none';const e=document.getElementById('signin-email').value;if(e)document.getElementById('forgot-email').value=e;}
@@ -553,6 +671,7 @@ async function initApp(){
   }
   // Product training library — everyone can read; only non-sysAdmin track their own confirmations
   await loadProductPhotos();
+  await loadProductMedia();
   if(!isSysAdmin(profile))await loadProductConfirmations();
   if(isManager(profile))adminProductDept=isSysAdmin(profile)?DEPARTMENTS[0]:profile.department;
   document.getElementById('userLabel').textContent=`${profile.full_name} · ${profile.employee_code}`;
@@ -563,7 +682,7 @@ async function initApp(){
 
 function showLogin(){document.getElementById('loginScreen').classList.remove('hidden');document.getElementById('appScreen').classList.add('hidden');showSignIn();}
 function showApp(){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('appScreen').classList.remove('hidden');}
-async function doSignOut(){await sb.auth.signOut();profile=null;allEmployees=[];moduleProgress={};knowledgeViewed=[];myDocs=[];allDocAlerts=[];adminViewDocs=[];adminViewEmpId=null;productPhotos=[];productConfirmed=[];showLogin();}
+async function doSignOut(){await sb.auth.signOut();profile=null;allEmployees=[];moduleProgress={};knowledgeViewed=[];myDocs=[];allDocAlerts=[];adminViewDocs=[];adminViewEmpId=null;productPhotos=[];productConfirmed=[];productMedia=[];productDetailId=null;showLogin();}
 
 // ── RENDER ROUTER ─────────────────────────────────────────────
 function renderView(){
@@ -580,7 +699,9 @@ function renderView(){
   else if(view==='empDocs')     app.innerHTML=renderEmpDocsView();
   else if(view==='products')    app.innerHTML=renderProductManager();
   else if(view==='library')     app.innerHTML=renderProductLibrary();
+  else if(view==='productDetail') app.innerHTML=renderProductDetail();
   hydrateProductThumbs();
+  hydrateProductVideos();
 }
 
 // ── EMPLOYEE / LOCATION MANAGER DASHBOARD ─────────────────────
@@ -1260,16 +1381,17 @@ function renderProductManager(){
   ${cats.length?`<div class="filters" style="margin-top:0">${cats.map(c=>`<span class="badge badge-pending">${esc(c)} (${inDept.filter(p=>p.category===c).length})</span>`).join('')}</div>`:''}
   <div class="doc-grid">
     ${inDept.length?inDept.map(p=>`<div class="prod-card">
-      <img class="prod-thumb" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)}" onerror="this.style.display='none'">
+      <img class="prod-thumb" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)}" style="cursor:pointer" onclick="openProductDetail('${p.id}','products')" onerror="this.style.display='none'">
       <div class="prod-body">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-          <div style="font-weight:600;font-size:.9rem">${esc(p.name)}</div>
+          <div style="font-weight:600;font-size:.9rem;cursor:pointer" onclick="openProductDetail('${p.id}','products')">${esc(p.name)}</div>
           ${p.is_essential?`<span class="essential-tag">★ Essential</span>`:''}
         </div>
         <div style="font-size:.72rem;color:var(--muted)">${esc(p.category)}</div>
         <div style="font-size:.78rem;color:var(--muted);flex:1">${esc(p.description||'No description')}</div>
         ${p.reject_image_path?`<div style="font-size:.72rem;color:var(--warning)">Has reject example ✓</div>`:`<div style="font-size:.72rem;color:var(--faint)">No reject example</div>`}
-        <div style="display:flex;gap:6px;margin-top:4px">
+        <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">
+          <button class="btn btn-info" style="font-size:.75rem" onclick="openProductDetail('${p.id}','products')">📖 Full Page</button>
           <button class="btn btn-ghost" style="font-size:.75rem" onclick="editProduct('${p.id}')">Edit</button>
           <button class="btn btn-danger" style="font-size:.75rem" onclick="deleteProduct('${p.id}')">Delete</button>
         </div>
@@ -1352,7 +1474,7 @@ async function saveProduct(){
     const{error:rejErr}=await sb.storage.from('product-photos').upload(rejectPath,rejectFile,{contentType:rejectFile.type});
     if(rejErr){console.warn('Reject photo upload failed:',rejErr.message);rejectPath=null;}
   }
-  const{error}=await sb.from('product_photos').insert({name,department:dept,category:cat,description:desc,image_path:goodPath,reject_image_path:rejectPath,reject_note:rejectPath?rejectNote:null,is_essential:essential,uploaded_by:profile.id});
+  const{error}=await sb.from('product_photos').insert({name,department:dept,category:cat,description:desc,image_path:goodPath,reject_image_path:rejectPath,reject_note:rejectPath?rejectNote:null,is_essential:essential,uploaded_by:profile.id,updated_by:profile.id,updated_at:new Date().toISOString()});
   if(error){showMsg('p_msg','Error: '+error.message,'error');btn.disabled=false;btn.textContent='Save Product';return;}
   await loadProductPhotos();adminProductDept=dept;closeModal();toast('✓ Product added.');renderView();
 }
@@ -1372,26 +1494,69 @@ function editProduct(id){
       </div>
       <div class="field full"><label>Description / Quality Standard</label><textarea id="ep_desc" rows="3">${esc(p.description||'')}</textarea></div>
       <div class="field full"><label>Reject note</label><input id="ep_reject_note" value="${esc(p.reject_note||'')}" placeholder="Why the reject example fails standard"></div>
+      <div class="field full">
+        <label>Acceptable / Standard Photo</label>
+        <img class="prod-thumb" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)}" style="width:120px;height:90px;display:block;margin-bottom:8px" onerror="this.style.display='none'">
+        <div class="upload-drop" id="ep_drop_good" onclick="document.getElementById('ep_file_good').click()">📎 Click to replace this photo (leave empty to keep current)</div>
+        <input type="file" id="ep_file_good" accept=".jpg,.jpeg,.png" style="display:none" onchange="showChosenFileInto(this,'ep_drop_good')">
+      </div>
+      <div class="field full">
+        <label>Reject / Below-standard Photo</label>
+        ${p.reject_image_path?`<img class="prod-thumb" data-img-path="${esc(p.reject_image_path)}" alt="reject example" style="width:120px;height:90px;display:block;margin-bottom:8px" onerror="this.style.display='none'">`:`<div style="font-size:.75rem;color:var(--faint);margin-bottom:8px">No reject example yet</div>`}
+        <div class="upload-drop" id="ep_drop_reject" onclick="document.getElementById('ep_file_reject').click()">📎 Click to ${p.reject_image_path?'replace':'add'} the reject example photo (leave empty to keep current)</div>
+        <input type="file" id="ep_file_reject" accept=".jpg,.jpeg,.png" style="display:none" onchange="showChosenFileInto(this,'ep_drop_reject')">
+      </div>
     </div>
     <div id="ep_msg" class="msg"></div>
     <div class="modal-actions">
-      <button class="btn btn-primary" onclick="saveProductEdit('${id}')">Save Changes</button>
+      <button class="btn btn-primary" id="ep_btn" onclick="saveProductEdit('${id}')">Save Changes</button>
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
     </div>
   </div></div>`;
+  hydrateProductThumbs();
 }
 
 async function saveProductEdit(id){
   const p=productPhotos.find(x=>x.id===id);if(!p)return;
+  if(!canManageProductsFor(p.department)){showMsg('ep_msg','You can only edit products for your own department.','error');return;}
+  const btn=document.getElementById('ep_btn');btn.disabled=true;btn.textContent='Saving…';
   let cat=document.getElementById('ep_cat').value;
   if(cat==='__new__')cat=document.getElementById('ep_newcat_input').value.trim();
   const name=document.getElementById('ep_name').value.trim();
   const essential=document.getElementById('ep_essential').checked;
   const desc=document.getElementById('ep_desc').value.trim();
   const rejectNote=document.getElementById('ep_reject_note').value.trim()||null;
-  const{error}=await sb.from('product_photos').update({name,category:cat,is_essential:essential,description:desc,reject_note:rejectNote}).eq('id',id);
-  if(error){showMsg('ep_msg','Error: '+error.message,'error');return;}
-  await loadProductPhotos();closeModal();toast('Product updated.');renderView();
+  const newGoodFile=document.getElementById('ep_file_good').files[0];
+  const newRejectFile=document.getElementById('ep_file_reject').files[0];
+  const updatePayload={name,category:cat,is_essential:essential,description:desc,reject_note:rejectNote,updated_by:profile.id,updated_at:new Date().toISOString()};
+
+  // Replace the "acceptable" photo if a new one was chosen.
+  if(newGoodFile){
+    const ext=newGoodFile.name.split('.').pop();
+    const newPath=`${p.department}/${Date.now()}_good.${ext}`;
+    const{error:upErr}=await sb.storage.from('product-photos').upload(newPath,newGoodFile,{contentType:newGoodFile.type});
+    if(upErr){showMsg('ep_msg','Photo upload error: '+upErr.message,'error');btn.disabled=false;btn.textContent='Save Changes';return;}
+    updatePayload.image_path=newPath;
+  }
+  // Replace (or add) the reject photo if a new one was chosen.
+  if(newRejectFile){
+    const rext=newRejectFile.name.split('.').pop();
+    const newRejectPath=`${p.department}/${Date.now()}_reject.${rext}`;
+    const{error:rejErr}=await sb.storage.from('product-photos').upload(newRejectPath,newRejectFile,{contentType:newRejectFile.type});
+    if(rejErr){showMsg('ep_msg','Reject photo upload error: '+rejErr.message,'error');btn.disabled=false;btn.textContent='Save Changes';return;}
+    updatePayload.reject_image_path=newRejectPath;
+  }
+
+  const{error}=await sb.from('product_photos').update(updatePayload).eq('id',id);
+  if(error){showMsg('ep_msg','Error: '+error.message,'error');btn.disabled=false;btn.textContent='Save Changes';return;}
+
+  // Clean up the old files in storage now that the DB row points at the new ones.
+  const toRemove=[];
+  if(newGoodFile&&p.image_path)toRemove.push(p.image_path);
+  if(newRejectFile&&p.reject_image_path)toRemove.push(p.reject_image_path);
+  if(toRemove.length){try{await sb.storage.from('product-photos').remove(toRemove);}catch(e){}}
+
+  await loadProductPhotos();closeModal();toast('✓ Product updated.');renderView();
 }
 
 async function deleteProduct(id){
@@ -1504,12 +1669,13 @@ function renderProductLibrary(){
     ${otherDepts.map(d=>`<button class="btn ${libraryDeptFilter===d?'btn-primary':'btn-ghost'}" style="font-size:.78rem" onclick="libraryDeptFilter='${esc(d)}';renderView()">${esc(d)}</button>`).join('')}
   </div>
   <div class="doc-grid">
-    ${items.length?items.map(p=>viewingOwn?`<div class="prod-card">
+    ${items.length?items.map(p=>viewingOwn?`<div class="prod-card" style="cursor:pointer" onclick="openProductDetail('${p.id}','library')">
       <img class="prod-thumb" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)}" onerror="this.style.display='none'">
       <div class="prod-body">
         <div style="display:flex;justify-content:space-between;gap:8px"><div style="font-weight:600;font-size:.9rem">${esc(p.name)}</div>${p.is_essential?`<span class="essential-tag">★</span>`:''}</div>
         <div style="font-size:.72rem;color:var(--muted)">${esc(p.category)}</div>
         <div style="font-size:.78rem;color:var(--muted)">${esc(p.description||'')}</div>
+        <div style="font-size:.72rem;color:var(--primary);margin-top:2px">📖 View full page →</div>
       </div>
     </div>`:`<div class="prod-card">
       <img class="prod-thumb" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)}" onerror="this.style.display='none'">
@@ -1519,6 +1685,125 @@ function renderProductLibrary(){
       </div>
     </div>`).join(''):`<p style="color:var(--muted)">No products recorded for ${esc(dept)} yet.</p>`}
   </div></div>`;
+}
+
+// ── PRODUCT TRAINING: FULL PRODUCT PAGE (Quality Knowledge Library) ──
+function renderProductDetail(){
+  const p=productPhotos.find(x=>x.id===productDetailId);
+  const backView=productDetailFrom==='products'?'products':'library';
+  if(!p){view=backView;return view==='products'?renderProductManager():renderProductLibrary();}
+  const canEdit=canManageProductsFor(p.department);
+  const isOwnDept=profile.department===p.department;
+  const backLabel=productDetailFrom==='products'?'← Product Training Library':'← Product Reference Library';
+
+  const goodGallery=mediaFor(p.id,'good_photo');
+  const badGallery=mediaFor(p.id,'bad_photo');
+  const goodVideos=mediaFor(p.id,'good_video');
+  const badVideos=mediaFor(p.id,'bad_video');
+  const extOf=path=>(path||'').split('.').pop();
+
+  // Main photo card — download only, no delete/reorder (replace it via "Edit Details").
+  const mainMedia=(path,label)=>path?`<div class="media-item">
+      <img data-img-path="${esc(path)}" alt="${esc(label)}" onerror="this.style.display='none'">
+      <div class="media-item-actions"><button onclick="downloadMedia('product-photos','${esc(path)}')">⬇ Download</button></div>
+    </div>`:'';
+
+  // Extra gallery photo — download + (if editable) move/delete.
+  const galleryMedia=m=>`<div class="media-item">
+      <img data-img-path="${esc(m.file_path)}" alt="gallery photo" onerror="this.style.display='none'">
+      <div class="media-item-actions">
+        <button onclick="downloadMedia('product-photos','${esc(m.file_path)}')">⬇ Download</button>
+        ${canEdit?`<button onclick="moveGalleryItem('${m.id}','up')" title="Move up">↑</button><button onclick="moveGalleryItem('${m.id}','down')" title="Move down">↓</button><button class="danger" onclick="deleteGalleryItem('${m.id}')" title="Remove">✕</button>`:''}
+      </div>
+    </div>`;
+
+  const addTile=(mediaType,label,accept)=>{
+    const inputId=`add_${mediaType}_${p.id}`;
+    return`<div class="media-add-tile" onclick="document.getElementById('${inputId}').click()">
+      <div style="font-size:1.3rem;line-height:1">＋</div><div>${esc(label)}</div>
+    </div><input type="file" id="${inputId}" accept="${accept}" style="display:none" onchange="uploadGalleryItem('${p.id}','${mediaType}',this)">`;
+  };
+
+  const videoBlock=v=>`<div class="video-item">
+      <video controls data-vid-path="${esc(v.file_path)}"></video>
+      <div class="media-item-actions" style="padding:6px 0 0">
+        <button onclick="downloadMedia('${VIDEO_BUCKET}','${esc(v.file_path)}')">⬇ Download</button>
+        ${canEdit?`<button class="danger" onclick="deleteGalleryItem('${v.id}')">✕ Remove</button>`:''}
+      </div>
+    </div>`;
+
+  const addVideoTile=(mediaType,label)=>{
+    const inputId=`add_${mediaType}_${p.id}`;
+    return`<div class="media-add-tile" style="width:220px" onclick="document.getElementById('${inputId}').click()">
+      <div style="font-size:1.3rem;line-height:1">＋</div><div>${esc(label)}<br><span style="color:var(--faint)">MP4, MOV, WebM · max 200MB</span></div>
+    </div><input type="file" id="${inputId}" accept=".mp4,.mov,.webm,video/mp4,video/quicktime,video/webm" style="display:none" onchange="uploadGalleryItem('${p.id}','${mediaType}',this)">`;
+  };
+
+  const resourceRow=(iconLabel,bucket,path)=>path?`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:.85rem">${esc(iconLabel)}</span>
+      <button class="dl-btn" onclick="downloadMedia('${bucket}','${esc(path)}')">⬇ Download</button>
+    </div>`:'';
+
+  return`<div style="max-width:1020px">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+    <button class="btn btn-ghost" onclick="view='${backView}';renderView()">${backLabel}</button>
+  </div>
+
+  ${!isOwnDept&&!canEdit?`<div class="readonly-banner">🔒 This product belongs to another department (${esc(p.department)}). You're viewing it in read-only reference mode.</div>`:''}
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">Overview</div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">
+      <img class="prod-thumb" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)}" style="width:160px;height:120px;border-radius:10px;flex-shrink:0" onerror="this.style.display='none'">
+      <div style="flex:1;min-width:220px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div style="font-size:1.3rem;font-weight:700">${esc(p.name)}</div>
+          ${p.is_essential?`<span class="essential-tag">★ Essential</span>`:''}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:12px">
+          <div><div style="color:var(--muted);font-size:.7rem">Department</div><div style="font-weight:500">${esc(p.department)}</div></div>
+          <div><div style="color:var(--muted);font-size:.7rem">Category</div><div style="font-weight:500">${esc(p.category)}</div></div>
+          <div><div style="color:var(--muted);font-size:.7rem">Last Updated</div><div style="font-weight:500">${p.updated_at?fmtDate(p.updated_at):'—'}</div></div>
+          <div><div style="color:var(--muted);font-size:.7rem">Updated By</div><div style="font-weight:500">${esc(employeeName(p.updated_by||p.uploaded_by))}</div></div>
+        </div>
+        ${canEdit?`<button class="btn btn-ghost" style="font-size:.75rem;margin-top:12px" onclick="editProduct('${p.id}')">✏️ Edit Details / Replace Main Photos</button>`:''}
+      </div>
+    </div>
+  </div>
+
+  <div class="qk-section qk-good">
+    <div class="qk-section-title">✅ Good Quality</div>
+    <div class="qk-section-sub">${esc(p.description||'No accept criteria recorded yet.')}</div>
+    <div class="media-grid">
+      ${mainMedia(p.image_path,'Main good photo')}
+      ${goodGallery.map(galleryMedia).join('')}
+      ${addTile('good_photo','Add good photo','.jpg,.jpeg,.png')}
+    </div>
+    ${goodVideos.length||canEdit?`<div style="font-size:.78rem;color:var(--muted);margin:10px 0 6px">Good example videos</div><div class="video-row">${goodVideos.map(videoBlock).join('')}${addVideoTile('good_video','Add good video')}</div>`:''}
+  </div>
+
+  <div class="qk-section qk-bad">
+    <div class="qk-section-title">❌ Poor Quality</div>
+    <div class="qk-section-sub">${esc(p.reject_note||'No reject criteria recorded yet.')}</div>
+    <div class="media-grid">
+      ${mainMedia(p.reject_image_path,'Main reject photo')}
+      ${badGallery.map(galleryMedia).join('')}
+      ${addTile('bad_photo','Add reject photo','.jpg,.jpeg,.png')}
+    </div>
+    ${badVideos.length||canEdit?`<div style="font-size:.78rem;color:var(--muted);margin:10px 0 6px">Reject example videos</div><div class="video-row">${badVideos.map(videoBlock).join('')}${addVideoTile('bad_video','Add reject video')}</div>`:''}
+  </div>
+
+  <div class="qk-section">
+    <div class="qk-section-title">📁 Resources</div>
+    <div class="qk-section-sub">Download any photo or video for posters, training packs, or toolbox talks.</div>
+    ${resourceRow('Good photo (main)','product-photos',p.image_path)}
+    ${goodGallery.map((m,i)=>resourceRow(`Good photo ${i+2}`,'product-photos',m.file_path)).join('')}
+    ${resourceRow('Reject photo (main)','product-photos',p.reject_image_path)}
+    ${badGallery.map((m,i)=>resourceRow(`Reject photo ${i+2}`,'product-photos',m.file_path)).join('')}
+    ${goodVideos.map((m,i)=>resourceRow(`Good example video ${i+1}`,VIDEO_BUCKET,m.file_path)).join('')}
+    ${badVideos.map((m,i)=>resourceRow(`Reject example video ${i+1}`,VIDEO_BUCKET,m.file_path)).join('')}
+  </div>
+  </div>`;
 }
 
 // ── INDUCTION FLOW ────────────────────────────────────────────
