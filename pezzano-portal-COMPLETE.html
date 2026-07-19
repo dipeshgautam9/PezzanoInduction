@@ -684,8 +684,9 @@ function renderManagerDashboard(){
         <button class="btn btn-ghost" onclick="exportExcel()">📥 Export Excel</button>
         <button class="btn btn-warn" onclick="view='docsAlerts';renderView()">📋 Doc Alerts${allDocAlerts.length?` (${allDocAlerts.length})`:''}</button>
         <button class="btn btn-warn" onclick="bulkPrint()">🖨 Bulk Print Letters</button>
+        ${isSysAdmin(profile)?`<button class="btn btn-warn" onclick="bulkPrintDocs()">🖨 Bulk Print Docs</button>`:''}
         ${departmentsManagerCanEdit().length?`<button class="btn btn-info" onclick="view='products';renderView()">📦 Product Training</button>`:''}
-        ${isSysAdmin(profile)?`<button class="btn btn-primary" onclick="openCreate()">+ Add Staff</button>`:''}
+        ${isManager(profile)?`<button class="btn btn-primary" onclick="openCreate()">+ Add Staff</button>`:''}
         ${isSysAdmin(profile)?`<button class="btn btn-ghost" onclick="openAudit()">Audit Log</button>`:''}
       </div>
     </div>
@@ -712,7 +713,7 @@ function buildTableHtml(){
       <td><div style="display:flex;align-items:center;gap:6px"><div class="prog-bar"><div class="prog-fill" style="width:${e.progress_pct}%"></div></div><span style="font-size:.75rem">${e.progress_pct}%</span></div></td>
       <td><div class="actions-cell">
         <button class="btn btn-ghost" onclick="viewDetail('${e.id}')">View</button>
-        <button class="btn btn-ghost" onclick="changeDept('${e.id}')">Dept</button>
+        ${isSysAdmin(profile)?`<button class="btn btn-ghost" onclick="changeDept('${e.id}')">Dept</button>`:''}
         ${isSysAdmin(profile)?`<button class="btn btn-info" style="font-size:.75rem" onclick="viewEmpDocs('${e.id}')">📄 Docs</button>`:''}
         ${(isSysAdmin(profile)||(isManager(profile)&&e.role==='employee'))?`<button class="btn btn-warn" style="font-size:.75rem" onclick="openEdit('${e.id}')">⚙ Edit</button>`:''}
         ${e.completion_status==='completed'?`<button class="btn btn-success" onclick="printLetterFor('${e.id}')">🖨 Letter</button>`:''}
@@ -1727,6 +1728,30 @@ function bulkPrint(){
   const area=document.getElementById('printArea');area.style.display='block';area.innerHTML=done.map(buildLetter).join('<div style="page-break-after:always"></div>');window.print();area.style.display='none';
 }
 
+// Bulk-print every uploaded document file for every staff member in the current filter.
+// Opens one tab per file (staggered so popup blockers don't choke) and triggers print on each.
+async function bulkPrintDocs(){
+  if(!isSysAdmin(profile)){toast('Only a System Administrator can bulk print documents.');return;}
+  const rows=filteredEmployees();
+  if(!rows.length){alert('No staff in current filter.');return;}
+  const empIds=rows.map(e=>e.id);
+  const{data,error}=await sb.from('employee_documents').select('*').in('employee_id',empIds).not('file_path','is',null);
+  if(error){alert('Could not load documents: '+error.message);return;}
+  const docs=data||[];
+  if(!docs.length){alert('No document files found for staff in the current filter.');return;}
+  if(!confirm(`This opens ${docs.length} document file(s) across ${rows.length} staff member(s), one tab per file. Continue?`))return;
+  toast(`Opening ${docs.length} documents for printing…`);
+  for(const doc of docs){
+    try{
+      const{data:signed,error:sErr}=await sb.storage.from('employee-documents').createSignedUrl(doc.file_path,300);
+      if(sErr)continue;
+      const w=window.open(signed.signedUrl,'_blank');
+      if(w){setTimeout(()=>{try{w.focus();w.print();}catch(e){/* cross-origin viewers may block direct print(); user can use Ctrl+P */}},900);}
+      await new Promise(r=>setTimeout(r,400)); // stagger tab openings so popup blockers don't choke
+    }catch(e){/* skip failed file, continue to next */}
+  }
+}
+
 // ── ENHANCED EXCEL EXPORT (includes doc expiry data) ──────────
 function exportExcel(){
   const empRows=filteredEmployees();
@@ -1789,6 +1814,7 @@ function viewDetail(id){
 }
 
 function changeDept(id){
+  if(!isSysAdmin(profile)){toast('Only a System Administrator can change department.');return;}
   const e=allEmployees.find(x=>x.id===id);if(!e)return;
   document.getElementById('modalRoot').innerHTML=`<div class="modal-back" onclick="if(event.target===this)closeModal()"><div class="modal">
   <h3>Change Department</h3>
@@ -1798,9 +1824,12 @@ function changeDept(id){
   </div></div>`;
 }
 async function saveDept(id){
+  if(!isSysAdmin(profile)){toast('Only a System Administrator can change department.');closeModal();return;}
   const dept=document.getElementById('newDept').value;
-  await sb.from('employees').update({department:dept}).eq('id',id);
-  const e=allEmployees.find(x=>x.id===id);if(e)e.department=dept;
+  const{data:updRows,error}=await sb.from('employees').update({department:dept}).eq('id',id).select();
+  if(error){toast('Error: '+error.message);return;}
+  if(!updRows||updRows.length===0){toast('No record was updated — permission blocked the change.');return;}
+  const e=allEmployees.find(x=>x.id===id);if(e)Object.assign(e,updRows[0]);
   closeModal();refreshTable();toast('Department updated.');
 }
 
@@ -1875,7 +1904,8 @@ async function saveEdit(id){
 }
 
 function openCreate(){
-  if(!isSysAdmin(profile))return;
+  if(!isManager(profile))return;
+  const managerOnly=!isSysAdmin(profile); // Location Manager: can add staff, but always as Employee in their own department
   document.getElementById('modalRoot').innerHTML=`<div class="modal-back" onclick="if(event.target===this)closeModal()"><div class="modal">
   <h3>Add New Staff Member</h3>
   <div style="background:rgba(74,222,128,.07);border:1px solid rgba(74,222,128,.2);border-radius:8px;padding:12px;margin-bottom:16px;font-size:.82rem;color:var(--success)">
@@ -1887,9 +1917,13 @@ function openCreate(){
     <div class="field"><label>Age</label><input id="c_age" type="number" min="15" max="100" placeholder="Age"></div>
     <div class="field full"><label>Work Email</label><input id="c_email" type="email" placeholder="employee@email.com"></div>
     <div class="field"><label>Position</label><select id="c_pos">${POSITIONS.map(p=>`<option>${p}</option>`).join('')}</select></div>
-    <div class="field"><label>Department</label><select id="c_dept">${DEPARTMENTS.map(d=>`<option>${d}</option>`).join('')}</select></div>
-    <div class="field"><label>Portal Role</label><select id="c_role"><option value="employee">Employee</option><option value="locationManager">Location Manager</option><option value="sysAdmin">System Administrator</option></select></div>
+    ${managerOnly
+      ?`<div class="field"><label>Department</label><input value="${esc(profile.department)}" readonly></div>
+         <div class="field"><label>Portal Role</label><input value="Employee" readonly></div>`
+      :`<div class="field"><label>Department</label><select id="c_dept">${DEPARTMENTS.map(d=>`<option>${d}</option>`).join('')}</select></div>
+         <div class="field"><label>Portal Role</label><select id="c_role"><option value="employee">Employee</option><option value="locationManager">Location Manager</option><option value="sysAdmin">System Administrator</option></select></div>`}
   </div>
+  ${managerOnly?`<p style="font-size:.72rem;color:var(--muted);margin-top:10px">As a Location Manager, new staff you add are always created as Employee in ${esc(profile.department)}. A System Administrator can change department or role afterwards.</p>`:''}
   <div id="c_msg" style="display:none;margin-top:10px;padding:10px;border-radius:8px;font-size:.82rem"></div>
   <div class="modal-actions"><button class="btn btn-primary" id="c_btn" onclick="createEmployee()">Add Staff Record</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button></div>
   </div></div>`;
@@ -1897,14 +1931,17 @@ function openCreate(){
 
 async function createEmployee(){
   const btn=document.getElementById('c_btn');btn.disabled=true;btn.textContent='Creating…';
+  const managerOnly=!isSysAdmin(profile);
+  const deptEl=document.getElementById('c_dept');
+  const roleEl=document.getElementById('c_role');
   const{data,error}=await sb.rpc('create_employee',{
     p_email:document.getElementById('c_email').value.trim().toLowerCase(),
     p_full_name:document.getElementById('c_name').value.trim(),
     p_phone:document.getElementById('c_phone').value.trim(),
     p_age:parseInt(document.getElementById('c_age').value)||null,
-    p_department:document.getElementById('c_dept').value,
+    p_department:managerOnly?profile.department:deptEl.value,
     p_position:document.getElementById('c_pos').value,
-    p_role:document.getElementById('c_role').value
+    p_role:managerOnly?'employee':roleEl.value
   });
   const msg=document.getElementById('c_msg');
   if(error){
