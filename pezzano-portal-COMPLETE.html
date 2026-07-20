@@ -130,29 +130,46 @@ tbody tr:hover{background:var(--surface2)}
 .upload-drop:hover,.upload-drop.dragover{border-color:var(--primary);color:var(--primary);background:rgba(0,180,216,.04)}
 .upload-drop.file-chosen{border-color:var(--success);background:rgba(74,222,128,.06);color:var(--success)}
 .prod-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
-.prod-thumb{width:100%;height:150px;object-fit:cover;background:var(--surface3);display:block}
+.prod-thumb{width:100%;aspect-ratio:4/3;height:auto;object-fit:cover;background:var(--surface3);display:block}
 .prod-thumb-ph{width:100%;height:150px;background:var(--surface3);display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:.75rem}
 .prod-body{padding:12px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
-.essential-tag{display:inline-flex;align-items:center;gap:4px;font-size:.68rem;background:rgba(0,180,216,.12);color:var(--primary);padding:2px 8px;border-radius:999px;font-weight:600;width:fit-content}
+.essential-tag{display:inline-flex;align-items:center;gap:4px;font-size:.75rem;background:rgba(0,180,216,.12);color:var(--primary);padding:5px 12px;border-radius:999px;font-weight:600;width:fit-content;border:none;cursor:pointer}
+.essential-tag:hover{background:rgba(0,180,216,.2)}
+.detail-hero{width:220px;max-width:100%;border-radius:14px;flex-shrink:0;object-fit:cover;aspect-ratio:4/3;background:var(--surface3)}
 .qk-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px}
 .qk-section.qk-good{border-left:3px solid var(--success)}
 .qk-section.qk-bad{border-left:3px solid var(--error)}
-.qk-section-title{font-size:.95rem;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
-.qk-section-sub{font-size:.8rem;color:var(--muted);margin-bottom:14px}
-.media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:10px}
+.qk-section-title{font-size:1.1rem;font-weight:700;margin-bottom:5px;display:flex;align-items:center;gap:8px}
+.qk-section-sub{font-size:.88rem;color:var(--muted);margin-bottom:14px;line-height:1.4}
+.media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:10px}
 .media-item{position:relative;background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
-.media-item img,.media-item video{width:100%;height:110px;object-fit:cover;display:block;background:var(--surface3)}
+.media-item img{width:100%;aspect-ratio:4/3;height:auto;object-fit:cover;display:block;background:var(--surface3);cursor:zoom-in;transition:.15s}
+.media-item img:hover{opacity:.88}
+.media-item video{width:100%;aspect-ratio:4/3;height:auto;object-fit:cover;display:block;background:var(--surface3)}
 .media-item-actions{display:flex;gap:4px;padding:6px;flex-wrap:wrap}
-.media-item-actions button{flex:1;font-size:.68rem;padding:4px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface3);color:var(--text);cursor:pointer}
+.media-item-actions button{flex:1;font-size:.78rem;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface3);color:var(--text);cursor:pointer}
 .media-item-actions button:hover{border-color:var(--primary);color:var(--primary)}
 .media-item-actions button.danger:hover{border-color:var(--error);color:var(--error)}
-.media-add-tile{border:2px dashed var(--border);border-radius:10px;height:110px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;cursor:pointer;color:var(--muted);font-size:.7rem;text-align:center;padding:8px}
+.media-add-tile{border:2px dashed var(--border);border-radius:10px;aspect-ratio:4/3;height:auto;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;cursor:pointer;color:var(--muted);font-size:.7rem;text-align:center;padding:8px}
 .media-add-tile:hover{border-color:var(--primary);color:var(--primary)}
 .video-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px}
-.video-item{width:220px}
+.video-item{width:260px}
 .video-item video{width:100%;border-radius:10px;background:var(--surface3);display:block}
 .readonly-banner{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35);color:var(--warning);border-radius:10px;padding:10px 14px;font-size:.82rem;margin-bottom:16px}
 .dl-btn{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;padding:5px 10px;border-radius:7px;border:1px solid var(--border);background:var(--surface3);color:var(--text);cursor:pointer}
+.lightbox-back{position:fixed;inset:0;background:rgba(6,7,10,.92);z-index:200;display:flex;align-items:center;justify-content:center;padding:30px;cursor:zoom-out}
+.lightbox-img{max-width:92vw;max-height:88vh;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.5);cursor:default}
+.lightbox-close{position:absolute;top:20px;right:24px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:20px;padding:8px 16px;font-size:.85rem;cursor:pointer}
+.lightbox-close:hover{border-color:var(--primary);color:var(--primary)}
+.lightbox-dl{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:20px;padding:9px 18px;font-size:.85rem;cursor:pointer}
+.lightbox-dl:hover{border-color:var(--primary);color:var(--primary)}
+@media(max-width:640px){
+  .detail-hero{width:100%}
+  .qk-section{padding:14px}
+  .media-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+  .video-item{width:100%}
+  .qk-section-title{font-size:1.15rem}
+}
 .dl-btn:hover{border-color:var(--primary);color:var(--primary)}
 @media print{
   @page{margin:0;size:A4 portrait}
@@ -243,7 +260,7 @@ const SUPABASE_ANON_KEY='sb_publishable_1emkeuRvXdsF6S-yyxcUeQ_BdUBJ5PF';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
 
 // ── CONSTANTS ─────────────────────────────────────────────────
-const DEPARTMENTS=['Floor Morning','Processing','Meat','Logistics','Admin','Others'];
+let DEPARTMENTS=['Floor Morning','Processing','Meat','Logistics','Admin','Others','Core Juice','Sales Reps','Night Packing','Potato Peeling','Seafood','Cleaner'];
 const POSITIONS=['Employee','Supervisor','Logistics Driver','Location Manager','System Administrator'];
 const COMPANY={name:'Pezzano Enterprises Pty Ltd',address:'Unit 12 Purdy Pl, Canning Vale WA 6155',cert:'24/7 HACCP Certified'};
 const DECLARATION_POINTS=[
@@ -522,6 +539,49 @@ function employeeName(id){
   return e?e.full_name:'Team member';
 }
 
+// ── DEPARTMENTS: DB-backed list, extendable by sysAdmin only ──
+async function loadDepartments(){
+  try{
+    const{data,error}=await sb.from('departments').select('name').order('name');
+    if(!error&&data&&data.length){
+      // Merge with the built-in defaults so nothing already in use ever disappears.
+      DEPARTMENTS=Array.from(new Set([...DEPARTMENTS,...data.map(d=>d.name)]));
+    }
+  }catch(e){/* table may not exist yet — built-in defaults still work */}
+}
+// Renders a "+ Add" button next to a department <select>, sysAdmin only.
+function addDeptBtn(selectId){
+  return isSysAdmin(profile)?`<button type="button" class="btn btn-ghost" style="padding:0 12px;font-size:.78rem;flex-shrink:0" onclick="addDepartmentInline('${selectId}')">+ Add</button>`:'';
+}
+async function addDepartmentInline(selectId){
+  if(!isSysAdmin(profile)){toast('Only a System Administrator can add departments.');return;}
+  const name=prompt('New department name:');
+  if(!name)return;
+  const trimmed=name.trim();
+  if(!trimmed)return;
+  if(DEPARTMENTS.some(d=>d.toLowerCase()===trimmed.toLowerCase())){toast('That department already exists.');return;}
+  const{error}=await sb.from('departments').insert({name:trimmed,created_by:profile.id});
+  if(error){toast('Error: '+error.message);return;}
+  await loadDepartments();
+  const sel=document.getElementById(selectId);
+  if(sel){
+    sel.innerHTML=DEPARTMENTS.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join('');
+    sel.value=trimmed;
+  }
+  toast('✓ Department added: '+trimmed);
+}
+
+// Full-size click-to-zoom viewer for any product photo (photos live in the 'product-photos' bucket).
+function openLightbox(path){
+  if(!path)return;
+  document.getElementById('modalRoot').innerHTML=`<div class="lightbox-back" onclick="closeModal()">
+    <button class="lightbox-close" onclick="event.stopPropagation();closeModal()">✕ Close</button>
+    <img class="lightbox-img" data-img-path="${esc(path)}" alt="Full size photo" onclick="event.stopPropagation()">
+    <button class="lightbox-dl" onclick="event.stopPropagation();downloadMedia('product-photos','${esc(path)}')">⬇ Download</button>
+  </div>`;
+  hydrateProductThumbs();
+}
+
 function openProductDetail(id,from){
   productDetailId=id;productDetailFrom=from||'library';view='productDetail';renderView();
 }
@@ -653,6 +713,7 @@ async function initApp(){
   const{data:emp,error}=await sb.from('employees').select('*').eq('auth_id',session.user.id).single();
   if(error||!emp){await sb.auth.signOut();showLogin();return;}
   profile=emp;
+  await loadDepartments();
   if(!isSysAdmin(profile)){
     // Module progress / knowledge / personal docs are only relevant for real warehouse staff.
     const{data:progRows}=await sb.from('module_progress').select('module_id,answers,completed').eq('employee_id',profile.id);
@@ -1700,17 +1761,10 @@ function renderProductDetail(){
   const badGallery=mediaFor(p.id,'bad_photo');
   const goodVideos=mediaFor(p.id,'good_video');
   const badVideos=mediaFor(p.id,'bad_video');
-  const extOf=path=>(path||'').split('.').pop();
 
-  // Main photo card — download only, no delete/reorder (replace it via "Edit Details").
-  const mainMedia=(path,label)=>path?`<div class="media-item">
-      <img data-img-path="${esc(path)}" alt="${esc(label)}" onerror="this.style.display='none'">
-      <div class="media-item-actions"><button onclick="downloadMedia('product-photos','${esc(path)}')">⬇ Download</button></div>
-    </div>`:'';
-
-  // Extra gallery photo — download + (if editable) move/delete.
+  // Extra gallery photo — click to zoom, download + (if editable) move/delete.
   const galleryMedia=m=>`<div class="media-item">
-      <img data-img-path="${esc(m.file_path)}" alt="gallery photo" onerror="this.style.display='none'">
+      <img data-img-path="${esc(m.file_path)}" alt="gallery photo" onclick="openLightbox('${esc(m.file_path)}')" onerror="this.style.display='none'">
       <div class="media-item-actions">
         <button onclick="downloadMedia('product-photos','${esc(m.file_path)}')">⬇ Download</button>
         ${canEdit?`<button onclick="moveGalleryItem('${m.id}','up')" title="Move up">↑</button><button onclick="moveGalleryItem('${m.id}','down')" title="Move down">↓</button><button class="danger" onclick="deleteGalleryItem('${m.id}')" title="Remove">✕</button>`:''}
@@ -1734,17 +1788,12 @@ function renderProductDetail(){
 
   const addVideoTile=(mediaType,label)=>{
     const inputId=`add_${mediaType}_${p.id}`;
-    return`<div class="media-add-tile" style="width:220px" onclick="document.getElementById('${inputId}').click()">
-      <div style="font-size:1.3rem;line-height:1">＋</div><div>${esc(label)}<br><span style="color:var(--faint)">MP4, MOV, WebM · max 200MB</span></div>
+    return`<div class="media-add-tile" style="width:260px" onclick="document.getElementById('${inputId}').click()">
+      <div style="font-size:1.3rem;line-height:1">＋</div><div>${esc(label)}<br><span style="color:var(--faint)">MP4, MOV, WebM · max 45MB</span></div>
     </div><input type="file" id="${inputId}" accept=".mp4,.mov,.webm,video/mp4,video/quicktime,video/webm" style="display:none" onchange="uploadGalleryItem('${p.id}','${mediaType}',this)">`;
   };
 
-  const resourceRow=(iconLabel,bucket,path)=>path?`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-      <span style="font-size:.85rem">${esc(iconLabel)}</span>
-      <button class="dl-btn" onclick="downloadMedia('${bucket}','${esc(path)}')">⬇ Download</button>
-    </div>`:'';
-
-  return`<div style="max-width:1020px">
+  return`<div style="max-width:1200px">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
     <button class="btn btn-ghost" onclick="view='${backView}';renderView()">${backLabel}</button>
   </div>
@@ -1752,21 +1801,23 @@ function renderProductDetail(){
   ${!isOwnDept&&!canEdit?`<div class="readonly-banner">🔒 This product belongs to another department (${esc(p.department)}). You're viewing it in read-only reference mode.</div>`:''}
 
   <div class="card" style="margin-bottom:16px">
-    <div class="card-title">Overview</div>
-    <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">
-      <img class="prod-thumb" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)}" style="width:160px;height:120px;border-radius:10px;flex-shrink:0" onerror="this.style.display='none'">
+    <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center">
+      <div style="display:flex;gap:14px;flex-wrap:wrap">
+        <div>
+          <img class="detail-hero" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)} — good example" onerror="this.style.display='none'">
+          <div style="text-align:center;font-size:.72rem;color:var(--success);margin-top:5px;font-weight:600">✅ Good</div>
+        </div>
+        ${p.reject_image_path?`<div>
+          <img class="detail-hero" data-img-path="${esc(p.reject_image_path)}" alt="${esc(p.name)} — reject example" onerror="this.style.display='none'">
+          <div style="text-align:center;font-size:.72rem;color:var(--error);margin-top:5px;font-weight:600">❌ Reject</div>
+        </div>`:''}
+      </div>
       <div style="flex:1;min-width:220px">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <div style="font-size:1.3rem;font-weight:700">${esc(p.name)}</div>
-          ${p.is_essential?`<span class="essential-tag">★ Essential</span>`:''}
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <div style="font-size:1.6rem;font-weight:700">${esc(p.name)}</div>
+          ${p.is_essential?`<button class="essential-tag" onclick="toast('★ Essential — required as part of core product training.')">★ Essential</button>`:''}
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:12px">
-          <div><div style="color:var(--muted);font-size:.7rem">Department</div><div style="font-weight:500">${esc(p.department)}</div></div>
-          <div><div style="color:var(--muted);font-size:.7rem">Category</div><div style="font-weight:500">${esc(p.category)}</div></div>
-          <div><div style="color:var(--muted);font-size:.7rem">Last Updated</div><div style="font-weight:500">${p.updated_at?fmtDate(p.updated_at):'—'}</div></div>
-          <div><div style="color:var(--muted);font-size:.7rem">Updated By</div><div style="font-weight:500">${esc(employeeName(p.updated_by||p.uploaded_by))}</div></div>
-        </div>
-        ${canEdit?`<button class="btn btn-ghost" style="font-size:.75rem;margin-top:12px" onclick="editProduct('${p.id}')">✏️ Edit Details / Replace Main Photos</button>`:''}
+        ${canEdit?`<button class="btn btn-primary" style="font-size:.85rem;padding:9px 16px;margin-top:16px" onclick="editProduct('${p.id}')">✏️ Edit Details / Replace Main Photos</button>`:''}
       </div>
     </div>
   </div>
@@ -1774,34 +1825,21 @@ function renderProductDetail(){
   <div class="qk-section qk-good">
     <div class="qk-section-title">✅ Good Quality</div>
     <div class="qk-section-sub">${esc(p.description||'No accept criteria recorded yet.')}</div>
-    <div class="media-grid">
-      ${mainMedia(p.image_path,'Main good photo')}
+    ${(goodGallery.length||canEdit)?`<div class="media-grid">
       ${goodGallery.map(galleryMedia).join('')}
-      ${addTile('good_photo','Add good photo','.jpg,.jpeg,.png')}
-    </div>
-    ${goodVideos.length||canEdit?`<div style="font-size:.78rem;color:var(--muted);margin:10px 0 6px">Good example videos</div><div class="video-row">${goodVideos.map(videoBlock).join('')}${addVideoTile('good_video','Add good video')}</div>`:''}
+      ${canEdit?addTile('good_photo','Add good photo','.jpg,.jpeg,.png'):''}
+    </div>`:''}
+    ${(goodVideos.length||canEdit)?`<div style="font-size:.85rem;color:var(--muted);margin:12px 0 6px">Good example videos</div><div class="video-row">${goodVideos.map(videoBlock).join('')}${canEdit?addVideoTile('good_video','Add good video'):''}</div>`:''}
   </div>
 
   <div class="qk-section qk-bad">
     <div class="qk-section-title">❌ Poor Quality</div>
     <div class="qk-section-sub">${esc(p.reject_note||'No reject criteria recorded yet.')}</div>
-    <div class="media-grid">
-      ${mainMedia(p.reject_image_path,'Main reject photo')}
+    ${(badGallery.length||canEdit)?`<div class="media-grid">
       ${badGallery.map(galleryMedia).join('')}
-      ${addTile('bad_photo','Add reject photo','.jpg,.jpeg,.png')}
-    </div>
-    ${badVideos.length||canEdit?`<div style="font-size:.78rem;color:var(--muted);margin:10px 0 6px">Reject example videos</div><div class="video-row">${badVideos.map(videoBlock).join('')}${addVideoTile('bad_video','Add reject video')}</div>`:''}
-  </div>
-
-  <div class="qk-section">
-    <div class="qk-section-title">📁 Resources</div>
-    <div class="qk-section-sub">Download any photo or video for posters, training packs, or toolbox talks.</div>
-    ${resourceRow('Good photo (main)','product-photos',p.image_path)}
-    ${goodGallery.map((m,i)=>resourceRow(`Good photo ${i+2}`,'product-photos',m.file_path)).join('')}
-    ${resourceRow('Reject photo (main)','product-photos',p.reject_image_path)}
-    ${badGallery.map((m,i)=>resourceRow(`Reject photo ${i+2}`,'product-photos',m.file_path)).join('')}
-    ${goodVideos.map((m,i)=>resourceRow(`Good example video ${i+1}`,VIDEO_BUCKET,m.file_path)).join('')}
-    ${badVideos.map((m,i)=>resourceRow(`Reject example video ${i+1}`,VIDEO_BUCKET,m.file_path)).join('')}
+      ${canEdit?addTile('bad_photo','Add reject photo','.jpg,.jpeg,.png'):''}
+    </div>`:''}
+    ${(badVideos.length||canEdit)?`<div style="font-size:.85rem;color:var(--muted);margin:12px 0 6px">Reject example videos</div><div class="video-row">${badVideos.map(videoBlock).join('')}${canEdit?addVideoTile('bad_video','Add reject video'):''}</div>`:''}
   </div>
   </div>`;
 }
@@ -2104,7 +2142,7 @@ function changeDept(id){
   document.getElementById('modalRoot').innerHTML=`<div class="modal-back" onclick="if(event.target===this)closeModal()"><div class="modal">
   <h3>Change Department</h3>
   <p style="color:var(--muted);font-size:.83rem;margin-bottom:14px">Staff: <strong>${esc(e.full_name)}</strong> &middot; Current: <strong>${esc(e.department)}</strong></p>
-  <div class="field"><label>New Department</label><select id="newDept">${DEPARTMENTS.map(d=>`<option value="${d}" ${e.department===d?'selected':''}>${d}</option>`).join('')}</select></div>
+  <div class="field"><label>New Department</label><div style="display:flex;gap:6px"><select id="newDept" style="flex:1">${DEPARTMENTS.map(d=>`<option value="${d}" ${e.department===d?'selected':''}>${d}</option>`).join('')}</select>${addDeptBtn('newDept')}</div></div>
   <div class="modal-actions"><button class="btn btn-primary" onclick="saveDept('${id}')">Save</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button></div>
   </div></div>`;
 }
@@ -2133,7 +2171,7 @@ function openEdit(id){
     <div class="field"><label>Age</label><input id="e_age" type="number" min="15" max="100" value="${esc(String(e.age||''))}"></div>
     <div class="field"><label>Position</label><select id="e_pos">${POSITIONS.map(p=>`<option value="${p}" ${e.position===p?'selected':''}>${p}</option>`).join('')}</select></div>
     ${isSysAdmin(profile)?`<div class="field"><label>Role</label><select id="e_role"><option value="employee" ${e.role==='employee'?'selected':''}>Employee</option><option value="locationManager" ${e.role==='locationManager'?'selected':''}>Location Manager</option><option value="sysAdmin" ${e.role==='sysAdmin'?'selected':''}>System Administrator</option></select></div>`:''}
-    <div class="field full"><label>Department</label><select id="e_dept">${DEPARTMENTS.map(d=>`<option value="${d}" ${e.department===d?'selected':''}>${d}</option>`).join('')}</select></div>
+    <div class="field full"><label>Department</label><div style="display:flex;gap:6px"><select id="e_dept" style="flex:1">${DEPARTMENTS.map(d=>`<option value="${d}" ${e.department===d?'selected':''}>${d}</option>`).join('')}</select>${addDeptBtn('e_dept')}</div></div>
     <div class="field full"><label>Email Address</label><input id="e_email" type="email" value="${esc(e.email||'')}" placeholder="employee@email.com">
       <span style="font-size:.72rem;color:var(--warning);margin-top:4px;display:block">⚠ Changing email updates their login email automatically.</span>
     </div>
@@ -2205,7 +2243,7 @@ function openCreate(){
     ${managerOnly
       ?`<div class="field"><label>Department</label><input value="${esc(profile.department)}" readonly></div>
          <div class="field"><label>Portal Role</label><input value="Employee" readonly></div>`
-      :`<div class="field"><label>Department</label><select id="c_dept">${DEPARTMENTS.map(d=>`<option>${d}</option>`).join('')}</select></div>
+      :`<div class="field"><label>Department</label><div style="display:flex;gap:6px"><select id="c_dept" style="flex:1">${DEPARTMENTS.map(d=>`<option>${d}</option>`).join('')}</select>${addDeptBtn('c_dept')}</div></div>
          <div class="field"><label>Portal Role</label><select id="c_role"><option value="employee">Employee</option><option value="locationManager">Location Manager</option><option value="sysAdmin">System Administrator</option></select></div>`}
   </div>
   ${managerOnly?`<p style="font-size:.72rem;color:var(--muted);margin-top:10px">As a Location Manager, new staff you add are always created as Employee in ${esc(profile.department)}. A System Administrator can change department or role afterwards.</p>`:''}
