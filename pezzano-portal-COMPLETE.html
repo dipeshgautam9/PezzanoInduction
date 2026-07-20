@@ -1438,8 +1438,29 @@ async function viewDocFile(docId){
 
 // ── PRODUCT TRAINING: MANAGER / SYSADMIN UPLOAD SCREEN ────────
 function renderProductManager(){
-  const editableDepts=departmentsManagerCanEdit();
-  if(!editableDepts.length){view='mgr';return renderManagerDashboard();}
+  const allEditable=departmentsManagerCanEdit();
+  // sysAdmin's department tabs respect the same visible_in_library flag as the employee Reference Library.
+  // Location Managers only ever see their own department here, so they're unaffected.
+  const editableDepts=isSysAdmin(profile)?allEditable.filter(d=>!libraryHiddenDepts.includes(d)):allEditable;
+  const hiddenAvailable=isSysAdmin(profile)?allEditable.filter(d=>libraryHiddenDepts.includes(d)):[];
+  if(!editableDepts.length){
+    if(isSysAdmin(profile)&&hiddenAvailable.length){
+      return`<div style="max-width:700px">
+        <button class="btn btn-ghost" onclick="view='mgr';renderView()">← Staff Management</button>
+        <div class="card" style="margin-top:16px">
+          <div class="card-title">Product Training Library</div>
+          <p style="color:var(--muted);margin-bottom:12px;font-size:.85rem">Every department is currently hidden from this library. Add one back to start managing products.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <select id="mgr_add_dept_empty" style="font-size:.85rem;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text)">
+              ${hiddenAvailable.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join('')}
+            </select>
+            <button class="btn btn-primary" onclick="toggleLibraryDept(document.getElementById('mgr_add_dept_empty').value,true)">+ Add Department</button>
+          </div>
+        </div>
+      </div>`;
+    }
+    view='mgr';return renderManagerDashboard();
+  }
   if(!adminProductDept||!editableDepts.includes(adminProductDept))adminProductDept=editableDepts[0];
   const inDept=productPhotos.filter(p=>p.department===adminProductDept);
   const cats=[...new Set(inDept.map(p=>p.category))];
@@ -1449,7 +1470,18 @@ function renderProductManager(){
     <div><div style="font-size:1.15rem;font-weight:700">Product Training Library</div><div style="font-size:.78rem;color:var(--muted)">${inDept.length} products &middot; ${inDept.filter(p=>p.is_essential).length} marked essential</div></div>
     <button class="btn btn-primary" style="margin-left:auto" onclick="openProductUpload()">+ Add Product Photo</button>
   </div>
-  ${editableDepts.length>1?`<div class="filters">${editableDepts.map(d=>`<button class="btn ${d===adminProductDept?'btn-primary':'btn-ghost'}" style="font-size:.78rem" onclick="adminProductDept='${esc(d)}';renderView()">${esc(d)} (${productPhotos.filter(p=>p.department===d).length})</button>`).join('')}</div>`
+  ${(editableDepts.length>1||hiddenAvailable.length)?`<div class="filters" style="align-items:center">
+    ${editableDepts.map(d=>`<span style="display:inline-flex;align-items:center;gap:2px">
+      <button class="btn ${d===adminProductDept?'btn-primary':'btn-ghost'}" style="font-size:.78rem" onclick="adminProductDept='${esc(d)}';renderView()">${esc(d)} (${productPhotos.filter(p=>p.department===d).length})</button>
+      ${isSysAdmin(profile)?`<button class="btn btn-ghost" title="Hide ${esc(d)} from this library" style="font-size:.68rem;padding:3px 7px" onclick="toggleLibraryDept('${esc(d)}',false)">✕</button>`:''}
+    </span>`).join('')}
+    ${isSysAdmin(profile)&&hiddenAvailable.length?`<span style="display:inline-flex;gap:4px;align-items:center;margin-left:6px">
+      <select id="mgr_add_dept" style="font-size:.78rem;padding:5px 7px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text)">
+        ${hiddenAvailable.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join('')}
+      </select>
+      <button class="btn btn-ghost" style="font-size:.78rem" onclick="toggleLibraryDept(document.getElementById('mgr_add_dept').value,true)">+ Add Department</button>
+    </span>`:''}
+  </div>`
    :`<p style="font-size:.8rem;color:var(--muted);margin-bottom:14px">Managing: <strong style="color:var(--text)">${esc(adminProductDept)}</strong></p>`}
   ${cats.length?`<div class="filters" style="margin-top:0">${cats.map(c=>`<span class="badge badge-pending">${esc(c)} (${inDept.filter(p=>p.category===c).length})</span>`).join('')}</div>`:''}
   <div class="doc-grid">
