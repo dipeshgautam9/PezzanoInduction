@@ -370,6 +370,7 @@ let productConfirmed=[];           // product_ids the current staff member has c
 let activeProductCategory='';      // sub-category filter while in the induction gate
 let adminProductDept=null;         // which department SysAdmin/Manager is currently managing
 let libraryDeptFilter='mine';      // 'mine' or a specific department name, for the browse-all-departments library
+let libraryHiddenDepts=['Others','Sales Reps']; // depts excluded from the Product Reference Library tabs (sysAdmin can add/remove); overwritten from DB once loaded
 let productMedia=[];               // gallery items: extra good/bad photos + good/bad videos, per product
 let productDetailId=null;          // product currently open on the full product page
 let productDetailFrom='library';   // where to return to on "← Back" ('library' or 'products')
@@ -542,12 +543,23 @@ function employeeName(id){
 // ── DEPARTMENTS: DB-backed list, extendable by sysAdmin only ──
 async function loadDepartments(){
   try{
-    const{data,error}=await sb.from('departments').select('name').order('name');
+    const{data,error}=await sb.from('departments').select('name,visible_in_library').order('name');
     if(!error&&data&&data.length){
       // Merge with the built-in defaults so nothing already in use ever disappears.
       DEPARTMENTS=Array.from(new Set([...DEPARTMENTS,...data.map(d=>d.name)]));
+      libraryHiddenDepts=data.filter(d=>d.visible_in_library===false).map(d=>d.name);
     }
   }catch(e){/* table may not exist yet — built-in defaults still work */}
+}
+// sysAdmin-only: show or hide a department's tab in the Product Reference Library.
+async function toggleLibraryDept(deptName,visible){
+  if(!isSysAdmin(profile)){toast('Only a System Administrator can change this.');return;}
+  if(!deptName)return;
+  const{error}=await sb.from('departments').update({visible_in_library:visible}).eq('name',deptName);
+  if(error){toast('Error: '+error.message);return;}
+  await loadDepartments();
+  toast(visible?`✓ ${deptName} added to reference library.`:`${deptName} removed from reference library.`);
+  renderView();
 }
 // Renders a "+ Add" button next to a department <select>, sysAdmin only.
 function addDeptBtn(selectId){
@@ -1715,7 +1727,8 @@ async function confirmProductSimple(id){
 // ── PRODUCT TRAINING: LIBRARY (browse anytime, own dept full + others summary) ──
 function renderProductLibrary(){
   const myDept=profile.department;
-  const otherDepts=DEPARTMENTS.filter(d=>d!==myDept);
+  const otherDepts=DEPARTMENTS.filter(d=>d!==myDept&&!libraryHiddenDepts.includes(d));
+  const hiddenAvailable=DEPARTMENTS.filter(d=>d!==myDept&&libraryHiddenDepts.includes(d));
   if(libraryDeptFilter!=='mine'&&!otherDepts.includes(libraryDeptFilter))libraryDeptFilter='mine';
   const viewingOwn=libraryDeptFilter==='mine';
   const dept=viewingOwn?myDept:libraryDeptFilter;
@@ -1725,9 +1738,18 @@ function renderProductLibrary(){
     <button class="btn btn-ghost" onclick="view='dashboard';renderView()">← Back</button>
     <div><div style="font-size:1.15rem;font-weight:700">Product Reference Library</div><div style="font-size:.78rem;color:var(--muted)">Your department shows full quality detail. Other departments are reference-only.</div></div>
   </div>
-  <div class="filters">
+  <div class="filters" style="align-items:center">
     <button class="btn ${viewingOwn?'btn-primary':'btn-ghost'}" onclick="libraryDeptFilter='mine';renderView()">${esc(myDept)} (mine)</button>
-    ${otherDepts.map(d=>`<button class="btn ${libraryDeptFilter===d?'btn-primary':'btn-ghost'}" style="font-size:.78rem" onclick="libraryDeptFilter='${esc(d)}';renderView()">${esc(d)}</button>`).join('')}
+    ${otherDepts.map(d=>`<span style="display:inline-flex;align-items:center;gap:2px">
+      <button class="btn ${libraryDeptFilter===d?'btn-primary':'btn-ghost'}" style="font-size:.78rem" onclick="libraryDeptFilter='${esc(d)}';renderView()">${esc(d)}</button>
+      ${isSysAdmin(profile)?`<button class="btn btn-ghost" title="Remove ${esc(d)} from reference library" style="font-size:.68rem;padding:3px 7px" onclick="toggleLibraryDept('${esc(d)}',false)">✕</button>`:''}
+    </span>`).join('')}
+    ${isSysAdmin(profile)&&hiddenAvailable.length?`<span style="display:inline-flex;gap:4px;align-items:center;margin-left:6px">
+      <select id="lib_add_dept" style="font-size:.78rem;padding:5px 7px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text)">
+        ${hiddenAvailable.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join('')}
+      </select>
+      <button class="btn btn-ghost" style="font-size:.78rem" onclick="toggleLibraryDept(document.getElementById('lib_add_dept').value,true)">+ Add to Library</button>
+    </span>`:''}
   </div>
   <div class="doc-grid">
     ${items.length?items.map(p=>viewingOwn?`<div class="prod-card" style="cursor:pointer" onclick="openProductDetail('${p.id}','library')">
