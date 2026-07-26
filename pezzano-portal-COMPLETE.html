@@ -371,6 +371,8 @@ let activeProductCategory='';      // sub-category filter while in the induction
 let adminProductDept=null;         // which department SysAdmin/Manager is currently managing
 let libraryDeptFilter='mine';      // 'mine' or a specific department name, for the browse-all-departments library
 let libraryHiddenDepts=['Others','Sales Reps']; // depts excluded from the Product Reference Library tabs (sysAdmin can add/remove); overwritten from DB once loaded
+let librarySearchQuery='';
+let mgrProductSearch='';
 let productMedia=[];               // gallery items: extra good/bad photos + good/bad videos, per product
 let productDetailId=null;          // product currently open on the full product page
 let productDetailFrom='library';   // where to return to on "← Back" ('library' or 'products')
@@ -502,6 +504,40 @@ async function loadProductMedia(){
     const{data,error}=await sb.from('product_media').select('*').order('sort_order');
     if(!error)productMedia=data||[];
   }catch(e){productMedia=[];}
+}
+// ── SMART SEARCH: name, category, keywords, accept criteria, reject criteria ──
+// Tokenized, weighted substring matching — no exact phrase required.
+// "soft tomato" matches a Tomato whose reject note mentions "soft".
+function searchProducts(query,pool){
+  const q=(query||'').trim().toLowerCase();
+  if(!q)return[];
+  const tokens=q.split(/\s+/).filter(Boolean);
+  const results=pool.map(p=>{
+    const fields={
+      name:(p.name||'').toLowerCase(),
+      category:(p.category||'').toLowerCase(),
+      keywords:(p.keywords||'').toLowerCase(),
+      accept:(p.description||'').toLowerCase(),
+      reject:(p.reject_note||'').toLowerCase()
+    };
+    let score=0;const matchedIn=new Set();
+    tokens.forEach(t=>{
+      Object.entries(fields).forEach(([k,v])=>{
+        if(v&&v.includes(t)){score+=(k==='name')?4:(k==='keywords')?3:(k==='category')?2:1;matchedIn.add(k);}
+      });
+    });
+    return{p,score,matchedIn};
+  }).filter(r=>r.score>0);
+  results.sort((a,b)=>b.score-a.score);
+  return results;
+}
+// Builds the "why this matched" explanation shown under each search result.
+function matchReason(r){
+  const{p,matchedIn}=r;
+  if(matchedIn.has('reject'))return{icon:'⚠️',label:'Reject',text:p.reject_note};
+  if(matchedIn.has('accept'))return{icon:'✅',label:'Accept',text:p.description};
+  if(matchedIn.has('keywords'))return{icon:'🏷️',label:'Matched keyword',text:p.keywords};
+  return{icon:'🔎',label:'Matched product name/category',text:null};
 }
 function mediaFor(productId,type){
   return productMedia.filter(m=>m.product_id===productId&&m.media_type===type).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
@@ -862,6 +898,9 @@ function renderDashboard(){
       <div style="height:8px;background:var(--surface3);border-radius:999px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--primary),var(--success));transition:.4s"></div></div>
     </div>
   </div>
+  ${productPhotos.length?`<div class="card" style="margin-bottom:16px">
+    <input placeholder="🔍 Search any product... e.g. soft tomato, black banana, mould" style="width:100%;padding:12px 14px;font-size:.9rem;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text)" onkeydown="if(event.key==='Enter'&&this.value.trim()){librarySearchQuery=this.value;view='library';renderView();}">
+  </div>`:''}
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">My Details</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;font-size:.83rem">
@@ -944,7 +983,7 @@ function renderManagerDashboard(){
     </div>
     <div class="filters">
       <input placeholder="Search name, code, phone…" value="${esc(filters.search)}" oninput="filters.search=this.value;refreshTable()">
-      <select onchange="filters.dept=this.value;refreshTable()"><option value="">All departments</option>${DEPARTMENTS.map(d=>`<option value="${d}" ${filters.dept===d?'selected':''}>${d}</option>`).join('')}</select>
+      ${isSysAdmin(profile)?`<select onchange="filters.dept=this.value;refreshTable()"><option value="">All departments</option>${DEPARTMENTS.map(d=>`<option value="${d}" ${filters.dept===d?'selected':''}>${d}</option>`).join('')}</select>`:`<span class="badge badge-pending" style="align-self:center">${esc(profile.department)} only</span>`}
       <select onchange="filters.status=this.value;refreshTable()"><option value="">All status</option><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="completed">Completed</option></select>
       <select onchange="filters.position=this.value;refreshTable()"><option value="">All positions</option>${POSITIONS.map(p=>`<option value="${p}" ${filters.position===p?'selected':''}>${p}</option>`).join('')}</select>
     </div>
@@ -977,7 +1016,11 @@ function buildTableHtml(){
 }
 
 function refreshTable(){const w=document.getElementById('tblWrap');if(w)w.innerHTML=buildTableHtml();}
-function filteredEmployees(){return allEmployees.filter(e=>(!filters.search||[e.full_name,e.employee_code,e.phone||'',e.department,e.position].join(' ').toLowerCase().includes(filters.search.toLowerCase()))&&(!filters.dept||e.department===filters.dept)&&(!filters.status||e.completion_status===filters.status)&&(!filters.position||e.position===filters.position));}
+function filteredEmployees(){
+  // Location Managers only ever see their own department's staff — sysAdmin sees everyone.
+  const deptScope=isSysAdmin(profile)?filters.dept:profile.department;
+  return allEmployees.filter(e=>(!filters.search||[e.full_name,e.employee_code,e.phone||'',e.department,e.position].join(' ').toLowerCase().includes(filters.search.toLowerCase()))&&(!deptScope||e.department===deptScope)&&(!filters.status||e.completion_status===filters.status)&&(!filters.position||e.position===filters.position));
+}
 
 // ── SYSADMIN: VIEW EMPLOYEE DOCUMENTS ─────────────────────────
 async function viewEmpDocs(empId){
@@ -1495,37 +1538,59 @@ async function viewDocFile(docId){
 }
 
 // ── PRODUCT TRAINING: MANAGER / SYSADMIN UPLOAD SCREEN ────────
+const ADMIN_ALL_DEPTS='__ALL__';
 function renderProductManager(){
   const editableDepts=departmentsManagerCanEdit();
   if(!editableDepts.length){view='mgr';return renderManagerDashboard();}
-  if(!adminProductDept||!editableDepts.includes(adminProductDept))adminProductDept=editableDepts[0];
-  const inDept=productPhotos.filter(p=>p.department===adminProductDept);
-  const cats=[...new Set(inDept.map(p=>p.category))];
+  const canViewAll=isSysAdmin(profile)&&editableDepts.length>1;
+  if(!adminProductDept||(adminProductDept!==ADMIN_ALL_DEPTS&&!editableDepts.includes(adminProductDept))||(adminProductDept===ADMIN_ALL_DEPTS&&!canViewAll)){
+    adminProductDept=editableDepts[0];
+  }
+  const viewingAll=canViewAll&&adminProductDept===ADMIN_ALL_DEPTS;
+  const inDept=viewingAll?productPhotos.filter(p=>editableDepts.includes(p.department)):productPhotos.filter(p=>p.department===adminProductDept);
+  const deptCount=viewingAll?new Set(inDept.map(p=>p.department)).size:1;
   return`<div style="max-width:1100px">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
     <button class="btn btn-ghost" onclick="view='mgr';renderView()">← Staff Management</button>
-    <div><div style="font-size:1.15rem;font-weight:700">Product Training Library</div><div style="font-size:.78rem;color:var(--muted)">${inDept.length} products &middot; ${inDept.filter(p=>p.is_essential).length} marked essential</div></div>
+    <div><div style="font-size:1.15rem;font-weight:700">Product Training Library</div><div style="font-size:.78rem;color:var(--muted)">${inDept.length} products${viewingAll?` across ${deptCount} department${deptCount===1?'':'s'}`:''} &middot; ${inDept.filter(p=>p.is_essential).length} marked essential</div></div>
     <button class="btn btn-primary" style="margin-left:auto" onclick="openProductUpload()">+ Add Product Photo</button>
   </div>
   ${(editableDepts.length>1||isSysAdmin(profile))?`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px">
     <label style="font-size:.78rem;color:var(--muted)">Department:</label>
-    <select onchange="adminProductDept=this.value;renderView()" style="font-size:.85rem;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text)">
-      ${editableDepts.map(d=>`<option value="${esc(d)}" ${d===adminProductDept?'selected':''}>${esc(d)} (${productPhotos.filter(p=>p.department===d).length})</option>`).join('')}
+    <select onchange="adminProductDept=this.value;mgrProductSearch='';renderView()" style="font-size:.85rem;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text)">
+      ${canViewAll?`<option value="${ADMIN_ALL_DEPTS}" ${viewingAll?'selected':''}>📋 All Departments (${productPhotos.filter(p=>editableDepts.includes(p.department)).length})</option>`:''}
+      ${editableDepts.map(d=>`<option value="${esc(d)}" ${!viewingAll&&d===adminProductDept?'selected':''}>${esc(d)} (${productPhotos.filter(p=>p.department===d).length})</option>`).join('')}
     </select>
     ${isSysAdmin(profile)?`<button class="btn btn-ghost" style="font-size:.78rem" onclick="addDepartmentInline(null,{setAdminProductDept:true,rerender:true})">+ Add Department</button>`:''}
-    ${isSysAdmin(profile)&&adminProductDept?`<button class="btn btn-danger" style="font-size:.78rem" onclick="deleteDepartmentInline()">🗑 Delete Department</button>`:''}
+    ${isSysAdmin(profile)&&adminProductDept&&!viewingAll?`<button class="btn btn-danger" style="font-size:.78rem" onclick="deleteDepartmentInline()">🗑 Delete Department</button>`:''}
   </div>`
    :`<p style="font-size:.8rem;color:var(--muted);margin-bottom:14px">Managing: <strong style="color:var(--text)">${esc(adminProductDept)}</strong></p>`}
-  ${cats.length?`<div class="filters" style="margin-top:0">${cats.map(c=>`<span class="badge badge-pending">${esc(c)} (${inDept.filter(p=>p.category===c).length})</span>`).join('')}</div>`:''}
+  ${inDept.length?`<input id="mgr_search_box" value="${esc(mgrProductSearch)}" oninput="mgrProductSearch=this.value;refreshMgrProducts()" placeholder="🔍 Search ${viewingAll?'all departments':'this department'}..." style="width:100%;padding:10px 13px;font-size:.85rem;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);margin-bottom:12px">`:''}
+  <div id="mgr_products_wrap">${renderMgrProductsInner(inDept,viewingAll)}</div>
+  </div>`;
+}
+function refreshMgrProducts(){
+  const editableDepts=departmentsManagerCanEdit();
+  const viewingAll=isSysAdmin(profile)&&adminProductDept===ADMIN_ALL_DEPTS;
+  const inDept=viewingAll?productPhotos.filter(p=>editableDepts.includes(p.department)):productPhotos.filter(p=>p.department===adminProductDept);
+  const wrap=document.getElementById('mgr_products_wrap');
+  if(wrap)wrap.innerHTML=renderMgrProductsInner(inDept,viewingAll);
+  hydrateProductThumbs();
+}
+function renderMgrProductsInner(inDept,viewingAll){
+  const searching=mgrProductSearch.trim().length>0;
+  const shown=searching?searchProducts(mgrProductSearch,inDept).map(r=>r.p):inDept;
+  const cats=[...new Set(inDept.map(p=>p.category))];
+  return`${!searching&&!viewingAll&&cats.length?`<div class="filters" style="margin-top:0">${cats.map(c=>`<span class="badge badge-pending">${esc(c)} (${inDept.filter(p=>p.category===c).length})</span>`).join('')}</div>`:''}
   <div class="doc-grid">
-    ${inDept.length?inDept.map(p=>`<div class="prod-card">
+    ${shown.length?shown.map(p=>`<div class="prod-card">
       <img class="prod-thumb" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)}" style="cursor:pointer" onclick="openProductDetail('${p.id}','products')" onerror="this.style.display='none'">
       <div class="prod-body">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
           <div style="font-weight:600;font-size:.9rem;cursor:pointer" onclick="openProductDetail('${p.id}','products')">${esc(p.name)}</div>
           ${p.is_essential?`<span class="essential-tag">★ Essential</span>`:''}
         </div>
-        <div style="font-size:.72rem;color:var(--muted)">${esc(p.category)}</div>
+        <div style="font-size:.72rem;color:var(--muted)">${viewingAll?`<strong style="color:var(--primary)">${esc(p.department)}</strong> &middot; `:''}${esc(p.category)}</div>
         <div style="font-size:.78rem;color:var(--muted);flex:1">${esc(p.description||'No description')}</div>
         ${p.reject_image_path?`<div style="font-size:.72rem;color:var(--warning)">Has reject example ✓</div>`:`<div style="font-size:.72rem;color:var(--faint)">No reject example</div>`}
         <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">
@@ -1534,8 +1599,8 @@ function renderProductManager(){
           <button class="btn btn-danger" style="font-size:.75rem" onclick="deleteProduct('${p.id}')">Delete</button>
         </div>
       </div>
-    </div>`).join(''):`<p style="color:var(--muted)">No products in ${esc(adminProductDept)} yet. Use "+ Add Product Photo" to start building the library.</p>`}
-  </div></div>`;
+    </div>`).join(''):searching?`<p style="color:var(--muted)">No products${viewingAll?'':` in ${esc(adminProductDept)}`} match "${esc(mgrProductSearch)}".</p>`:`<p style="color:var(--muted)">No products${viewingAll?' in any department':` in ${esc(adminProductDept)}`} yet. Use "+ Add Product Photo" to start building the library.</p>`}
+  </div>`;
 }
 
 function categoryOptionsFor(dept){
@@ -1545,14 +1610,17 @@ function categoryOptionsFor(dept){
 }
 
 function openProductUpload(){
-  if(!canManageProductsFor(adminProductDept)){toast('You can only manage products for your own department.');return;}
   const editableDepts=departmentsManagerCanEdit();
-  const cats=categoryOptionsFor(adminProductDept);
+  // If viewing the "All Departments" overview, default the new product's department
+  // to the first one the admin can manage — they can still change it in the form.
+  const startDept=(adminProductDept===ADMIN_ALL_DEPTS)?editableDepts[0]:adminProductDept;
+  if(!canManageProductsFor(startDept)){toast('You can only manage products for your own department.');return;}
+  const cats=categoryOptionsFor(startDept);
   document.getElementById('modalRoot').innerHTML=`<div class="modal-back" onclick="if(event.target===this)closeModal()"><div class="modal">
     <h3>📦 Add Product Photo</h3>
     <div class="form-grid">
-      ${editableDepts.length>1?`<div class="field full"><label>Department</label><select id="p_dept">${editableDepts.map(d=>`<option ${d===adminProductDept?'selected':''}>${d}</option>`).join('')}</select></div>`
-        :`<div class="field full"><label>Department</label><input value="${esc(adminProductDept)}" readonly></div>`}
+      ${editableDepts.length>1?`<div class="field full"><label>Department</label><select id="p_dept">${editableDepts.map(d=>`<option ${d===startDept?'selected':''}>${d}</option>`).join('')}</select></div>`
+        :`<div class="field full"><label>Department</label><input value="${esc(startDept)}" readonly></div>`}
       <div class="field full"><label>Product Name</label><input id="p_name" placeholder="e.g. Cavendish Bananas"></div>
       <div class="field"><label>Category</label><select id="p_cat" onchange="document.getElementById('p_newcat').style.display=this.value==='__new__'?'block':'none'">${cats.map(c=>`<option>${esc(c)}</option>`).join('')}<option value="__new__">+ New category…</option></select></div>
       <div class="field" id="p_newcat" style="display:none"><label>New Category Name</label><input id="p_newcat_input" placeholder="e.g. Stonefruit"></div>
@@ -1571,6 +1639,7 @@ function openProductUpload(){
         <input type="file" id="p_file_reject" accept=".jpg,.jpeg,.png" style="display:none" onchange="showChosenFileInto(this,'p_drop_reject')">
       </div>
       <div class="field full" id="p_rejectnote_wrap"><label>Why the reject example fails standard</label><input id="p_reject_note" placeholder="e.g. overripe patches, split skins"></div>
+      <div class="field full"><label>Search Keywords (optional)</label><input id="p_keywords" placeholder="e.g. soft, black spots, overripe, mould, bruised"><span style="font-size:.72rem;color:var(--muted);margin-top:4px;display:block">Comma-separated words staff might search for — helps them find this product even if they don't type its exact name.</span></div>
     </div>
     <div id="p_msg" class="msg"></div>
     <div class="modal-actions">
@@ -1600,6 +1669,7 @@ async function saveProduct(){
   const goodFile=document.getElementById('p_file_good').files[0];
   const rejectFile=document.getElementById('p_file_reject').files[0];
   const rejectNote=document.getElementById('p_reject_note').value.trim()||null;
+  const keywords=document.getElementById('p_keywords').value.trim()||null;
   if(!name||!cat||!goodFile){showMsg('p_msg','Name, category, and the acceptable-standard photo are required.','error');btn.disabled=false;btn.textContent='Save Product';return;}
   const ext=goodFile.name.split('.').pop();
   const goodPath=`${dept}/${Date.now()}_good.${ext}`;
@@ -1612,9 +1682,9 @@ async function saveProduct(){
     const{error:rejErr}=await sb.storage.from('product-photos').upload(rejectPath,rejectFile,{contentType:rejectFile.type});
     if(rejErr){console.warn('Reject photo upload failed:',rejErr.message);rejectPath=null;}
   }
-  const{error}=await sb.from('product_photos').insert({name,department:dept,category:cat,description:desc,image_path:goodPath,reject_image_path:rejectPath,reject_note:rejectPath?rejectNote:null,is_essential:essential,uploaded_by:profile.id,updated_by:profile.id,updated_at:new Date().toISOString()});
+  const{error}=await sb.from('product_photos').insert({name,department:dept,category:cat,description:desc,keywords,image_path:goodPath,reject_image_path:rejectPath,reject_note:rejectPath?rejectNote:null,is_essential:essential,uploaded_by:profile.id,updated_by:profile.id,updated_at:new Date().toISOString()});
   if(error){showMsg('p_msg','Error: '+error.message,'error');btn.disabled=false;btn.textContent='Save Product';return;}
-  await loadProductPhotos();adminProductDept=dept;closeModal();
+  await loadProductPhotos();if(adminProductDept!==ADMIN_ALL_DEPTS)adminProductDept=dept;closeModal();
   logAudit('Product added',`${name} (${dept}, ${cat})`);
   toast('✓ Product added.');renderView();
 }
@@ -1634,6 +1704,7 @@ function editProduct(id){
       </div>
       <div class="field full"><label>Description / Quality Standard</label><textarea id="ep_desc" rows="3">${esc(p.description||'')}</textarea></div>
       <div class="field full"><label>Reject note</label><input id="ep_reject_note" value="${esc(p.reject_note||'')}" placeholder="Why the reject example fails standard"></div>
+      <div class="field full"><label>Search Keywords</label><input id="ep_keywords" value="${esc(p.keywords||'')}" placeholder="e.g. soft, black spots, overripe, mould, bruised"><span style="font-size:.72rem;color:var(--muted);margin-top:4px;display:block">Comma-separated words staff might search for.</span></div>
       <div class="field full">
         <label>Acceptable / Standard Photo</label>
         <img class="prod-thumb" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)}" style="width:120px;height:90px;display:block;margin-bottom:8px" onerror="this.style.display='none'">
@@ -1666,9 +1737,10 @@ async function saveProductEdit(id){
   const essential=document.getElementById('ep_essential').checked;
   const desc=document.getElementById('ep_desc').value.trim();
   const rejectNote=document.getElementById('ep_reject_note').value.trim()||null;
+  const keywords=document.getElementById('ep_keywords').value.trim()||null;
   const newGoodFile=document.getElementById('ep_file_good').files[0];
   const newRejectFile=document.getElementById('ep_file_reject').files[0];
-  const updatePayload={name,category:cat,is_essential:essential,description:desc,reject_note:rejectNote,updated_by:profile.id,updated_at:new Date().toISOString()};
+  const updatePayload={name,category:cat,is_essential:essential,description:desc,reject_note:rejectNote,keywords,updated_by:profile.id,updated_at:new Date().toISOString()};
 
   // Replace the "acceptable" photo if a new one was chosen.
   if(newGoodFile){
@@ -1798,21 +1870,63 @@ async function confirmProductSimple(id){
 // ── PRODUCT TRAINING: LIBRARY (browse anytime, own dept full + others summary) ──
 function renderProductLibrary(){
   const myDept=profile.department;
+  return`<div style="max-width:1100px">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+    <button class="btn btn-ghost" onclick="view='dashboard';renderView()">← Back</button>
+    <div><div style="font-size:1.15rem;font-weight:700">Product Reference Library</div><div style="font-size:.78rem;color:var(--muted)">Your department shows full quality detail. Other departments are reference-only.</div></div>
+  </div>
+  <div style="position:relative;margin-bottom:14px">
+    <input id="lib_search_box" value="${esc(librarySearchQuery)}" oninput="librarySearchQuery=this.value;refreshLibraryResults()" placeholder="🔍 Search: e.g. soft tomato, black banana, mould..." style="width:100%;padding:12px 14px;font-size:.9rem;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text)">
+    <button id="lib_search_clear" class="btn btn-ghost" style="position:absolute;right:6px;top:6px;font-size:.75rem;padding:5px 10px;display:${librarySearchQuery?'block':'none'}" onclick="librarySearchQuery='';document.getElementById('lib_search_box').value='';refreshLibraryResults()">✕ Clear</button>
+  </div>
+  <div id="lib_results_wrap">${renderLibraryResultsInner(myDept)}</div>
+  </div>`;
+}
+// Regenerates only the results area (tabs+grid, or search results) — leaves the
+// search input's DOM node untouched so it never loses focus while typing.
+function refreshLibraryResults(){
+  const wrap=document.getElementById('lib_results_wrap');
+  if(wrap)wrap.innerHTML=renderLibraryResultsInner(profile.department);
+  const clearBtn=document.getElementById('lib_search_clear');
+  if(clearBtn)clearBtn.style.display=librarySearchQuery?'block':'none';
+  hydrateProductThumbs();
+}
+function renderLibraryResultsInner(myDept){
   const otherDepts=DEPARTMENTS.filter(d=>d!==myDept&&!libraryHiddenDepts.includes(d));
   const hiddenAvailable=DEPARTMENTS.filter(d=>d!==myDept&&libraryHiddenDepts.includes(d));
   if(libraryDeptFilter!=='mine'&&!otherDepts.includes(libraryDeptFilter))libraryDeptFilter='mine';
   const viewingOwn=libraryDeptFilter==='mine';
   const dept=viewingOwn?myDept:libraryDeptFilter;
   const items=productPhotos.filter(p=>p.department===dept);
-  return`<div style="max-width:1100px">
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-    <button class="btn btn-ghost" onclick="view='dashboard';renderView()">← Back</button>
-    <div><div style="font-size:1.15rem;font-weight:700">Product Reference Library</div><div style="font-size:.78rem;color:var(--muted)">Your department shows full quality detail. Other departments are reference-only.</div></div>
-  </div>
-  <div class="filters" style="align-items:center">
-    <button class="btn ${viewingOwn?'btn-primary':'btn-ghost'}" onclick="libraryDeptFilter='mine';renderView()">${esc(myDept)} (mine)</button>
+  const searching=librarySearchQuery.trim().length>0;
+  // Search covers everything this employee can already see: their own department (full detail)
+  // plus every other department currently visible in the library (reference-only).
+  const searchPool=productPhotos.filter(p=>p.department===myDept||otherDepts.includes(p.department));
+  const searchResults=searching?searchProducts(librarySearchQuery,searchPool):[];
+  if(searching){
+    return`<div style="font-size:.82rem;color:var(--muted);margin-bottom:12px">${searchResults.length} result${searchResults.length===1?'':'s'} for "${esc(librarySearchQuery)}"</div>
+    ${searchResults.length?`<div class="doc-grid">
+      ${searchResults.map(r=>{
+        const p=r.p,reason=matchReason(r),own=p.department===myDept;
+        return`<div class="prod-card" style="cursor:pointer" onclick="openProductDetail('${p.id}','library')">
+          <img class="prod-thumb" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)}" onerror="this.style.display='none'">
+          <div class="prod-body">
+            <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+              <div style="font-weight:600;font-size:.9rem">${esc(p.name)}</div>
+              <span class="badge badge-pending" style="font-size:.68rem">${esc(p.department)}${own?' · mine':''}</span>
+            </div>
+            <div style="font-size:.72rem;color:var(--muted)">${esc(p.category)}</div>
+            ${reason.text?`<div style="font-size:.78rem;margin-top:4px"><strong>${reason.icon} ${reason.label}:</strong> <span style="color:var(--muted)">${esc(reason.text)}</span></div>`:`<div style="font-size:.78rem;color:var(--muted);margin-top:4px">${reason.icon} ${reason.label}</div>`}
+            <div style="font-size:.72rem;color:var(--primary);margin-top:4px">📖 View full page →</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`:`<p style="color:var(--muted)">No products match "${esc(librarySearchQuery)}". Try a different word, or check the spelling.</p>`}`;
+  }
+  return`<div class="filters" style="align-items:center">
+    <button class="btn ${viewingOwn?'btn-primary':'btn-ghost'}" onclick="libraryDeptFilter='mine';refreshLibraryResults()">${esc(myDept)} (mine)</button>
     ${otherDepts.map(d=>`<span style="display:inline-flex;align-items:center;gap:2px">
-      <button class="btn ${libraryDeptFilter===d?'btn-primary':'btn-ghost'}" style="font-size:.78rem" onclick="libraryDeptFilter='${esc(d)}';renderView()">${esc(d)}</button>
+      <button class="btn ${libraryDeptFilter===d?'btn-primary':'btn-ghost'}" style="font-size:.78rem" onclick="libraryDeptFilter='${esc(d)}';refreshLibraryResults()">${esc(d)}</button>
       ${isSysAdmin(profile)?`<button class="btn btn-ghost" title="Remove ${esc(d)} from reference library" style="font-size:.68rem;padding:3px 7px" onclick="toggleLibraryDept('${esc(d)}',false)">✕</button>`:''}
     </span>`).join('')}
     ${isSysAdmin(profile)&&hiddenAvailable.length?`<span style="display:inline-flex;gap:4px;align-items:center;margin-left:6px">
@@ -1838,7 +1952,7 @@ function renderProductLibrary(){
         <div style="font-size:.72rem;color:var(--muted)">${esc(p.category)} &middot; reference only</div>
       </div>
     </div>`).join(''):`<p style="color:var(--muted)">No products recorded for ${esc(dept)} yet.</p>`}
-  </div></div>`;
+  </div>`;
 }
 
 // ── PRODUCT TRAINING: FULL PRODUCT PAGE (Quality Knowledge Library) ──
@@ -2253,8 +2367,11 @@ function openEdit(id){
   if(!isManager(profile))return; // both locationManager and sysAdmin can open this now
   const e=allEmployees.find(x=>x.id===id);if(!e)return;
   // Location managers may edit regular employees' contact/role-irrelevant details,
-  // but should not edit other managers' or sysAdmin's records.
-  if(!isSysAdmin(profile)&&e.role!=='employee'){toast('You can only edit employee-level staff records.');return;}
+  // but only within their own department, and never other managers'/sysAdmin's records.
+  if(!isSysAdmin(profile)){
+    if(e.role!=='employee'){toast('You can only edit employee-level staff records.');return;}
+    if(e.department!==profile.department){toast('You can only edit staff in your own department.');return;}
+  }
   document.getElementById('modalRoot').innerHTML=`<div class="modal-back" onclick="if(event.target===this)closeModal()"><div class="modal">
   <h3>⚙ Edit Staff Details</h3>
   <p style="color:var(--muted);font-size:.78rem;margin-bottom:14px">Start date and induction date are locked.</p>
@@ -2264,7 +2381,7 @@ function openEdit(id){
     <div class="field"><label>Age</label><input id="e_age" type="number" min="15" max="100" value="${esc(String(e.age||''))}"></div>
     <div class="field"><label>Position</label><div style="display:flex;gap:6px"><select id="e_pos" style="flex:1">${POSITIONS.map(p=>`<option value="${p}" ${e.position===p?'selected':''}>${p}</option>`).join('')}</select>${addPosBtn('e_pos')}</div></div>
     ${isSysAdmin(profile)?`<div class="field"><label>Role</label><select id="e_role"><option value="employee" ${e.role==='employee'?'selected':''}>Employee</option><option value="locationManager" ${e.role==='locationManager'?'selected':''}>Location Manager</option><option value="sysAdmin" ${e.role==='sysAdmin'?'selected':''}>System Administrator</option></select></div>`:''}
-    <div class="field full"><label>Department</label><div style="display:flex;gap:6px"><select id="e_dept" style="flex:1">${DEPARTMENTS.map(d=>`<option value="${d}" ${e.department===d?'selected':''}>${d}</option>`).join('')}</select>${addDeptBtn('e_dept')}</div></div>
+    <div class="field full"><label>Department</label>${isSysAdmin(profile)?`<div style="display:flex;gap:6px"><select id="e_dept" style="flex:1">${DEPARTMENTS.map(d=>`<option value="${d}" ${e.department===d?'selected':''}>${d}</option>`).join('')}</select>${addDeptBtn('e_dept')}</div>`:`<input value="${esc(e.department)}" readonly><span style="font-size:.72rem;color:var(--muted);margin-top:4px;display:block">Only a System Administrator can change department.</span>`}</div>
     <div class="field full"><label>Email Address</label><input id="e_email" type="email" value="${esc(e.email||'')}" placeholder="employee@email.com">
       <span style="font-size:.72rem;color:var(--warning);margin-top:4px;display:block">⚠ Changing email updates their login email automatically.</span>
     </div>
@@ -2278,12 +2395,16 @@ function openEdit(id){
 }
 
 async function saveEdit(id){
+  const e0=allEmployees.find(x=>x.id===id);
+  if(!isSysAdmin(profile)&&e0&&(e0.role!=='employee'||e0.department!==profile.department)){
+    toast('You can only edit employee-level staff in your own department.');return;
+  }
   const btn=document.getElementById('edit_save_btn');btn.disabled=true;btn.textContent='Saving…';
   const name=document.getElementById('e_name').value.trim();
   const phone=document.getElementById('e_phone').value.trim();
   const age=parseInt(document.getElementById('e_age').value)||null;
   const pos=document.getElementById('e_pos').value;
-  const dept=document.getElementById('e_dept').value;
+  const dept=isSysAdmin(profile)?document.getElementById('e_dept').value:e0.department; // non-sysAdmin can never change department, regardless of what's in the DOM
   const email=document.getElementById('e_email').value.trim().toLowerCase();
   // Role field only exists for sysAdmin editing — location managers don't see it
   const roleEl=document.getElementById('e_role');
@@ -2378,6 +2499,7 @@ async function createEmployee(){
 }
 
 async function deleteEmp(id){
+  if(!isSysAdmin(profile)){toast('Only a System Administrator can delete staff records.');return;}
   const e=allEmployees.find(x=>x.id===id);if(!e)return;
   if(!confirm(`Delete ${e.full_name}? This cannot be undone.`))return;
   await sb.rpc('admin_delete_employee',{p_emp_id:id});
