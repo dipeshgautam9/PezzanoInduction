@@ -4,7 +4,7 @@
 // accept/reject data sent up from the portal — not general knowledge.
 //
 // Uses Google's Gemini API (Google AI Studio) — free tier, no credit card,
-// no trial expiration, ~1,500 requests/day on gemini-2.5-flash.
+// no trial expiration, ~1,500 requests/day on gemini-2.5-lite.
 //
 // This file replaces the previous OpenAI version. Path stays the same:
 // api/ask-ai.js in your repo root (same level as pezzano-portal-COMPLETE.html).
@@ -48,14 +48,14 @@ Product data:
 
   try {
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           system_instruction: { parts: [{ text: systemPrompt }] },
           contents: [{ role: 'user', parts: [{ text: question.trim() }] }],
-          generationConfig: { temperature: 0.2, maxOutputTokens: 400 }
+          generationConfig: { maxOutputTokens: 400 }
         })
       }
     );
