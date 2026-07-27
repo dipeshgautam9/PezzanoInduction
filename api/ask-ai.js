@@ -1,20 +1,22 @@
 // api/ask-ai.js
-// Vercel Serverless Function. Reads OPENAI_API_KEY server-side (never exposed
+// Vercel Serverless Function. Reads GEMINI_API_KEY server-side (never exposed
 // to the browser) and answers a staff question using ONLY the product's own
 // accept/reject data sent up from the portal — not general knowledge.
 //
-// Add this file at: api/ask-ai.js in your repo root (same level as portal.html).
-// Vercel auto-detects anything under /api as a serverless function — no
-// framework or build step required.
+// Uses Google's Gemini API (Google AI Studio) — free tier, no credit card,
+// no trial expiration, ~1,500 requests/day on gemini-2.5-flash.
+//
+// This file replaces the previous OpenAI version. Path stays the same:
+// api/ask-ai.js in your repo root (same level as pezzano-portal-COMPLETE.html).
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: 'OPENAI_API_KEY is not set on this Vercel project.' });
+    return res.status(500).json({ error: 'GEMINI_API_KEY is not set on this Vercel project.' });
   }
 
   const { question, product } = req.body || {};
@@ -45,32 +47,29 @@ Product data:
 - Keywords: ${product.keywords || 'none'}`;
 
   try {
-    const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        temperature: 0.2,
-        max_tokens: 300,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: question.trim() }
-        ]
-      })
-    });
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: systemPrompt }] },
+          contents: [{ role: 'user', parts: [{ text: question.trim() }] }],
+          generationConfig: { temperature: 0.2, maxOutputTokens: 400 }
+        })
+      }
+    );
 
-    if (!openaiRes.ok) {
-      const errText = await openaiRes.text();
-      console.error('OpenAI error:', errText);
+    if (!geminiRes.ok) {
+      const errText = await geminiRes.text();
+      console.error('Gemini error:', errText);
       return res.status(502).json({ error: 'The AI service returned an error. Please try again.' });
     }
 
-    const data = await openaiRes.json();
-    const answer = data.choices?.[0]?.message?.content?.trim();
+    const data = await geminiRes.json();
+    const answer = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
     if (!answer) {
+      console.error('Gemini returned no text:', JSON.stringify(data));
       return res.status(502).json({ error: 'No answer was returned. Please try again.' });
     }
 
