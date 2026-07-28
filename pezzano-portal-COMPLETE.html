@@ -901,6 +901,16 @@ function renderDashboard(){
   ${productPhotos.length?`<div class="card" style="margin-bottom:16px">
     <input placeholder="🔍 Search any product... e.g. soft tomato, black banana, mould" style="width:100%;padding:12px 14px;font-size:.9rem;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text)" onkeydown="if(event.key==='Enter'&&this.value.trim()){librarySearchQuery=this.value;view='library';renderView();}">
   </div>`:''}
+  ${productPhotos.length?`<div class="card" style="margin-bottom:16px">
+    <div class="card-title" style="margin-bottom:6px">🤖 AI Quality Assistant</div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:10px">Ask a general quality question — e.g. "What do I do if fruit looks bruised?" or "Who do I escalate a reject to?"</div>
+    <div id="ai_chat_history_dashboard">${renderDashboardAIChatHistory()}</div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <input id="ai_chat_input_dashboard" placeholder="Ask a question..." style="flex:1;padding:10px 13px;font-size:.85rem;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();askDashboardAI()}">
+      <button class="btn btn-primary" id="ai_chat_send_dashboard" style="font-size:.85rem" onclick="askDashboardAI()">Ask</button>
+    </div>
+    <div style="font-size:.68rem;color:var(--faint);margin-top:8px;line-height:1.4">This is an AI recommendation based on Pezzano standards. If you are unsure, follow your department's escalation procedure.</div>
+  </div>`:''}
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">My Details</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;font-size:.83rem">
@@ -1686,7 +1696,7 @@ async function saveProduct(){
     const{error:rejErr}=await sb.storage.from('product-photos').upload(rejectPath,rejectFile,{contentType:rejectFile.type});
     if(rejErr){console.warn('Reject photo upload failed:',rejErr.message);rejectPath=null;}
   }
-  const{error}=await sb.from('product_photos').insert({name,department:dept,category:cat,description:desc,keywords,image_path:goodPath,reject_image_path:rejectPath,reject_note:rejectPath?rejectNote:null,is_essential:essential,uploaded_by:profile.id,updated_by:profile.id,updated_at:new Date().toISOString()});
+  const{error}=await sb.from('product_photos').insert({name,department:dept,category:cat,description:desc,keywords,image_path:goodPath||'',reject_image_path:rejectPath,reject_note:rejectPath?rejectNote:null,is_essential:essential,uploaded_by:profile.id,updated_by:profile.id,updated_at:new Date().toISOString()});
   if(error){showMsg('p_msg','Error: '+error.message,'error');btn.disabled=false;btn.textContent='Save Product';return;}
   await loadProductPhotos();if(adminProductDept!==ADMIN_ALL_DEPTS)adminProductDept=dept;closeModal();
   logAudit('Product added',`${name} (${dept}, ${cat})`);
@@ -1790,7 +1800,7 @@ async function saveBulkImport(){
   const btn=document.getElementById('bi_btn');btn.disabled=true;btn.textContent='Importing…';
   const rows=bulkImportRows.filter(r=>!r.errors.length);
   if(!rows.length){showMsg('bi_msg','No valid rows to import.','error');btn.disabled=false;btn.textContent='Import Products';return;}
-  const payload=rows.map(r=>({name:r.name,department:r.department,category:r.category,description:r.description||null,keywords:r.keywords||null,image_path:null,reject_image_path:null,is_essential:r.essential,uploaded_by:profile.id,updated_by:profile.id,updated_at:new Date().toISOString()}));
+  const payload=rows.map(r=>({name:r.name,department:r.department,category:r.category,description:r.description||null,keywords:r.keywords||null,image_path:'',reject_image_path:null,is_essential:r.essential,uploaded_by:profile.id,updated_by:profile.id,updated_at:new Date().toISOString()}));
   const{error}=await sb.from('product_photos').insert(payload);
   if(error){showMsg('bi_msg','Import error: '+error.message,'error');btn.disabled=false;btn.textContent='Import Products';return;}
   await loadProductPhotos();closeModal();
@@ -1984,20 +1994,13 @@ function renderProductLibrary(){
     <button class="btn btn-ghost" onclick="view='dashboard';renderView()">← Back</button>
     <div><div style="font-size:1.15rem;font-weight:700">Product Reference Library</div><div style="font-size:.78rem;color:var(--muted)">Your department shows full quality detail. Other departments are reference-only.</div></div>
   </div>
-  <div style="position:relative;margin-bottom:14px">
-    <input id="lib_search_box" value="${esc(librarySearchQuery)}" oninput="librarySearchQuery=this.value;refreshLibraryResults()" placeholder="🔍 Search: e.g. soft tomato, black banana, mould..." style="width:100%;padding:12px 14px;font-size:.9rem;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text)">
-    <button id="lib_search_clear" class="btn btn-ghost" style="position:absolute;right:6px;top:6px;font-size:.75rem;padding:5px 10px;display:${librarySearchQuery?'block':'none'}" onclick="librarySearchQuery='';document.getElementById('lib_search_box').value='';refreshLibraryResults()">✕ Clear</button>
-  </div>
   <div id="lib_results_wrap">${renderLibraryResultsInner(myDept)}</div>
   </div>`;
 }
-// Regenerates only the results area (tabs+grid, or search results) — leaves the
-// search input's DOM node untouched so it never loses focus while typing.
+// Regenerates the results area (tabs+grid, or search results triggered from the dashboard search bar).
 function refreshLibraryResults(){
   const wrap=document.getElementById('lib_results_wrap');
   if(wrap)wrap.innerHTML=renderLibraryResultsInner(profile.department);
-  const clearBtn=document.getElementById('lib_search_clear');
-  if(clearBtn)clearBtn.style.display=librarySearchQuery?'block':'none';
   hydrateProductThumbs();
 }
 function renderLibraryResultsInner(myDept){
@@ -2013,7 +2016,10 @@ function renderLibraryResultsInner(myDept){
   const searchPool=productPhotos.filter(p=>p.department===myDept||otherDepts.includes(p.department));
   const searchResults=searching?searchProducts(librarySearchQuery,searchPool):[];
   if(searching){
-    return`<div style="font-size:.82rem;color:var(--muted);margin-bottom:12px">${searchResults.length} result${searchResults.length===1?'':'s'} for "${esc(librarySearchQuery)}"</div>
+    return`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+      <div style="font-size:.82rem;color:var(--muted)">${searchResults.length} result${searchResults.length===1?'':'s'} for "${esc(librarySearchQuery)}"</div>
+      <button class="btn btn-ghost" style="font-size:.75rem;padding:5px 10px" onclick="librarySearchQuery='';refreshLibraryResults()">✕ Clear search</button>
+    </div>
     ${searchResults.length?`<div class="doc-grid">
       ${searchResults.map(r=>{
         const p=r.p,reason=matchReason(r),own=p.department===myDept;
@@ -2209,6 +2215,46 @@ async function askAI(productId){
   }
   if(btn){btn.disabled=false;btn.textContent='Ask';}
   if(histEl)histEl.innerHTML=renderAIChatHistory(productId);
+}
+
+// ── DASHBOARD: general AI Quality Assistant (not tied to a single product) ──
+let dashboardAiChat=[];
+function renderDashboardAIChatHistory(){
+  if(!dashboardAiChat.length)return`<div style="font-size:.8rem;color:var(--faint)">No questions asked yet.</div>`;
+  return dashboardAiChat.map(m=>m.role==='user'
+    ?`<div style="margin-bottom:8px"><div style="font-size:.68rem;color:var(--muted);margin-bottom:2px">You asked</div><div style="font-size:.85rem;background:var(--surface2);border-radius:9px;padding:8px 12px;display:inline-block">${esc(m.text)}</div></div>`
+    :m.role==='error'
+    ?`<div style="margin-bottom:12px"><div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:8px 12px">${esc(m.text)}</div></div>`
+    :`<div style="margin-bottom:12px"><div style="font-size:.68rem;color:var(--muted);margin-bottom:2px">🤖 Pezzano Quality Assistant</div><div style="font-size:.85rem;background:rgba(0,180,216,.08);border:1px solid rgba(0,180,216,.2);border-radius:9px;padding:8px 12px;white-space:pre-wrap">${esc(m.text)}</div></div>`
+  ).join('');
+}
+async function askDashboardAI(){
+  const input=document.getElementById('ai_chat_input_dashboard');
+  const question=input?.value.trim();
+  if(!question)return;
+  dashboardAiChat.push({role:'user',text:question});
+  input.value='';
+  const btn=document.getElementById('ai_chat_send_dashboard');
+  if(btn){btn.disabled=true;btn.textContent='Thinking…';}
+  const histEl=document.getElementById('ai_chat_history_dashboard');
+  if(histEl){histEl.innerHTML=renderDashboardAIChatHistory()+`<div style="font-size:.8rem;color:var(--muted)">🤖 Thinking…</div>`;}
+  try{
+    const resp=await fetch('/api/ask-ai',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({question,product:{name:'General question',department:profile.department,category:'',description:'',reject_note:'',keywords:''}})
+    });
+    const data=await resp.json();
+    if(!resp.ok||!data.answer){
+      dashboardAiChat.push({role:'error',text:data.error||"Couldn't get an answer — please try again."});
+    }else{
+      dashboardAiChat.push({role:'assistant',text:data.answer});
+    }
+  }catch(e){
+    dashboardAiChat.push({role:'error',text:"Couldn't reach the AI Assistant — check your connection and try again."});
+  }
+  if(btn){btn.disabled=false;btn.textContent='Ask';}
+  if(histEl)histEl.innerHTML=renderDashboardAIChatHistory();
 }
 
 // ── INDUCTION FLOW ────────────────────────────────────────────
