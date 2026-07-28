@@ -1553,7 +1553,8 @@ function renderProductManager(){
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
     <button class="btn btn-ghost" onclick="view='mgr';renderView()">← Staff Management</button>
     <div><div style="font-size:1.15rem;font-weight:700">Product Training Library</div><div style="font-size:.78rem;color:var(--muted)">${inDept.length} products${viewingAll?` across ${deptCount} department${deptCount===1?'':'s'}`:''} &middot; ${inDept.filter(p=>p.is_essential).length} marked essential</div></div>
-    <button class="btn btn-primary" style="margin-left:auto" onclick="openProductUpload()">+ Add Product Photo</button>
+    <button class="btn btn-ghost" style="margin-left:auto" onclick="openBulkImportModal()">📥 Bulk Import Products</button>
+    <button class="btn btn-primary" onclick="openProductUpload()">+ Add Product Photo</button>
   </div>
   ${(editableDepts.length>1||isSysAdmin(profile))?`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px">
     <label style="font-size:.78rem;color:var(--muted)">Department:</label>
@@ -1584,7 +1585,7 @@ function renderMgrProductsInner(inDept,viewingAll){
   return`${!searching&&!viewingAll&&cats.length?`<div class="filters" style="margin-top:0">${cats.map(c=>`<span class="badge badge-pending">${esc(c)} (${inDept.filter(p=>p.category===c).length})</span>`).join('')}</div>`:''}
   <div class="doc-grid">
     ${shown.length?shown.map(p=>`<div class="prod-card">
-      <img class="prod-thumb" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)}" style="cursor:pointer" onclick="openProductDetail('${p.id}','products')" onerror="this.style.display='none'">
+      ${p.image_path?`<img class="prod-thumb" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)}" style="cursor:pointer" onclick="openProductDetail('${p.id}','products')" onerror="this.style.display='none'">`:`<div class="prod-thumb-ph" style="cursor:pointer" onclick="openProductDetail('${p.id}','products')">📷 No photo yet</div>`}
       <div class="prod-body">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
           <div style="font-weight:600;font-size:.9rem;cursor:pointer" onclick="openProductDetail('${p.id}','products')">${esc(p.name)}</div>
@@ -1629,7 +1630,7 @@ function openProductUpload(){
       </div>
       <div class="field full"><label>Description / Quality Standard</label><textarea id="p_desc" rows="3" placeholder="What good stock looks like: size, colour, grading notes, packing count, storage requirements…"></textarea></div>
       <div class="field full">
-        <label>Acceptable / Standard Photo</label>
+        <label>Acceptable / Standard Photo (optional — can be added later from Edit Product)</label>
         <div class="upload-drop" id="p_drop_good" onclick="document.getElementById('p_file_good').click()">📎 Click to choose the "acceptable" photo (JPG/PNG, max 10MB)</div>
         <input type="file" id="p_file_good" accept=".jpg,.jpeg,.png" style="display:none" onchange="showChosenFileInto(this,'p_drop_good')">
       </div>
@@ -1670,11 +1671,14 @@ async function saveProduct(){
   const rejectFile=document.getElementById('p_file_reject').files[0];
   const rejectNote=document.getElementById('p_reject_note').value.trim()||null;
   const keywords=document.getElementById('p_keywords').value.trim()||null;
-  if(!name||!cat||!goodFile){showMsg('p_msg','Name, category, and the acceptable-standard photo are required.','error');btn.disabled=false;btn.textContent='Save Product';return;}
-  const ext=goodFile.name.split('.').pop();
-  const goodPath=`${dept}/${Date.now()}_good.${ext}`;
-  const{error:goodErr}=await sb.storage.from('product-photos').upload(goodPath,goodFile,{contentType:goodFile.type});
-  if(goodErr){showMsg('p_msg','Upload error: '+goodErr.message,'error');btn.disabled=false;btn.textContent='Save Product';return;}
+  if(!name||!cat){showMsg('p_msg','Name and category are required.','error');btn.disabled=false;btn.textContent='Save Product';return;}
+  let goodPath=null;
+  if(goodFile){
+    const ext=goodFile.name.split('.').pop();
+    goodPath=`${dept}/${Date.now()}_good.${ext}`;
+    const{error:goodErr}=await sb.storage.from('product-photos').upload(goodPath,goodFile,{contentType:goodFile.type});
+    if(goodErr){showMsg('p_msg','Upload error: '+goodErr.message,'error');btn.disabled=false;btn.textContent='Save Product';return;}
+  }
   let rejectPath=null;
   if(rejectFile){
     const rext=rejectFile.name.split('.').pop();
@@ -1687,6 +1691,111 @@ async function saveProduct(){
   await loadProductPhotos();if(adminProductDept!==ADMIN_ALL_DEPTS)adminProductDept=dept;closeModal();
   logAudit('Product added',`${name} (${dept}, ${cat})`);
   toast('✓ Product added.');renderView();
+}
+
+// ── PRODUCT TRAINING: BULK IMPORT (CSV/XLSX, no photos) ────────
+let bulkImportRows=[];
+function openBulkImportModal(){
+  const editableDepts=departmentsManagerCanEdit();
+  const startDept=(adminProductDept===ADMIN_ALL_DEPTS)?editableDepts[0]:adminProductDept;
+  if(!canManageProductsFor(startDept)){toast('You can only manage products for your own department.');return;}
+  bulkImportRows=[];
+  document.getElementById('modalRoot').innerHTML=`<div class="modal-back" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:900px">
+    <h3>📥 Bulk Import Products</h3>
+    <p style="font-size:.8rem;color:var(--muted);margin-top:-6px">Upload a CSV or XLSX file to add many products at once, without photos. Add photos later, one at a time, from Edit Product.</p>
+    <div class="form-grid">
+      ${editableDepts.length>1?`<div class="field full"><label>Default Department</label><select id="bi_dept" onchange="if(bulkImportRows.length)processBulkImportRows(bulkImportRows.map(r=>r.raw))">${editableDepts.map(d=>`<option ${d===startDept?'selected':''}>${esc(d)}</option>`).join('')}</select><span style="font-size:.72rem;color:var(--muted);margin-top:4px;display:block">Used for any row that doesn't include its own "department" column.</span></div>`
+        :`<div class="field full"><label>Department</label><input id="bi_dept_ro" value="${esc(startDept)}" readonly></div>`}
+      <div class="field full">
+        <label>File (CSV or XLSX)</label>
+        <div class="upload-drop" id="bi_drop" onclick="document.getElementById('bi_file').click()">📎 Click to choose a .csv or .xlsx file</div>
+        <input type="file" id="bi_file" accept=".csv,.xlsx,.xls" style="display:none" onchange="handleBulkImportFile(this)">
+        <span style="font-size:.72rem;color:var(--muted);margin-top:4px;display:block">Expected columns: name, category, description (optional), keywords (optional), essential (optional yes/no). A "department" column, if present, overrides the default above.</span>
+      </div>
+    </div>
+    <div id="bi_msg" class="msg"></div>
+    <div id="bi_preview_wrap"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="bi_btn" onclick="saveBulkImport()" disabled>Import Products</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  </div></div>`;
+}
+function handleBulkImportFile(input){
+  const f=input.files[0];if(!f)return;
+  const drop=document.getElementById('bi_drop');
+  drop.classList.add('file-chosen');
+  drop.innerHTML=`<div style="font-size:1.4rem;margin-bottom:6px">✓</div><div style="font-weight:500">${esc(f.name)}</div>`;
+  const isCsv=/\.csv$/i.test(f.name);
+  const reader=new FileReader();
+  reader.onload=(e)=>{
+    try{
+      const wb=isCsv?XLSX.read(e.target.result,{type:'string'}):XLSX.read(e.target.result,{type:'array'});
+      const sheet=wb.Sheets[wb.SheetNames[0]];
+      const raw=XLSX.utils.sheet_to_json(sheet,{defval:''});
+      processBulkImportRows(raw);
+    }catch(err){showMsg('bi_msg','Could not read that file: '+err.message,'error');}
+  };
+  reader.onerror=()=>showMsg('bi_msg','Could not read that file.','error');
+  if(isCsv)reader.readAsText(f);else reader.readAsArrayBuffer(f);
+}
+function processBulkImportRows(raw){
+  const deptEl=document.getElementById('bi_dept');
+  const defaultDept=deptEl?deptEl.value:(document.getElementById('bi_dept_ro')?document.getElementById('bi_dept_ro').value:adminProductDept);
+  const editableDepts=departmentsManagerCanEdit();
+  bulkImportRows=raw.map(row=>{
+    const norm={};
+    Object.keys(row).forEach(k=>{const v=row[k];const clean=String(k).trim().toLowerCase().replace(/[^a-z0-9]/g,'');norm[clean]=typeof v==='string'?v.trim():v;});
+    const pick=(...keys)=>{for(const k of keys){if(norm[k]!==undefined&&norm[k]!==null&&String(norm[k]).trim()!=='')return String(norm[k]).trim();}return'';};
+    const name=pick('name','productname','product','item','itemname');
+    const department=pick('department','dept')||defaultDept||'';
+    const category=pick('category','cat');
+    const description=pick('description','desc');
+    const keywords=pick('keywords','keyword');
+    const essRaw=pick('essential','isessential').toLowerCase();
+    const essential=['yes','y','true','1','essential'].includes(essRaw);
+    const errors=[];
+    if(!name)errors.push('missing name');
+    if(!category)errors.push('missing category');
+    if(!department)errors.push('missing department');
+    else if(!editableDepts.includes(department))errors.push('department not permitted');
+    return{raw:row,name,department,category,description,keywords,essential,errors};
+  }).filter(r=>r.name||r.category||r.description||r.keywords);
+  renderBulkImportPreview();
+}
+function renderBulkImportPreview(){
+  const wrap=document.getElementById('bi_preview_wrap');
+  const btn=document.getElementById('bi_btn');
+  if(!wrap||!btn)return;
+  if(!bulkImportRows.length){wrap.innerHTML=`<p style="font-size:.8rem;color:var(--muted)">No rows found in that file.</p>`;btn.disabled=true;return;}
+  const validCount=bulkImportRows.filter(r=>!r.errors.length).length;
+  const invalidCount=bulkImportRows.length-validCount;
+  wrap.innerHTML=`
+    <p style="font-size:.8rem;margin:10px 0 6px"><strong>${bulkImportRows.length}</strong> rows found &middot; <strong style="color:var(--success)">${validCount} ready to import</strong>${invalidCount?` &middot; <strong style="color:var(--error)">${invalidCount} skipped (see errors)</strong>`:''}. Photos are left empty and can be added later from Edit Product.</p>
+    <div style="max-height:320px;overflow:auto;border:1px solid var(--border);border-radius:8px">
+      <table style="width:100%;border-collapse:collapse;font-size:.78rem">
+        <thead><tr style="background:var(--surface2);text-align:left"><th style="padding:6px 8px">Name</th><th style="padding:6px 8px">Department</th><th style="padding:6px 8px">Category</th><th style="padding:6px 8px">Essential</th><th style="padding:6px 8px">Status</th></tr></thead>
+        <tbody>${bulkImportRows.map(r=>`<tr style="border-top:1px solid var(--border)${r.errors.length?';opacity:.55':''}">
+          <td style="padding:6px 8px">${esc(r.name||'—')}</td>
+          <td style="padding:6px 8px">${esc(r.department||'—')}</td>
+          <td style="padding:6px 8px">${esc(r.category||'—')}</td>
+          <td style="padding:6px 8px">${r.essential?'★':''}</td>
+          <td style="padding:6px 8px">${r.errors.length?`<span style="color:var(--error)">${esc(r.errors.join(', '))}</span>`:'<span style="color:var(--success)">OK</span>'}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+  btn.disabled=validCount===0;
+}
+async function saveBulkImport(){
+  const btn=document.getElementById('bi_btn');btn.disabled=true;btn.textContent='Importing…';
+  const rows=bulkImportRows.filter(r=>!r.errors.length);
+  if(!rows.length){showMsg('bi_msg','No valid rows to import.','error');btn.disabled=false;btn.textContent='Import Products';return;}
+  const payload=rows.map(r=>({name:r.name,department:r.department,category:r.category,description:r.description||null,keywords:r.keywords||null,image_path:null,reject_image_path:null,is_essential:r.essential,uploaded_by:profile.id,updated_by:profile.id,updated_at:new Date().toISOString()}));
+  const{error}=await sb.from('product_photos').insert(payload);
+  if(error){showMsg('bi_msg','Import error: '+error.message,'error');btn.disabled=false;btn.textContent='Import Products';return;}
+  await loadProductPhotos();closeModal();
+  logAudit('Products bulk imported',`${payload.length} product${payload.length===1?'':'s'} imported via file (no photos)`);
+  toast(`✓ Imported ${payload.length} product${payload.length===1?'':'s'}. Add photos anytime from Edit Product.`);renderView();
 }
 
 function editProduct(id){
