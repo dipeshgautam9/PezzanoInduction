@@ -2162,6 +2162,85 @@ function renderProductDetail(){
       ${canEdit?addTile('bad_photo','Add reject photo','.jpg,.jpeg,.png'):''}
     </div>`:''}
     ${(badVideos.length||canEdit)?`<div style="font-size:.85rem;color:var(--muted);margin:12px 0 6px">Reject example videos</div><div class="video-row">${badVideos.map(videoBlock).join('')}${canEdit?addVideoTile('bad_video','Add reject video'):''}</div>`:''}
+  </div>
+
+  ${(isOwnDept||canEdit)?`<div class="qk-section" id="ai_photo_check_section">
+    <div class="qk-section-title">📸 AI Photo Check</div>
+    <div class="qk-section-sub">Take or upload a photo of the batch in front of you — the AI compares it against the reference photos above and tells you if it looks acceptable.</div>
+    ${p.image_path?`
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">
+      <div class="upload-drop" id="pc_drop_${p.id}" onclick="document.getElementById('pc_file_${p.id}').click()" style="flex:1;min-width:220px">📷 Click to take/choose a photo to check</div>
+      <input type="file" id="pc_file_${p.id}" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoCheckFile('${p.id}',this)">
+    </div>
+    <div id="pc_preview_${p.id}" style="margin-top:10px"></div>
+    <div id="pc_result_${p.id}" style="margin-top:10px"></div>
+    <div style="font-size:.68rem;color:var(--faint);margin-top:8px;line-height:1.4">This is an AI recommendation based on Pezzano standards. If you are unsure or the product has unusual defects, follow your department's escalation procedure.</div>
+    `:`<p style="font-size:.82rem;color:var(--muted);margin-top:8px">Add an acceptable-standard photo to this product first (Edit Details) before AI photo checks can run.</p>`}
+  </div>`:''}`;
+}
+
+// ── PRODUCT DETAIL: AI Photo Check — compares a staff-taken photo against the
+// product's reference good/reject images. Nothing here is persisted or saved.
+let aiPhotoCheckFiles={};
+function fileToBase64(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(reader.result);
+    reader.onerror=reject;
+    reader.readAsDataURL(file);
+  });
+}
+function handlePhotoCheckFile(productId,input){
+  const f=input.files[0];if(!f)return;
+  aiPhotoCheckFiles[productId]=f;
+  const preview=document.getElementById(`pc_preview_${productId}`);
+  const url=URL.createObjectURL(f);
+  if(preview)preview.innerHTML=`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <img src="${url}" style="width:96px;height:96px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">
+    <button class="btn btn-primary" style="font-size:.82rem" onclick="runAIPhotoCheck('${productId}')">Check This Photo</button>
+  </div>`;
+  const resultEl=document.getElementById(`pc_result_${productId}`);if(resultEl)resultEl.innerHTML='';
+}
+async function runAIPhotoCheck(productId){
+  const p=productPhotos.find(x=>x.id===productId);if(!p)return;
+  const file=aiPhotoCheckFiles[productId];if(!file)return;
+  const resultEl=document.getElementById(`pc_result_${productId}`);
+  if(resultEl)resultEl.innerHTML=`<div style="font-size:.82rem;color:var(--muted)">🤖 Checking photo…</div>`;
+  try{
+    const staffPhoto=await fileToBase64(file);
+    let referenceGoodUrl=null,referenceRejectUrl=null;
+    if(p.image_path){const{data:goodSigned}=await sb.storage.from('product-photos').createSignedUrl(p.image_path,600);referenceGoodUrl=goodSigned?.signedUrl||null;}
+    if(p.reject_image_path){const{data:rejSigned}=await sb.storage.from('product-photos').createSignedUrl(p.reject_image_path,600);referenceRejectUrl=rejSigned?.signedUrl||null;}
+    const resp=await fetch('/api/check-photo',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        staffPhoto,
+        product:{name:p.name,department:p.department,category:p.category,description:p.description,reject_note:p.reject_note,keywords:p.keywords},
+        referenceGoodUrl,referenceRejectUrl
+      })
+    });
+    const data=await resp.json();
+    if(!resp.ok||!data.verdict){
+      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:8px 12px">${esc(data.error||"Couldn't check that photo — please try again.")}</div>`;
+      return;
+    }
+    renderPhotoCheckResult(productId,data);
+  }catch(e){
+    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:8px 12px">Couldn't reach the AI Assistant — check your connection and try again.</div>`;
+  }
+}
+function renderPhotoCheckResult(productId,data){
+  const resultEl=document.getElementById(`pc_result_${productId}`);if(!resultEl)return;
+  const verdict=String(data.verdict||'').toLowerCase();
+  const style=verdict==='pass'
+    ?{bg:'rgba(74,222,128,.1)',border:'rgba(74,222,128,.3)',color:'var(--success)',icon:'✅',label:'Looks acceptable'}
+    :verdict==='fail'
+    ?{bg:'rgba(248,113,113,.1)',border:'rgba(248,113,113,.3)',color:'var(--error)',icon:'❌',label:'Does not match standard'}
+    :{bg:'rgba(251,191,36,.1)',border:'rgba(251,191,36,.3)',color:'var(--warning)',icon:'⚠',label:'Uncertain — check manually'};
+  resultEl.innerHTML=`<div style="background:${style.bg};border:1px solid ${style.border};border-radius:9px;padding:10px 14px">
+    <div style="font-weight:600;color:${style.color};font-size:.88rem;margin-bottom:4px">${style.icon} ${esc(style.label)}${typeof data.confidence==='number'?` &middot; ${Math.round(data.confidence*100)}% confidence`:''}</div>
+    ${data.explanation?`<div style="font-size:.82rem;color:var(--text);white-space:pre-wrap">${esc(data.explanation)}</div>`:''}
   </div>`;
 }
 
