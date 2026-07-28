@@ -903,7 +903,7 @@ function renderDashboard(){
   </div>`:''}
   ${productPhotos.length?`<div class="card" style="margin-bottom:16px">
     <div class="card-title" style="margin-bottom:6px">🤖 AI Quality Assistant</div>
-    <div style="font-size:.8rem;color:var(--muted);margin-bottom:10px">Ask a general quality question — e.g. "What do I do if fruit looks bruised?" or "Who do I escalate a reject to?"</div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:10px">Ask anything about quality standards or procedures — e.g. "Can I pack a bruised apple?" or "Who do I escalate a reject to?" Get an instant answer before you go digging through the library.</div>
     <div id="ai_chat_history_dashboard">${renderDashboardAIChatHistory()}</div>
     <div style="display:flex;gap:8px;margin-top:10px">
       <input id="ai_chat_input_dashboard" placeholder="Ask a question..." style="flex:1;padding:10px 13px;font-size:.85rem;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();askDashboardAI()}">
@@ -2162,59 +2162,7 @@ function renderProductDetail(){
       ${canEdit?addTile('bad_photo','Add reject photo','.jpg,.jpeg,.png'):''}
     </div>`:''}
     ${(badVideos.length||canEdit)?`<div style="font-size:.85rem;color:var(--muted);margin:12px 0 6px">Reject example videos</div><div class="video-row">${badVideos.map(videoBlock).join('')}${canEdit?addVideoTile('bad_video','Add reject video'):''}</div>`:''}
-  <div class="qk-section" id="ai_assistant_section">
-    <div class="qk-section-title">🤖 AI Quality Assistant</div>
-    <div class="qk-section-sub">Ask a question about this product — e.g. "Can I pack this?" or "Why would this be rejected?"</div>
-    <div id="ai_chat_history_${p.id}">${renderAIChatHistory(p.id)}</div>
-    <div style="display:flex;gap:8px;margin-top:10px">
-      <input id="ai_chat_input_${p.id}" placeholder="Ask a question about ${esc(p.name)}..." style="flex:1;padding:10px 13px;font-size:.85rem;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();askAI('${p.id}')}">
-      <button class="btn btn-primary" id="ai_chat_send_${p.id}" style="font-size:.85rem" onclick="askAI('${p.id}')">Ask</button>
-    </div>
-    <div style="font-size:.68rem;color:var(--faint);margin-top:8px;line-height:1.4">This is an AI recommendation based on Pezzano standards. If you are unsure or the product has unusual defects, follow your department's escalation procedure.</div>
-  </div>
   </div>`;
-}
-// In-memory chat history per product, keyed by product id — resets on page reload (not persisted).
-let aiChats={};
-function renderAIChatHistory(productId){
-  const msgs=aiChats[productId]||[];
-  if(!msgs.length)return`<div style="font-size:.8rem;color:var(--faint)">No questions asked yet.</div>`;
-  return msgs.map(m=>m.role==='user'
-    ?`<div style="margin-bottom:8px"><div style="font-size:.68rem;color:var(--muted);margin-bottom:2px">You asked</div><div style="font-size:.85rem;background:var(--surface2);border-radius:9px;padding:8px 12px;display:inline-block">${esc(m.text)}</div></div>`
-    :m.role==='error'
-    ?`<div style="margin-bottom:12px"><div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:8px 12px">${esc(m.text)}</div></div>`
-    :`<div style="margin-bottom:12px"><div style="font-size:.68rem;color:var(--muted);margin-bottom:2px">🤖 Pezzano Quality Assistant</div><div style="font-size:.85rem;background:rgba(0,180,216,.08);border:1px solid rgba(0,180,216,.2);border-radius:9px;padding:8px 12px;white-space:pre-wrap">${esc(m.text)}</div></div>`
-  ).join('');
-}
-async function askAI(productId){
-  const input=document.getElementById(`ai_chat_input_${productId}`);
-  const question=input?.value.trim();
-  if(!question)return;
-  const p=productPhotos.find(x=>x.id===productId);if(!p)return;
-  if(!aiChats[productId])aiChats[productId]=[];
-  aiChats[productId].push({role:'user',text:question});
-  input.value='';
-  const btn=document.getElementById(`ai_chat_send_${productId}`);
-  if(btn){btn.disabled=true;btn.textContent='Thinking…';}
-  const histEl=document.getElementById(`ai_chat_history_${productId}`);
-  if(histEl){histEl.innerHTML=renderAIChatHistory(productId)+`<div style="font-size:.8rem;color:var(--muted)">🤖 Thinking…</div>`;}
-  try{
-    const resp=await fetch('/api/ask-ai',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({question,product:{name:p.name,department:p.department,category:p.category,description:p.description,reject_note:p.reject_note,keywords:p.keywords}})
-    });
-    const data=await resp.json();
-    if(!resp.ok||!data.answer){
-      aiChats[productId].push({role:'error',text:data.error||"Couldn't get an answer — please try again."});
-    }else{
-      aiChats[productId].push({role:'assistant',text:data.answer});
-    }
-  }catch(e){
-    aiChats[productId].push({role:'error',text:"Couldn't reach the AI Assistant — check your connection and try again."});
-  }
-  if(btn){btn.disabled=false;btn.textContent='Ask';}
-  if(histEl)histEl.innerHTML=renderAIChatHistory(productId);
 }
 
 // ── DASHBOARD: general AI Quality Assistant (not tied to a single product) ──
