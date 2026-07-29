@@ -1655,12 +1655,13 @@ function openProductUpload(){
       </div>
       <div class="field full"><label>Description / Quality Standard</label><textarea id="p_desc" rows="3" placeholder="What good stock looks like: size, colour, grading notes, packing count, storage requirements…"></textarea></div>
       <div class="field full">
-        <label>Acceptable / Standard Photo (optional — can be added later from Edit Product)</label>
-        <div class="upload-drop" id="p_drop_good" onclick="document.getElementById('p_file_good').click()">📎 Click to choose the "acceptable" photo (JPG/PNG, max 10MB)</div>
+        <label>Standard Product Photo (optional)</label>
+        <div class="upload-drop" id="p_drop_good" onclick="document.getElementById('p_file_good').click()">📎 Click to choose a photo (JPG/PNG, max 10MB)</div>
         <input type="file" id="p_file_good" accept=".jpg,.jpeg,.png" style="display:none" onchange="showChosenFileInto(this,'p_drop_good')">
+        <span style="font-size:.72rem;color:var(--muted);margin-top:4px;display:block">This one photo is automatically used as both the product's thumbnail in the library and its default "Accept / Good Quality" reference — no need to upload it twice. You can leave this empty and add it later from Edit Product, or replace it any time.</span>
       </div>
       <div class="field full">
-        <label>Reject / Below-standard Photo (optional — enables a comparison question)</label>
+        <label>Reject / Below-standard Photo (optional, separate from the Standard Photo above — enables a comparison question)</label>
         <div class="upload-drop" id="p_drop_reject" onclick="document.getElementById('p_file_reject').click()">📎 Click to choose a "reject example" photo</div>
         <input type="file" id="p_file_reject" accept=".jpg,.jpeg,.png" style="display:none" onchange="showChosenFileInto(this,'p_drop_reject')">
       </div>
@@ -1840,13 +1841,14 @@ function editProduct(id){
       <div class="field full"><label>Reject note</label><input id="ep_reject_note" value="${esc(p.reject_note||'')}" placeholder="Why the reject example fails standard"></div>
       <div class="field full"><label>Search Keywords</label><input id="ep_keywords" value="${esc(p.keywords||'')}" placeholder="e.g. soft, black spots, overripe, mould, bruised"><span style="font-size:.72rem;color:var(--muted);margin-top:4px;display:block">Comma-separated words staff might search for.</span></div>
       <div class="field full">
-        <label>Acceptable / Standard Photo</label>
-        <img class="prod-thumb" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)}" style="width:120px;height:90px;display:block;margin-bottom:8px" onerror="this.style.display='none'">
-        <div class="upload-drop" id="ep_drop_good" onclick="document.getElementById('ep_file_good').click()">📎 Click to replace this photo (leave empty to keep current)</div>
+        <label>Standard Product Photo (thumbnail + Accept/Good Quality image)</label>
+        ${p.image_path?`<img class="prod-thumb" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)}" style="width:120px;height:90px;display:block;margin-bottom:8px" onerror="this.style.display='none'">`:`<div style="font-size:.75rem;color:var(--faint);margin-bottom:8px">No photo yet</div>`}
+        <div class="upload-drop" id="ep_drop_good" onclick="document.getElementById('ep_file_good').click()">📎 Click to ${p.image_path?'replace':'add'} this photo (leave empty to keep current)</div>
         <input type="file" id="ep_file_good" accept=".jpg,.jpeg,.png" style="display:none" onchange="showChosenFileInto(this,'ep_drop_good')">
+        <span style="font-size:.72rem;color:var(--muted);margin-top:4px;display:block">This single photo is used as the product's thumbnail everywhere in the library and as the "Accept / Good Quality" reference — uploading a new one here replaces both automatically.</span>
       </div>
       <div class="field full">
-        <label>Reject / Below-standard Photo</label>
+        <label>Reject / Below-standard Photo (kept separate from the Standard Photo above)</label>
         ${p.reject_image_path?`<img class="prod-thumb" data-img-path="${esc(p.reject_image_path)}" alt="reject example" style="width:120px;height:90px;display:block;margin-bottom:8px" onerror="this.style.display='none'">`:`<div style="font-size:.75rem;color:var(--faint);margin-bottom:8px">No reject example yet</div>`}
         <div class="upload-drop" id="ep_drop_reject" onclick="document.getElementById('ep_file_reject').click()">📎 Click to ${p.reject_image_path?'replace':'add'} the reject example photo (leave empty to keep current)</div>
         <input type="file" id="ep_file_reject" accept=".jpg,.jpeg,.png" style="display:none" onchange="showChosenFileInto(this,'ep_drop_reject')">
@@ -2141,7 +2143,7 @@ function renderProductDetail(){
     <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center">
       <div style="display:flex;gap:14px;flex-wrap:wrap">
         <div>
-          <img class="detail-hero" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)} — good example" onerror="this.style.display='none'">
+          ${p.image_path?`<img class="detail-hero" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)} — good example" onerror="this.style.display='none'">`:`<div class="detail-hero" style="display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:.8rem;text-align:center;padding:10px">📷 No standard photo yet</div>`}
           <div style="text-align:center;font-size:.72rem;color:var(--success);margin-top:5px;font-weight:600">✅ Good</div>
         </div>
         ${p.reject_image_path?`<div>
