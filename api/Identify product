@@ -1,0 +1,98 @@
+// api/identify-product.js
+// Vercel Serverless Function. Given a staff-taken photo and a list of candidate
+// product names (the department's products that have a reference photo), asks
+// Gemini which one the photo most likely shows. Cheap/fast — text + one image,
+// no reference photos fetched here. api/check-photo.js does the actual
+// good/reject comparison once the product is known.
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: 'GEMINI_API_KEY is not set on this Vercel project.' });
+  }
+
+  const { staffPhoto, candidates } = req.body || {};
+  if (!staffPhoto || typeof staffPhoto !== 'string') {
+    return res.status(400).json({ error: 'A photo is required.' });
+  }
+  if (!Array.isArray(candidates) || !candidates.length) {
+    return res.status(400).json({ error: 'No candidate products were provided.' });
+  }
+
+  function splitDataUrl(dataUrl) {
+    const match = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/.exec(dataUrl);
+    if (!match) return null;
+    return { mimeType: match[1], base64: match[2] };
+  }
+
+  try {
+    const img = splitDataUrl(staffPhoto);
+    if (!img) {
+      return res.status(400).json({ error: 'The photo was not in a readable format.' });
+    }
+
+    const nameList = candidates.map((c, i) => `${i + 1}. ${c.name}`).join('\n');
+    const prompt = `You are identifying a warehouse produce/product photo. Here is a numbered list of possible products it could be:
+${nameList}
+
+Look at the photo and decide which single numbered product it most likely shows. If you are not reasonably confident it matches any of them, say so.
+
+Respond with STRICT JSON ONLY, no markdown, no code fences, in exactly this shape:
+{"match": true|false, "index": <number from the list, or null>, "confidence": 0.0-1.0}`;
+
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            role: 'user',
+            parts: [
+              { text: prompt },
+              { inline_data: { mime_type: img.mimeType, data: img.base64 } }
+            ]
+          }],
+          generationConfig: { temperature: 0.1, maxOutputTokens: 150 }
+        })
+      }
+    );
+
+    if (!geminiRes.ok) {
+      const errText = await geminiRes.text();
+      console.error('Gemini error (identify-product):', errText);
+      return res.status(502).json({ error: 'The AI service returned an error. Please try again.' });
+    }
+
+    const data = await geminiRes.json();
+    let raw = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    if (!raw) {
+      return res.status(200).json({ productId: null });
+    }
+    raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '').trim();
+
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      console.error('Could not parse Gemini JSON (identify-product):', raw);
+      return res.status(200).json({ productId: null });
+    }
+
+    const idx = typeof parsed.index === 'number' ? parsed.index - 1 : -1;
+    const confidence = typeof parsed.confidence === 'number' ? parsed.confidence : 0;
+    // Require reasonable confidence before auto-selecting — low-confidence guesses
+    // fall back to the manual picker instead of silently checking the wrong product.
+    if (parsed.match && idx >= 0 && idx < candidates.length && confidence >= 0.5) {
+      return res.status(200).json({ productId: candidates[idx].id, productName: candidates[idx].name, confidence });
+    }
+    return res.status(200).json({ productId: null, confidence });
+  } catch (err) {
+    console.error('identify-product function error:', err);
+    return res.status(500).json({ error: 'Something went wrong reaching the AI service.' });
+  }
+}
