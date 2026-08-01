@@ -911,18 +911,22 @@ function renderDashboard(){
     </div>
     <div style="font-size:.68rem;color:var(--faint);margin-top:8px;line-height:1.4">This is an AI recommendation based on Pezzano standards. If you are unsure, follow your department's escalation procedure.</div>
   </div>`:''}
-  ${(()=>{const checkable=productPhotos.filter(pp=>pp.department===profile.department&&pp.image_path);return checkable.length?`<div class="card" style="margin-bottom:16px">
+ ${(()=>{const checkable=productPhotos.filter(pp=>pp.department===profile.department&&pp.image_path);return checkable.length?`<div class="card" style="margin-bottom:16px">
     <div class="card-title" style="margin-bottom:6px">📸 AI Photo Check</div>
-    <div style="font-size:.8rem;color:var(--muted);margin-bottom:10px">Pick the product, then take or upload a photo of the batch in front of you — the AI compares it against that product's reference photos and tells you if it looks acceptable.</div>
-    <select id="pc_dash_product" style="width:100%;padding:10px 12px;font-size:.85rem;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);margin-bottom:10px" onchange="dashPhotoCheckProductChanged()">
-      <option value="">Select a product…</option>
-      ${checkable.sort((a,b)=>a.name.localeCompare(b.name)).map(pp=>`<option value="${esc(pp.id)}">${esc(pp.name)}</option>`).join('')}
-    </select>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:10px">Take or upload a photo of the batch in front of you — the AI figures out which product it is and compares it against that product's reference photos automatically.</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
       <div class="upload-drop" id="pc_drop_dashboard" onclick="document.getElementById('pc_file_dashboard').click()" style="flex:1;min-width:220px">📷 Click to take/choose a photo to check</div>
       <input type="file" id="pc_file_dashboard" accept="image/*" capture="environment" style="display:none" onchange="handleDashPhotoCheckFile(this)">
     </div>
     <div id="pc_preview_dashboard" style="margin-top:10px"></div>
+    <div id="pc_manual_dashboard" style="margin-top:10px;display:none">
+      <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:6px">Couldn't confidently identify the product — please pick it manually:</label>
+      <select id="pc_dash_product" style="width:100%;padding:10px 12px;font-size:.85rem;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text)">
+        <option value="">Select a product…</option>
+        ${checkable.sort((a,b)=>a.name.localeCompare(b.name)).map(pp=>`<option value="${esc(pp.id)}">${esc(pp.name)}</option>`).join('')}
+      </select>
+      <button class="btn btn-primary" style="font-size:.82rem;margin-top:8px" onclick="runDashAIPhotoCheck(document.getElementById('pc_dash_product').value)">Check Against Selected Product</button>
+    </div>
     <div id="pc_result_dashboard" style="margin-top:10px"></div>
     <div style="font-size:.68rem;color:var(--faint);margin-top:8px;line-height:1.4">This is an AI recommendation based on Pezzano standards. If you are unsure or the product has unusual defects, follow your department's escalation procedure.</div>
   </div>`:'';})()}
@@ -2233,30 +2237,48 @@ function renderPhotoCheckResult(resultElId,data){
     ${data.explanation?`<div style="font-size:.82rem;color:var(--text);white-space:pre-wrap">${esc(data.explanation)}</div>`:''}
   </div>`;
 }
-// Dashboard-specific wiring: product is chosen from a dropdown rather than page context.
+// Dashboard-specific wiring: photo is taken/chosen first, product is auto-identified from it.
 let dashPhotoCheckFile=null;
-function dashPhotoCheckProductChanged(){
-  dashPhotoCheckFile=null;
-  const preview=document.getElementById('pc_preview_dashboard');if(preview)preview.innerHTML='';
-  const resultEl=document.getElementById('pc_result_dashboard');if(resultEl)resultEl.innerHTML='';
-}
 function handleDashPhotoCheckFile(input){
   const f=input.files[0];if(!f)return;
   dashPhotoCheckFile=f;
   const preview=document.getElementById('pc_preview_dashboard');
   const url=URL.createObjectURL(f);
-  if(preview)preview.innerHTML=`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-    <img src="${url}" style="width:96px;height:96px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">
-    <button class="btn btn-primary" style="font-size:.82rem" onclick="runDashAIPhotoCheck()">Check This Photo</button>
-  </div>`;
-  const resultEl=document.getElementById('pc_result_dashboard');if(resultEl)resultEl.innerHTML='';
+  if(preview)preview.innerHTML=`<img src="${url}" style="width:96px;height:96px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">`;
+  const manualEl=document.getElementById('pc_manual_dashboard');if(manualEl)manualEl.style.display='none';
+  const resultEl=document.getElementById('pc_result_dashboard');if(resultEl)resultEl.innerHTML=`<div style="font-size:.82rem;color:var(--muted)">🔍 Identifying product…</div>`;
+  autoIdentifyAndCheck();
 }
-async function runDashAIPhotoCheck(){
-  const sel=document.getElementById('pc_dash_product');
-  const p=productPhotos.find(x=>x.id===(sel?sel.value:''));
+async function autoIdentifyAndCheck(){
+  const resultEl=document.getElementById('pc_result_dashboard');
+  const checkable=productPhotos.filter(pp=>pp.department===profile.department&&pp.image_path);
+  if(!dashPhotoCheckFile||!checkable.length)return;
+  try{
+    const staffPhoto=await fileToBase64(dashPhotoCheckFile);
+    const resp=await fetch('/api/identify-product',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({staffPhoto,candidates:checkable.map(pp=>({id:pp.id,name:pp.name}))})
+    });
+    const data=await resp.json();
+    const match=data&&data.productId?checkable.find(pp=>pp.id===data.productId):null;
+    if(!match){
+      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;color:var(--muted)">Couldn't confidently identify the product from that photo.</div>`;
+      const manualEl=document.getElementById('pc_manual_dashboard');if(manualEl)manualEl.style.display='block';
+      return;
+    }
+    if(resultEl)resultEl.innerHTML=`<div style="font-size:.82rem;color:var(--muted);margin-bottom:6px">Identified as: <strong style="color:var(--text)">${esc(match.name)}</strong></div><div style="font-size:.82rem;color:var(--muted)">🤖 Checking photo…</div>`;
+    await performAIPhotoCheck(dashPhotoCheckFile,match,'pc_result_dashboard');
+  }catch(e){
+    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:8px 12px">Couldn't identify the product automatically — please try again or pick it manually.</div>`;
+    const manualEl=document.getElementById('pc_manual_dashboard');if(manualEl)manualEl.style.display='block';
+  }
+}
+async function runDashAIPhotoCheck(productId){
+  const p=productPhotos.find(x=>x.id===productId);
   const resultEl=document.getElementById('pc_result_dashboard');
   if(!p){if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:8px 12px">Pick a product first.</div>`;return;}
   if(!dashPhotoCheckFile)return;
+  if(resultEl)resultEl.innerHTML=`<div style="font-size:.82rem;color:var(--muted)">🤖 Checking photo…</div>`;
   await performAIPhotoCheck(dashPhotoCheckFile,p,'pc_result_dashboard');
 }
 
@@ -2282,10 +2304,16 @@ async function askDashboardAI(){
   const histEl=document.getElementById('ai_chat_history_dashboard');
   if(histEl){histEl.innerHTML=renderDashboardAIChatHistory()+`<div style="font-size:.8rem;color:var(--muted)">🤖 Thinking…</div>`;}
   try{
+    // Retrieval step: search this employee's accessible products for anything
+    // relevant to the question, and hand the AI the real matching data —
+    // not a blank placeholder.
+    const otherDepts=DEPARTMENTS.filter(d=>d!==profile.department&&!libraryHiddenDepts.includes(d));
+    const pool=productPhotos.filter(p=>p.department===profile.department||otherDepts.includes(p.department));
+    const matches=searchProducts(question,pool).slice(0,5).map(r=>({name:r.p.name,department:r.p.department,category:r.p.category,description:r.p.description,reject_note:r.p.reject_note,keywords:r.p.keywords}));
     const resp=await fetch('/api/ask-ai',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({question,product:{name:'General question',department:profile.department,category:'',description:'',reject_note:'',keywords:''}})
+      body:JSON.stringify({question,products:matches})
     });
     const data=await resp.json();
     if(!resp.ok||!data.answer){
