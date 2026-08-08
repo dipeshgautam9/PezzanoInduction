@@ -803,12 +803,14 @@ sb.auth.onAuthStateChange(async(event,session)=>{if(event==='PASSWORD_RECOVERY')
 })();
 
 document.addEventListener('keydown',e=>{
-  if(e.key==='Enter'){
-    e.preventDefault();
-    if(document.getElementById('panel-signin').style.display!=='none')doSignIn();
-    else if(document.getElementById('panel-forgot').style.display!=='none')doForgotPassword();
-    else if(document.getElementById('panel-reset').style.display!=='none')doResetPassword();
-  }
+  // Only intercept Enter for the login screen — never interfere with the app's own inputs.
+  if(e.key!=='Enter')return;
+  const loginScreen=document.getElementById('loginScreen');
+  if(!loginScreen||loginScreen.classList.contains('hidden'))return; // app is showing — do nothing
+  e.preventDefault();
+  if(document.getElementById('panel-signin').style.display!=='none')doSignIn();
+  else if(document.getElementById('panel-forgot').style.display!=='none')doForgotPassword();
+  else if(document.getElementById('panel-reset').style.display!=='none')doResetPassword();
 });
 
 // ── INIT ──────────────────────────────────────────────────────
@@ -2012,8 +2014,12 @@ function renderProductLibrary(){
   const myDept=profile.department;
   return`<div style="max-width:1100px">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-    <button class="btn btn-ghost" onclick="view='dashboard';renderView()">← Back</button>
+    <button class="btn btn-ghost" onclick="librarySearchQuery='';view='dashboard';renderView()">← Back to Dashboard</button>
     <div><div style="font-size:1.15rem;font-weight:700">Product Reference Library</div><div style="font-size:.78rem;color:var(--muted)">Your department shows full quality detail. Other departments are reference-only.</div></div>
+  </div>
+  <div style="position:relative;margin-bottom:14px">
+    <input id="lib_search_input" value="${esc(librarySearchQuery)}" oninput="librarySearchQuery=this.value;refreshLibraryResults()" placeholder="🔍 Search any product... e.g. soft tomato, black banana, mould" style="width:100%;padding:12px 44px 12px 14px;font-size:.9rem;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text)">
+    ${librarySearchQuery?`<button onclick="librarySearchQuery='';document.getElementById('lib_search_input').value='';refreshLibraryResults()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:1rem;cursor:pointer;line-height:1" title="Clear search">✕</button>`:''}
   </div>
   <div id="lib_results_wrap">${renderLibraryResultsInner(myDept)}</div>
   </div>`;
@@ -2244,33 +2250,76 @@ function handleDashPhotoCheckFile(input){
   dashPhotoCheckFile=f;
   const preview=document.getElementById('pc_preview_dashboard');
   const url=URL.createObjectURL(f);
-  if(preview)preview.innerHTML=`<img src="${url}" style="width:96px;height:96px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">`;
+  if(preview)preview.innerHTML=`<img src="${url}" style="width:120px;height:120px;object-fit:cover;border-radius:10px;border:1px solid var(--border);display:block;margin-bottom:8px"><div style="font-size:.78rem;color:var(--muted)">Analysing your photo…</div>`;
   const manualEl=document.getElementById('pc_manual_dashboard');if(manualEl)manualEl.style.display='none';
-  const resultEl=document.getElementById('pc_result_dashboard');if(resultEl)resultEl.innerHTML=`<div style="font-size:.82rem;color:var(--muted)">🔍 Identifying product…</div>`;
+  const resultEl=document.getElementById('pc_result_dashboard');if(resultEl)resultEl.innerHTML=`<div style="font-size:.82rem;color:var(--muted)">🔍 Identifying product from photo…</div>`;
   autoIdentifyAndCheck();
 }
 async function autoIdentifyAndCheck(){
   const resultEl=document.getElementById('pc_result_dashboard');
-  const checkable=productPhotos.filter(pp=>pp.department===profile.department&&pp.image_path);
-  if(!dashPhotoCheckFile||!checkable.length)return;
+  // Include ALL products in this department for identification — not just those with photos —
+  // so the AI can still name the product even if no reference photo is loaded yet.
+  const allDeptProducts=productPhotos.filter(pp=>pp.department===profile.department);
+  if(!dashPhotoCheckFile||!allDeptProducts.length)return;
   try{
     const staffPhoto=await fileToBase64(dashPhotoCheckFile);
     const resp=await fetch('/api/identify-product',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({staffPhoto,candidates:checkable.map(pp=>({id:pp.id,name:pp.name}))})
+      body:JSON.stringify({staffPhoto,candidates:allDeptProducts.map(pp=>({id:pp.id,name:pp.name,category:pp.category}))})
     });
+    if(!resp.ok){
+      const errData=await resp.json().catch(()=>({}));
+      throw new Error(errData.error||'Server error');
+    }
     const data=await resp.json();
-    const match=data&&data.productId?checkable.find(pp=>pp.id===data.productId):null;
+    const match=data&&data.productId?allDeptProducts.find(pp=>pp.id===data.productId):null;
     if(!match){
-      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;color:var(--muted)">Couldn't confidently identify the product from that photo.</div>`;
+      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);color:var(--warning);border-radius:9px;padding:10px 14px">⚠ Couldn't confidently identify the product from that photo. Please pick it from the list below to check manually.</div>`;
       const manualEl=document.getElementById('pc_manual_dashboard');if(manualEl)manualEl.style.display='block';
       return;
     }
-    if(resultEl)resultEl.innerHTML=`<div style="font-size:.82rem;color:var(--muted);margin-bottom:6px">Identified as: <strong style="color:var(--text)">${esc(match.name)}</strong></div><div style="font-size:.82rem;color:var(--muted)">🤖 Checking photo…</div>`;
-    await performAIPhotoCheck(dashPhotoCheckFile,match,'pc_result_dashboard');
+    const confPct=data.confidence?Math.round(data.confidence*100):null;
+    if(resultEl)resultEl.innerHTML=`<div style="background:rgba(0,180,216,.08);border:1px solid rgba(0,180,216,.2);border-radius:9px;padding:10px 14px;margin-bottom:8px">
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:2px">Identified as</div>
+      <div style="font-size:1.05rem;font-weight:700;color:var(--text)">${esc(match.name)}</div>
+      ${confPct?`<div style="font-size:.72rem;color:var(--muted);margin-top:2px">${confPct}% confidence</div>`:''}
+    </div>
+    <div style="font-size:.82rem;color:var(--muted)">🤖 Checking quality…</div>`;
+    // If the matched product has a reference photo, run the full visual comparison.
+    // If it doesn't, run a text-only quality assessment using the description/criteria.
+    if(match.image_path){
+      await performAIPhotoCheck(dashPhotoCheckFile,match,'pc_result_dashboard');
+    }else{
+      // No reference photo yet — ask the AI to assess based on criteria text only.
+      await performTextOnlyPhotoCheck(dashPhotoCheckFile,match,'pc_result_dashboard');
+    }
   }catch(e){
-    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:8px 12px">Couldn't identify the product automatically — please try again or pick it manually.</div>`;
+    console.error('autoIdentifyAndCheck error:',e);
+    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">Couldn't identify the product — please try again with a clearer photo, or pick manually below.</div>`;
     const manualEl=document.getElementById('pc_manual_dashboard');if(manualEl)manualEl.style.display='block';
+  }
+}
+// Text-only quality check when no reference photo is available yet.
+async function performTextOnlyPhotoCheck(file,p,resultElId){
+  const resultEl=document.getElementById(resultElId);
+  try{
+    const staffPhoto=await fileToBase64(file);
+    const resp=await fetch('/api/check-photo',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        staffPhoto,
+        product:{name:p.name,department:p.department,category:p.category,description:p.description,reject_note:p.reject_note,keywords:p.keywords},
+        referenceGoodUrl:null,referenceRejectUrl:null,textOnlyMode:true
+      })
+    });
+    const data=await resp.json();
+    if(!resp.ok||!data.verdict){
+      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">${esc(data.error||"Couldn't check that photo — please try again.")}</div>`;
+      return;
+    }
+    renderPhotoCheckResult(resultElId,data);
+  }catch(e){
+    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">Couldn't reach the AI service — check your connection and try again.</div>`;
   }
 }
 async function runDashAIPhotoCheck(productId){
@@ -2278,8 +2327,12 @@ async function runDashAIPhotoCheck(productId){
   const resultEl=document.getElementById('pc_result_dashboard');
   if(!p){if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:8px 12px">Pick a product first.</div>`;return;}
   if(!dashPhotoCheckFile)return;
-  if(resultEl)resultEl.innerHTML=`<div style="font-size:.82rem;color:var(--muted)">🤖 Checking photo…</div>`;
-  await performAIPhotoCheck(dashPhotoCheckFile,p,'pc_result_dashboard');
+  if(resultEl)resultEl.innerHTML=`<div style="font-size:.82rem;color:var(--muted)">🤖 Checking against ${esc(p.name)}…</div>`;
+  if(p.image_path){
+    await performAIPhotoCheck(dashPhotoCheckFile,p,'pc_result_dashboard');
+  }else{
+    await performTextOnlyPhotoCheck(dashPhotoCheckFile,p,'pc_result_dashboard');
+  }
 }
 
 // ── DASHBOARD: general AI Quality Assistant (not tied to a single product) ──
@@ -2304,16 +2357,23 @@ async function askDashboardAI(){
   const histEl=document.getElementById('ai_chat_history_dashboard');
   if(histEl){histEl.innerHTML=renderDashboardAIChatHistory()+`<div style="font-size:.8rem;color:var(--muted)">🤖 Thinking…</div>`;}
   try{
-    // Retrieval step: search this employee's accessible products for anything
-    // relevant to the question, and hand the AI the real matching data —
-    // not a blank placeholder.
+    // Retrieval: search all visible products for anything relevant to the question.
+    // If keyword search finds nothing, fall back to sending ALL products from the
+    // employee's own department — so the AI always has real data to reason from
+    // rather than saying "no information found."
     const otherDepts=DEPARTMENTS.filter(d=>d!==profile.department&&!libraryHiddenDepts.includes(d));
-    const pool=productPhotos.filter(p=>p.department===profile.department||otherDepts.includes(p.department));
-    const matches=searchProducts(question,pool).slice(0,5).map(r=>({name:r.p.name,department:r.p.department,category:r.p.category,description:r.p.description,reject_note:r.p.reject_note,keywords:r.p.keywords}));
+    const allVisible=productPhotos.filter(p=>p.department===profile.department||otherDepts.includes(p.department));
+    let matches=searchProducts(question,allVisible).slice(0,6).map(r=>r.p);
+    if(!matches.length){
+      // No keyword match — send the employee's own department products so the AI
+      // can still reason from real Pezzano data rather than giving a "no data" response.
+      matches=productPhotos.filter(p=>p.department===profile.department).slice(0,8);
+    }
+    const products=matches.map(p=>({name:p.name,department:p.department,category:p.category,description:p.description,reject_note:p.reject_note,keywords:p.keywords}));
     const resp=await fetch('/api/ask-ai',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({question,products:matches})
+      body:JSON.stringify({question,products})
     });
     const data=await resp.json();
     if(!resp.ok||!data.answer){
