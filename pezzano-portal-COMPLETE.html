@@ -460,7 +460,7 @@ async function loadEmployeeDocs(empId){
 // ── PRODUCT TRAINING: LOAD ──────────────────────────────────────
 async function loadProductPhotos(){
   try{
-    const{data,error}=await sb.from('product_photos').select('*').order('department').order('category').order('name');
+    const{data,error}=await sb.from('product_photos').select('*').order('sort_order',{ascending:true,nullsFirst:false}).order('name');
     if(!error)productPhotos=data||[];
   }catch(e){productPhotos=[];}
 }
@@ -917,8 +917,12 @@ function renderDashboard(){
     <div class="card-title" style="margin-bottom:6px">📸 AI Photo Check</div>
     <div style="font-size:.8rem;color:var(--muted);margin-bottom:10px">Take or upload a photo of the batch in front of you — the AI figures out which product it is and compares it against that product's reference photos automatically.</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      <div class="upload-drop" id="pc_drop_dashboard" onclick="document.getElementById('pc_file_dashboard').click()" style="flex:1;min-width:220px">📷 Click to take/choose a photo to check</div>
-      <input type="file" id="pc_file_dashboard" accept="image/*" capture="environment" style="display:none" onchange="handleDashPhotoCheckFile(this)">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div class="upload-drop" id="pc_drop_dashboard" onclick="document.getElementById('pc_file_gallery').click()" style="flex:1;min-width:180px">🖼️ Upload from gallery / files</div>
+        <div class="upload-drop" onclick="document.getElementById('pc_file_camera').click()" style="flex:1;min-width:180px">📷 Take a photo now</div>
+      </div>
+      <input type="file" id="pc_file_gallery" accept="image/*" style="display:none" onchange="handleDashPhotoCheckFile(this)">
+      <input type="file" id="pc_file_camera" accept="image/*" capture="environment" style="display:none" onchange="handleDashPhotoCheckFile(this)">
     </div>
     <div id="pc_preview_dashboard" style="margin-top:10px"></div>
     <div id="pc_manual_dashboard" style="margin-top:10px;display:none">
@@ -1718,7 +1722,8 @@ async function saveProduct(){
     const{error:rejErr}=await sb.storage.from('product-photos').upload(rejectPath,rejectFile,{contentType:rejectFile.type});
     if(rejErr){console.warn('Reject photo upload failed:',rejErr.message);rejectPath=null;}
   }
-  const{error}=await sb.from('product_photos').insert({name,department:dept,category:cat,description:desc,keywords,image_path:goodPath||'',reject_image_path:rejectPath,reject_note:rejectPath?rejectNote:null,is_essential:essential,uploaded_by:profile.id,updated_by:profile.id,updated_at:new Date().toISOString()});
+  const nextOrder=productPhotos.length?Math.max(0,...productPhotos.map(p=>p.sort_order||0))+1:1;
+  const{error}=await sb.from('product_photos').insert({name,department:dept,category:cat,description:desc,keywords,image_path:goodPath||'',reject_image_path:rejectPath,reject_note:rejectPath?rejectNote:null,is_essential:essential,sort_order:nextOrder,uploaded_by:profile.id,updated_by:profile.id,updated_at:new Date().toISOString()});
   if(error){showMsg('p_msg','Error: '+error.message,'error');btn.disabled=false;btn.textContent='Save Product';return;}
   await loadProductPhotos();if(adminProductDept!==ADMIN_ALL_DEPTS)adminProductDept=dept;closeModal();
   logAudit('Product added',`${name} (${dept}, ${cat})`);
@@ -1822,7 +1827,9 @@ async function saveBulkImport(){
   const btn=document.getElementById('bi_btn');btn.disabled=true;btn.textContent='Importing…';
   const rows=bulkImportRows.filter(r=>!r.errors.length);
   if(!rows.length){showMsg('bi_msg','No valid rows to import.','error');btn.disabled=false;btn.textContent='Import Products';return;}
-  const payload=rows.map(r=>({name:r.name,department:r.department,category:r.category,description:r.description||null,keywords:r.keywords||null,image_path:'',reject_image_path:null,is_essential:r.essential,uploaded_by:profile.id,updated_by:profile.id,updated_at:new Date().toISOString()}));
+  // Get the current highest sort_order so new imports always append after existing products
+  const maxExisting=productPhotos.length?Math.max(0,...productPhotos.map(p=>p.sort_order||0)):0;
+  const payload=rows.map((r,i)=>({name:r.name,department:r.department,category:r.category,description:r.description||null,keywords:r.keywords||null,image_path:'',reject_image_path:null,is_essential:r.essential,sort_order:maxExisting+i+1,uploaded_by:profile.id,updated_by:profile.id,updated_at:new Date().toISOString()}));
   const{error}=await sb.from('product_photos').insert(payload);
   if(error){showMsg('bi_msg','Import error: '+error.message,'error');btn.disabled=false;btn.textContent='Import Products';return;}
   await loadProductPhotos();closeModal();
