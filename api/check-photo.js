@@ -51,13 +51,28 @@ ${productInfo}
 
 Look at the staff's photo and assess whether the product appears to meet the accept criteria or fails the reject criteria. Be practical and direct.
 
-Respond with STRICT JSON ONLY:
-{"verdict":"pass"|"fail"|"uncertain","confidence":0.0-1.0,"explanation":"one or two plain sentences for a warehouse floor"}`;
+Also score similarity (0–100) based on how closely the batch matches what an acceptable version of this product should look like — 100 means perfect, 0 means completely wrong.
+
+Include a breakdown of up to 5 visual attributes you can actually observe (e.g. Colour, Ripeness, Damage, Size, Cleanliness). Only include attributes visible in the photo — do not invent ones you cannot see.
+
+Respond with STRICT JSON ONLY — no markdown, no extra text:
+{
+  "verdict": "pass" | "fail" | "uncertain",
+  "confidence": 0.0–1.0,
+  "similarity": 0–100,
+  "explanation": "one or two plain sentences for a warehouse floor worker",
+  "breakdown": [
+    { "label": "Colour", "ok": true },
+    { "label": "Ripeness", "ok": false }
+  ]
+}`;
+
       parts = [
         { text: systemText },
         { text: 'STAFF PHOTO to assess:' },
         { inline_data: { mime_type: staffImg.mimeType, data: staffImg.base64 } }
       ];
+
     } else {
       // Full visual comparison mode with reference photos
       const goodImg = await urlToBase64(referenceGoodUrl);
@@ -73,8 +88,21 @@ Rules:
 - If the staff photo is too dark, blurry, or unclear to judge, say "uncertain" — don't guess.
 - Be direct and practical — this answer goes to a warehouse floor worker.
 
-Respond with STRICT JSON ONLY:
-{"verdict":"pass"|"fail"|"uncertain","confidence":0.0-1.0,"explanation":"one or two plain sentences"}`;
+Also score similarity (0–100) based on how closely the staff photo matches the GOOD reference photo — 100 means identical quality, 0 means completely different.
+
+Include a breakdown of up to 5 visual attributes you can actually observe (e.g. Colour, Firmness, Damage, Shape, Freshness). Only include attributes that are visible in the photos — do not invent ones you cannot see.
+
+Respond with STRICT JSON ONLY — no markdown, no extra text:
+{
+  "verdict": "pass" | "fail" | "uncertain",
+  "confidence": 0.0–1.0,
+  "similarity": 0–100,
+  "explanation": "one or two plain sentences for a warehouse floor worker",
+  "breakdown": [
+    { "label": "Colour", "ok": true },
+    { "label": "Firmness", "ok": false }
+  ]
+}`;
 
       parts = [
         { text: systemText },
@@ -96,7 +124,7 @@ Respond with STRICT JSON ONLY:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ role: 'user', parts }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 300 }
+          generationConfig: { temperature: 0.1, maxOutputTokens: 400 }
         })
       }
     );
@@ -122,17 +150,28 @@ Respond with STRICT JSON ONLY:
         return res.status(200).json({
           verdict: verdictMatch[1].toLowerCase(),
           confidence: null,
-          explanation: explanationMatch ? explanationMatch[1] : raw.replace(/[{}"]/g, '').substring(0, 200)
+          similarity: null,
+          explanation: explanationMatch ? explanationMatch[1] : raw.replace(/[{}"]/g, '').substring(0, 200),
+          breakdown: []
         });
       }
       return res.status(502).json({ error: 'Could not read the AI response. Please try again.' });
     }
 
+    // Validate and sanitise breakdown: must be array of {label:string, ok:boolean}, max 5 items
+    const rawBreakdown = Array.isArray(parsed.breakdown) ? parsed.breakdown : [];
+    const breakdown = rawBreakdown
+      .filter(b => b && typeof b.label === 'string' && typeof b.ok === 'boolean')
+      .slice(0, 5);
+
     return res.status(200).json({
-      verdict: ['pass','fail','uncertain'].includes(parsed.verdict) ? parsed.verdict : 'uncertain',
-      confidence: typeof parsed.confidence === 'number' ? Math.max(0, Math.min(1, parsed.confidence)) : null,
-      explanation: typeof parsed.explanation === 'string' ? parsed.explanation : ''
+      verdict:     ['pass','fail','uncertain'].includes(parsed.verdict) ? parsed.verdict : 'uncertain',
+      confidence:  typeof parsed.confidence === 'number' ? Math.max(0, Math.min(1, parsed.confidence)) : null,
+      similarity:  typeof parsed.similarity === 'number' ? Math.max(0, Math.min(100, Math.round(parsed.similarity))) : null,
+      explanation: typeof parsed.explanation === 'string' ? parsed.explanation : '',
+      breakdown
     });
+
   } catch (err) {
     console.error('check-photo error:', err);
     return res.status(500).json({ error: 'Something went wrong. Please try again.' });
