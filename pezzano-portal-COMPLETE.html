@@ -913,39 +913,25 @@ function renderDashboard(){
     </div>
     <div style="font-size:.68rem;color:var(--faint);margin-top:8px;line-height:1.4">This is an AI recommendation based on Pezzano standards. If you are unsure, follow your department's escalation procedure.</div>
   </div>`:''}
- ${(()=>{const checkable=productPhotos.filter(pp=>pp.department===profile.department&&pp.image_path);return checkable.length?`<div class="card" style="margin-bottom:16px">
+ ${(()=>{const checkable=productPhotos.filter(pp=>pp.department===profile.department);return checkable.length?`<div class="card" style="margin-bottom:16px">
     <div class="card-title" style="margin-bottom:6px">📸 AI Photo Check</div>
-    <div style="font-size:.8rem;color:var(--muted);margin-bottom:12px">Select a product, then take or upload a photo — the AI compares it against the reference library and shows you a similarity score.</div>
-
-    <!-- Step 1: Product picker with live search filter -->
-    <div style="margin-bottom:12px">
-      <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:5px">① Select Product</label>
-      <input id="pc_search_dashboard" placeholder="Type to filter — e.g. banana, tomato…" autocomplete="off"
-        style="width:100%;padding:10px 13px;font-size:.88rem;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);outline:none;font-family:var(--font);margin-bottom:6px"
-        oninput="filterPcProducts(this.value)" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
-      <select id="pc_dash_product"
-        style="width:100%;padding:10px 12px;font-size:.85rem;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);outline:none"
-        onchange="onPcProductChange(this.value)">
-        <option value="">— choose a product —</option>
-        ${checkable.sort((a,b)=>a.name.localeCompare(b.name)).map(pp=>`<option value="${esc(pp.id)}">${esc(pp.name)}</option>`).join('')}
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:12px">Pick the product, then take or upload a photo — the AI checks it against Pezzano's quality standard for that product.</div>
+    <div style="margin-bottom:10px">
+      <input id="pc_search_box" placeholder="🔍 Type product name to find it..." oninput="filterPhotoCheckProducts(this.value)" style="width:100%;padding:10px 13px;font-size:.88rem;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);margin-bottom:8px">
+      <select id="pc_dash_product" size="4" onchange="onPhotoCheckProductSelected()" style="width:100%;padding:6px 10px;font-size:.85rem;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);min-height:100px">
+        ${checkable.map(pp=>`<option value="${esc(pp.id)}">${esc(pp.name)}</option>`).join('')}
       </select>
     </div>
-
-    <!-- Step 2: photo upload/capture — hidden until product chosen -->
-    <div id="pc_step2_dashboard" style="display:none">
-      <label style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:6px">② Take or upload photo of this batch</label>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <div class="upload-drop" onclick="document.getElementById('pc_file_gallery').click()" style="flex:1;min-width:150px">🖼️ Upload from gallery / files</div>
-        <div class="upload-drop" onclick="document.getElementById('pc_file_camera').click()" style="flex:1;min-width:150px">📷 Take a photo now</div>
-      </div>
-      <input type="file" id="pc_file_gallery" accept="image/*" style="display:none" onchange="handleDashPhotoCheckFile(this)">
-      <input type="file" id="pc_file_camera" accept="image/*" capture="environment" style="display:none" onchange="handleDashPhotoCheckFile(this)">
+    <div id="pc_selected_label" style="font-size:.82rem;color:var(--muted);margin-bottom:8px">No product selected — pick one above first.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;display:none" id="pc_upload_area">
+      <div class="upload-drop" onclick="document.getElementById('pc_file_gallery').click()" style="flex:1;min-width:160px">🖼️ Upload from gallery</div>
+      <div class="upload-drop" onclick="document.getElementById('pc_file_camera').click()" style="flex:1;min-width:160px">📷 Take a photo now</div>
     </div>
-
-    <!-- Preview + result -->
+    <input type="file" id="pc_file_gallery" accept="image/*" style="display:none" onchange="handleDashPhotoCheckFile(this)">
+    <input type="file" id="pc_file_camera" accept="image/*" capture="environment" style="display:none" onchange="handleDashPhotoCheckFile(this)">
     <div id="pc_preview_dashboard" style="margin-top:10px"></div>
     <div id="pc_result_dashboard" style="margin-top:10px"></div>
-    <div style="font-size:.68rem;color:var(--faint);margin-top:8px;line-height:1.4">AI recommendation only — based on Pezzano reference standards. If unsure, follow your department's escalation procedure.</div>
+    <div style="font-size:.68rem;color:var(--faint);margin-top:8px;line-height:1.4">This is an AI recommendation based on Pezzano standards. If you are unsure or the product has unusual defects, follow your department's escalation procedure.</div>
   </div>`:'';})()}
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">My Details</div>
@@ -2210,11 +2196,9 @@ function renderProductDetail(){
   </div>`;
 }
 
-// ── AI Photo Check — select product FIRST, then take/upload photo.
-// The AI compares the staff photo against reference library images and returns
-// a verdict, similarity score, confidence %, and visual observations.
-// Nothing here is persisted or saved.
-
+// ── AI Photo Check — compares a staff-taken photo against a product's reference
+// good/reject images. Lives on the dashboard (product picked via dropdown, not
+// tied to a single product page). Nothing here is persisted or saved.
 function fileToBase64(file){
   return new Promise((resolve,reject)=>{
     const reader=new FileReader();
@@ -2223,60 +2207,9 @@ function fileToBase64(file){
     reader.readAsDataURL(file);
   });
 }
-
-// ── Product picker: live text filter on the select element ──
-function filterPcProducts(query){
-  const sel=document.getElementById('pc_dash_product');if(!sel)return;
-  const q=query.trim().toLowerCase();
-  const checkable=productPhotos.filter(pp=>pp.department===profile.department&&pp.image_path).sort((a,b)=>a.name.localeCompare(b.name));
-  const filtered=q?checkable.filter(pp=>pp.name.toLowerCase().includes(q)||pp.category.toLowerCase().includes(q)):checkable;
-  sel.innerHTML=`<option value="">— choose a product —</option>`+filtered.map(pp=>`<option value="${esc(pp.id)}">${esc(pp.name)}</option>`).join('');
-  // Keep current selection if it still matches
-  if(sel._chosen&&filtered.find(pp=>pp.id===sel._chosen))sel.value=sel._chosen;
-  else{sel.value='';onPcProductChange('');}
-}
-
-// ── Show step 2 (photo capture) only after a product is chosen ──
-function onPcProductChange(productId){
-  const sel=document.getElementById('pc_dash_product');if(sel)sel._chosen=productId||'';
-  const step2=document.getElementById('pc_step2_dashboard');
-  const preview=document.getElementById('pc_preview_dashboard');
-  const result=document.getElementById('pc_result_dashboard');
-  if(!productId){
-    if(step2)step2.style.display='none';
-    if(preview)preview.innerHTML='';
-    if(result)result.innerHTML='';
-    dashPhotoCheckFile=null;
-    return;
-  }
-  if(step2)step2.style.display='block';
-  if(preview)preview.innerHTML='';
-  if(result)result.innerHTML='';
-  dashPhotoCheckFile=null;
-}
-
-// ── Handle file chosen / camera taken ──
-let dashPhotoCheckFile=null;
-function handleDashPhotoCheckFile(input){
-  const f=input.files[0];if(!f)return;
-  dashPhotoCheckFile=f;
-  const productId=document.getElementById('pc_dash_product')?.value;
-  if(!productId){
-    // Shouldn't happen (step2 hidden until product chosen) but guard anyway
-    const resultEl=document.getElementById('pc_result_dashboard');
-    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);color:var(--warning);border-radius:9px;padding:10px 14px">⚠ Please select a product first.</div>`;
-    return;
-  }
-  const preview=document.getElementById('pc_preview_dashboard');
-  const url=URL.createObjectURL(f);
-  if(preview)preview.innerHTML=`<img src="${url}" style="width:120px;height:120px;object-fit:cover;border-radius:10px;border:1px solid var(--border);display:block;margin-bottom:6px">`;
-  runDashAIPhotoCheck(productId);
-}
-
-// ── Core quality check — fetches signed reference URLs then calls /api/check-photo ──
 async function performAIPhotoCheck(file,p,resultElId){
   const resultEl=document.getElementById(resultElId);
-  if(resultEl)resultEl.innerHTML=`<div style="font-size:.82rem;color:var(--muted)">🤖 Comparing against reference library…</div>`;
+  if(resultEl)resultEl.innerHTML=`<div style="font-size:.82rem;color:var(--muted)">🤖 Checking photo…</div>`;
   try{
     const staffPhoto=await fileToBase64(file);
     let referenceGoodUrl=null,referenceRejectUrl=null;
@@ -2288,55 +2221,86 @@ async function performAIPhotoCheck(file,p,resultElId){
       body:JSON.stringify({
         staffPhoto,
         product:{name:p.name,department:p.department,category:p.category,description:p.description,reject_note:p.reject_note,keywords:p.keywords},
-        referenceGoodUrl,referenceRejectUrl,
-        // Ask the API to return similarity + detailed visual breakdown
-        requestSimilarity:true
+        referenceGoodUrl,referenceRejectUrl
       })
     });
     const data=await resp.json();
     if(!resp.ok||!data.verdict){
-      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">${esc(data.error||"Couldn't check that photo — please try again.")}</div>`;
+      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:8px 12px">${esc(data.error||"Couldn't check that photo — please try again.")}</div>`;
       return;
     }
-    renderPhotoCheckResult(resultElId,data,p.name);
+    renderPhotoCheckResult(resultElId,data);
   }catch(e){
-    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">Couldn't reach the AI service — check your connection and try again.</div>`;
+    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:8px 12px">Couldn't reach the AI Assistant — check your connection and try again.</div>`;
   }
 }
+function renderPhotoCheckResult(resultElId,data){
+  const resultEl=document.getElementById(resultElId);if(!resultEl)return;
+  const verdict=String(data.verdict||'').toLowerCase();
+  const style=verdict==='pass'
+    ?{bg:'rgba(74,222,128,.1)',border:'rgba(74,222,128,.3)',color:'var(--success)',icon:'✅',label:'Looks acceptable'}
+    :verdict==='fail'
+    ?{bg:'rgba(248,113,113,.1)',border:'rgba(248,113,113,.3)',color:'var(--error)',icon:'❌',label:'Does not match standard'}
+    :{bg:'rgba(251,191,36,.1)',border:'rgba(251,191,36,.3)',color:'var(--warning)',icon:'⚠',label:'Uncertain — check manually'};
+  resultEl.innerHTML=`<div style="background:${style.bg};border:1px solid ${style.border};border-radius:9px;padding:10px 14px">
+    <div style="font-weight:600;color:${style.color};font-size:.88rem;margin-bottom:4px">${style.icon} ${esc(style.label)}${typeof data.confidence==='number'?` &middot; ${Math.round(data.confidence*100)}% confidence`:''}</div>
+    ${data.explanation?`<div style="font-size:.82rem;color:var(--text);white-space:pre-wrap">${esc(data.explanation)}</div>`:''}
+  </div>`;
+}
+// Dashboard-specific wiring: photo is taken/chosen first, product is auto-identified from it.
+let dashPhotoCheckFile=null;
+let dashPhotoCheckProductId=null;
 
-// ── Text-only check when no reference photo is stored yet ──
-async function performTextOnlyPhotoCheck(file,p,resultElId){
-  const resultEl=document.getElementById(resultElId);
-  if(resultEl)resultEl.innerHTML=`<div style="font-size:.82rem;color:var(--muted)">🤖 Checking against quality criteria…</div>`;
-  try{
-    const staffPhoto=await fileToBase64(file);
-    const resp=await fetch('/api/check-photo',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        staffPhoto,
-        product:{name:p.name,department:p.department,category:p.category,description:p.description,reject_note:p.reject_note,keywords:p.keywords},
-        referenceGoodUrl:null,referenceRejectUrl:null,textOnlyMode:true,requestSimilarity:true
-      })
-    });
-    const data=await resp.json();
-    if(!resp.ok||!data.verdict){
-      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">${esc(data.error||"Couldn't check that photo — please try again.")}</div>`;
-      return;
-    }
-    renderPhotoCheckResult(resultElId,data,p.name);
-  }catch(e){
-    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">Couldn't reach the AI service — check your connection and try again.</div>`;
-  }
+// Filter the product list as the user types
+function filterPhotoCheckProducts(query){
+  const sel=document.getElementById('pc_dash_product');if(!sel)return;
+  const q=query.trim().toLowerCase();
+  Array.from(sel.options).forEach(opt=>{
+    opt.style.display=(!q||opt.text.toLowerCase().includes(q))?'':'none';
+  });
 }
 
-// ── Entry point called after file chosen (and from product detail page) ──
+// Called when a product is selected from the list
+function onPhotoCheckProductSelected(){
+  const sel=document.getElementById('pc_dash_product');
+  const label=document.getElementById('pc_selected_label');
+  const uploadArea=document.getElementById('pc_upload_area');
+  const resultEl=document.getElementById('pc_result_dashboard');
+  const preview=document.getElementById('pc_preview_dashboard');
+  dashPhotoCheckProductId=sel?sel.value:'';
+  dashPhotoCheckFile=null;
+  if(preview)preview.innerHTML='';
+  if(resultEl)resultEl.innerHTML='';
+  if(!dashPhotoCheckProductId){
+    if(label)label.textContent='No product selected — pick one above first.';
+    if(uploadArea)uploadArea.style.display='none';
+    return;
+  }
+  const p=productPhotos.find(x=>x.id===dashPhotoCheckProductId);
+  if(!p)return;
+  if(label){
+    label.innerHTML=`<strong style="color:var(--primary)">${esc(p.name)}</strong> selected — now upload or take a photo of the batch.
+    ${p.image_path?'<span style="color:var(--success);font-size:.72rem;display:block;margin-top:2px">✓ Has reference photo — full visual comparison will run.</span>':'<span style="color:var(--warning);font-size:.72rem;display:block;margin-top:2px">⚠ No reference photo yet — AI will assess against quality criteria text only.</span>'}`;
+  }
+  if(uploadArea)uploadArea.style.display='flex';
+}
+
+function handleDashPhotoCheckFile(input){
+  const f=input.files[0];if(!f)return;
+  if(!dashPhotoCheckProductId){toast('Please select a product first.');return;}
+  dashPhotoCheckFile=f;
+  const preview=document.getElementById('pc_preview_dashboard');
+  const url=URL.createObjectURL(f);
+  if(preview)preview.innerHTML=`<img src="${url}" style="width:120px;height:120px;object-fit:cover;border-radius:10px;border:1px solid var(--border);display:block;margin-bottom:8px">`;
+  const resultEl=document.getElementById('pc_result_dashboard');
+  if(resultEl)resultEl.innerHTML=`<div style="font-size:.82rem;color:var(--muted)">🤖 Checking your photo…</div>`;
+  runDashAIPhotoCheck(dashPhotoCheckProductId);
+}
+
 async function runDashAIPhotoCheck(productId){
   const p=productPhotos.find(x=>x.id===productId);
   const resultEl=document.getElementById('pc_result_dashboard');
-  if(!p){
-    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:8px 12px">Pick a product first.</div>`;
-    return;
-  }
+  if(!p){if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:8px 12px">Pick a product first.</div>`;return;}
   if(!dashPhotoCheckFile)return;
   if(p.image_path){
     await performAIPhotoCheck(dashPhotoCheckFile,p,'pc_result_dashboard');
@@ -2345,81 +2309,28 @@ async function runDashAIPhotoCheck(productId){
   }
 }
 
-// ── Render the result with similarity bar + confidence + visual breakdown ──
-function renderPhotoCheckResult(resultElId,data,productName){
-  const resultEl=document.getElementById(resultElId);if(!resultEl)return;
-  const verdict=String(data.verdict||'').toLowerCase();
-
-  // Similarity: prefer data.similarity (0-100 int), fall back to data.confidence (0-1 float)
-  const similarity=typeof data.similarity==='number'
-    ?Math.min(100,Math.max(0,Math.round(data.similarity)))
-    :typeof data.confidence==='number'
-    ?Math.min(100,Math.max(0,Math.round(data.confidence*100)))
-    :null;
-
-  // Confidence: prefer data.confidence (0-1), fall back to similarity/100
-  const confidence=typeof data.confidence==='number'
-    ?Math.min(100,Math.max(0,Math.round(data.confidence*100)))
-    :similarity;
-
-  const style=verdict==='pass'
-    ?{bg:'rgba(74,222,128,.08)',border:'rgba(74,222,128,.3)',color:'var(--success)',barColor:'#4ade80',icon:'✅',label:'Acceptable quality'}
-    :verdict==='fail'
-    ?{bg:'rgba(248,113,113,.08)',border:'rgba(248,113,113,.3)',color:'var(--error)',barColor:'#f87171',icon:'❌',label:'Does not meet standard'}
-    :{bg:'rgba(251,191,36,.08)',border:'rgba(251,191,36,.3)',color:'var(--warning)',barColor:'#fbbf24',icon:'⚠️',label:'Uncertain — check manually'};
-
-  // Similarity bar colour: green ≥75, amber 50-74, red <50
-  const simColor=similarity===null?style.barColor:similarity>=75?'#4ade80':similarity>=50?'#fbbf24':'#f87171';
-
-  // Visual breakdown: array of {label, ok} if returned by the API
-  const breakdown=Array.isArray(data.breakdown)?data.breakdown:[];
-
-  resultEl.innerHTML=`
-  <div style="background:${style.bg};border:1px solid ${style.border};border-radius:12px;padding:14px 16px">
-
-    <!-- Header row: verdict + product name -->
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:10px">
-      <div style="font-size:.95rem;font-weight:700;color:${style.color}">${style.icon} ${esc(style.label)}</div>
-      ${productName?`<div style="font-size:.72rem;color:var(--muted);background:var(--surface3);padding:3px 9px;border-radius:999px">${esc(productName)}</div>`:''}
-    </div>
-
-    <!-- Similarity to reference bar -->
-    ${similarity!==null?`
-    <div style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:4px">
-        <span>Similarity to reference</span>
-        <strong style="color:${simColor}">${similarity}%</strong>
-      </div>
-      <div style="height:8px;background:var(--surface3);border-radius:999px;overflow:hidden">
-        <div style="height:100%;width:${similarity}%;background:${simColor};border-radius:999px;transition:width .5s ease"></div>
-      </div>
-    </div>`:''}
-
-    <!-- Confidence -->
-    ${confidence!==null?`
-    <div style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:4px">
-        <span>AI confidence</span>
-        <strong style="color:var(--text)">${confidence}%</strong>
-      </div>
-      <div style="height:6px;background:var(--surface3);border-radius:999px;overflow:hidden">
-        <div style="height:100%;width:${confidence}%;background:linear-gradient(90deg,var(--primary),#0077a8);border-radius:999px;transition:width .5s ease"></div>
-      </div>
-    </div>`:''}
-
-    <!-- Visual attribute breakdown if returned -->
-    ${breakdown.length?`
-    <div style="margin-bottom:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:5px">
-      ${breakdown.map(b=>`<div style="display:flex;align-items:center;gap:5px;font-size:.75rem;background:var(--surface3);border-radius:7px;padding:4px 8px">
-        <span style="color:${b.ok?'var(--success)':'var(--error)'}">${b.ok?'✓':'✗'}</span>
-        <span style="color:var(--text)">${esc(b.label)}</span>
-      </div>`).join('')}
-    </div>`:''}
-
-    <!-- Explanation text -->
-    ${data.explanation?`<div style="font-size:.82rem;color:var(--text);line-height:1.55;white-space:pre-wrap;border-top:1px solid ${style.border};padding-top:10px;margin-top:2px">${esc(data.explanation)}</div>`:''}
-
-  </div>`;
+// Text-only quality check when no reference photo is available yet.
+async function performTextOnlyPhotoCheck(file,p,resultElId){
+  const resultEl=document.getElementById(resultElId);
+  try{
+    const staffPhoto=await fileToBase64(file);
+    const resp=await fetch('/api/check-photo',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        staffPhoto,
+        product:{name:p.name,department:p.department,category:p.category,description:p.description,reject_note:p.reject_note,keywords:p.keywords},
+        referenceGoodUrl:null,referenceRejectUrl:null,textOnlyMode:true
+      })
+    });
+    const data=await resp.json();
+    if(!resp.ok||!data.verdict){
+      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">${esc(data.error||"Couldn't check that photo — please try again.")}</div>`;
+      return;
+    }
+    renderPhotoCheckResult(resultElId,data);
+  }catch(e){
+    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">Couldn't reach the AI service — check your connection and try again.</div>`;
+  }
 }
 
 // ── DASHBOARD: general AI Quality Assistant (not tied to a single product) ──
