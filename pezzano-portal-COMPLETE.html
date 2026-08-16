@@ -1826,43 +1826,54 @@ async function saveBulkImport(){
   const rows=bulkImportRows.filter(r=>!r.errors.length);
   if(!rows.length){showMsg('bi_msg','No valid rows to import.','error');btn.disabled=false;btn.textContent='Import Products';return;}
 
-  const maxExisting=productPhotos.length?Math.max(0,...productPhotos.map(p=>p.sort_order||0)):0;
-  let newSortCounter=0;
+  // Assign sort_order based on the row's position in the Excel/CSV file.
+  // This makes the library appear in exactly the same order as the spreadsheet.
+  // Existing products (already have photos etc.) adopt the file's sort_order so they
+  // slot into the correct position. Brand-new products (not yet in DB) also use the
+  // file position. Any product added manually via "+ Add Product Photo" later gets
+  // max(sort_order)+1 so it always lands at the bottom.
+  const FILE_SORT_START = 1; // first row = sort_order 1
 
-  const payload=rows.map(r=>{
-    const existing=productPhotos.find(p=>p.name===r.name&&p.department===r.department);
-    return{
-      name:r.name,department:r.department,category:r.category,
-      description:r.description||null,keywords:r.keywords||null,
-      // Preserve existing photos — only blank for brand-new rows
-      image_path:existing?existing.image_path:'',
-      reject_image_path:existing?(existing.reject_image_path||null):null,
-      reject_note:existing?(existing.reject_note||null):null,
-      is_essential:r.essential,
-      sort_order:existing?existing.sort_order:maxExisting+(++newSortCounter),
-      uploaded_by:existing?existing.uploaded_by:profile.id,
-      updated_by:profile.id,updated_at:new Date().toISOString()
+  const payload = rows.map((r, i) => {
+    const existing = productPhotos.find(p => p.name === r.name && p.department === r.department);
+    return {
+      name: r.name,
+      department: r.department,
+      category: r.category,
+      description: r.description || null,
+      keywords: r.keywords || null,
+      // Always preserve existing photos — never blank them on re-import
+      image_path: existing ? existing.image_path : '',
+      reject_image_path: existing ? (existing.reject_image_path || null) : null,
+      reject_note: existing ? (existing.reject_note || null) : null,
+      is_essential: r.essential,
+      // Key: use file row position as sort_order so list matches the spreadsheet
+      sort_order: FILE_SORT_START + i,
+      uploaded_by: existing ? existing.uploaded_by : profile.id,
+      updated_by: profile.id,
+      updated_at: new Date().toISOString()
     };
   });
 
-  // Upsert in batches of 100 — constraint product_photos_name_dept_unique must exist in Supabase
-  const BATCH=100;
-  let errors=0;
-  for(let i=0;i<payload.length;i+=BATCH){
-    const chunk=payload.slice(i,i+BATCH);
-    const{error}=await sb.from('product_photos').upsert(chunk,{onConflict:'name,department',ignoreDuplicates:false});
-    if(error){console.error('Upsert batch error:',error.message);errors+=chunk.length;}
+  // Upsert in batches of 100 — requires the unique constraint:
+  // ALTER TABLE product_photos ADD CONSTRAINT product_photos_name_dept_unique UNIQUE (name, department);
+  const BATCH = 100;
+  let errors = 0;
+  for (let i = 0; i < payload.length; i += BATCH) {
+    const chunk = payload.slice(i, i + BATCH);
+    const { error } = await sb.from('product_photos').upsert(chunk, { onConflict: 'name,department', ignoreDuplicates: false });
+    if (error) { console.error('Upsert batch error:', error.message); errors += chunk.length; }
   }
 
-  if(errors){
-    showMsg('bi_msg',`Import partially failed — ${errors} row(s) could not be saved. Check the browser console for details.`,'error');
-    btn.disabled=false;btn.textContent='Import Products';
-    await loadProductPhotos();renderView();return;
+  if (errors) {
+    showMsg('bi_msg', `Import partially failed — ${errors} row(s) could not be saved. Check the browser console.`, 'error');
+    btn.disabled = false; btn.textContent = 'Import Products';
+    await loadProductPhotos(); renderView(); return;
   }
 
-  await loadProductPhotos();closeModal();
-  logAudit('Products bulk imported',`${payload.length} product${payload.length===1?'':'s'} upserted via file`);
-  toast(`✓ Done — ${payload.length} product${payload.length===1?'':'s'} imported. Existing photos preserved.`);
+  await loadProductPhotos(); closeModal();
+  logAudit('Products bulk imported', `${payload.length} product${payload.length === 1 ? '' : 's'} upserted via file`);
+  toast(`✓ Done — ${payload.length} product${payload.length === 1 ? '' : 's'} imported in spreadsheet order. Photos preserved.`);
   renderView();
 }
 
