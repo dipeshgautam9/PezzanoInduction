@@ -64,6 +64,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .metric .lbl{font-size:.75rem;color:var(--muted);margin-top:4px}
 .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:.72rem;font-weight:600}
 .badge-pending{background:rgba(139,146,165,.12);color:var(--muted)}
+.badge-active{background:var(--primary);color:#fff}
 .badge-progress{background:rgba(251,191,36,.12);color:var(--warning)}
 .badge-completed{background:rgba(74,222,128,.12);color:var(--success)}
 .table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);margin-top:14px}
@@ -372,6 +373,7 @@ let adminProductDept=null;         // which department SysAdmin/Manager is curre
 let libraryDeptFilter='mine';      // 'mine' or a specific department name, for the browse-all-departments library
 let libraryHiddenDepts=['Others','Sales Reps']; // depts excluded from the Product Reference Library tabs (sysAdmin can add/remove); overwritten from DB once loaded
 let librarySearchQuery='';
+let libraryCatFilter='';           // category filter for the staff library — '' means show all
 let mgrProductSearch='';
 let productMedia=[];               // gallery items: extra good/bad photos + good/bad videos, per product
 let productDetailId=null;          // product currently open on the full product page
@@ -2108,13 +2110,16 @@ function renderLibraryResultsInner(myDept){
   if(libraryDeptFilter!=='mine'&&!otherDepts.includes(libraryDeptFilter))libraryDeptFilter='mine';
   const viewingOwn=libraryDeptFilter==='mine';
   const dept=viewingOwn?myDept:libraryDeptFilter;
-  const items=productPhotos.filter(p=>p.department===dept);
+  const allItems=productPhotos.filter(p=>p.department===dept);
   const searching=librarySearchQuery.trim().length>0;
-  // Search covers everything this employee can already see: their own department (full detail)
-  // plus every other department currently visible in the library (reference-only).
+
+  // Search covers everything this employee can see: own dept (full detail) + visible other depts (reference)
   const searchPool=productPhotos.filter(p=>p.department===myDept||otherDepts.includes(p.department));
   const searchResults=searching?searchProducts(librarySearchQuery,searchPool):[];
+
   if(searching){
+    // Reset category filter when searching
+    libraryCatFilter='';
     return`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
       <div style="font-size:.82rem;color:var(--muted)">${searchResults.length} result${searchResults.length===1?'':'s'} for "${esc(librarySearchQuery)}"</div>
       <button class="btn btn-ghost" style="font-size:.75rem;padding:5px 10px" onclick="librarySearchQuery='';refreshLibraryResults()">✕ Clear search</button>
@@ -2137,10 +2142,20 @@ function renderLibraryResultsInner(myDept){
       }).join('')}
     </div>`:`<p style="color:var(--muted)">No products match "${esc(librarySearchQuery)}". Try a different word, or check the spelling.</p>`}`;
   }
-  return`<div class="filters" style="align-items:center">
-    <button class="btn ${viewingOwn?'btn-primary':'btn-ghost'}" onclick="libraryDeptFilter='mine';refreshLibraryResults()">${esc(myDept)} (mine)</button>
+
+  // Build category list from ALL items in this dept (for badge counts)
+  const cats=[...new Set(allItems.map(p=>p.category))].sort();
+  // Validate current category filter still exists in this dept
+  if(libraryCatFilter&&!cats.includes(libraryCatFilter))libraryCatFilter='';
+  // Apply category filter
+  const items=libraryCatFilter?allItems.filter(p=>p.category===libraryCatFilter):allItems;
+
+  return`
+  <!-- Department tabs -->
+  <div class="filters" style="align-items:center;margin-bottom:10px">
+    <button class="btn ${viewingOwn?'btn-primary':'btn-ghost'}" onclick="libraryDeptFilter='mine';libraryCatFilter='';refreshLibraryResults()">${esc(myDept)} (mine)</button>
     ${otherDepts.map(d=>`<span style="display:inline-flex;align-items:center;gap:2px">
-      <button class="btn ${libraryDeptFilter===d?'btn-primary':'btn-ghost'}" style="font-size:.78rem" onclick="libraryDeptFilter='${esc(d)}';refreshLibraryResults()">${esc(d)}</button>
+      <button class="btn ${libraryDeptFilter===d?'btn-primary':'btn-ghost'}" style="font-size:.78rem" onclick="libraryDeptFilter='${esc(d)}';libraryCatFilter='';refreshLibraryResults()">${esc(d)}</button>
       ${isSysAdmin(profile)?`<button class="btn btn-ghost" title="Remove ${esc(d)} from reference library" style="font-size:.68rem;padding:3px 7px" onclick="toggleLibraryDept('${esc(d)}',false)">✕</button>`:''}
     </span>`).join('')}
     ${isSysAdmin(profile)&&hiddenAvailable.length?`<span style="display:inline-flex;gap:4px;align-items:center;margin-left:6px">
@@ -2150,9 +2165,23 @@ function renderLibraryResultsInner(myDept){
       <button class="btn btn-ghost" style="font-size:.78rem" onclick="toggleLibraryDept(document.getElementById('lib_add_dept').value,true)">+ Add to Library</button>
     </span>`:''}
   </div>
+
+  <!-- Clickable category filter badges — same as manager view -->
+  ${cats.length>1?`<div class="filters" style="margin-top:0;margin-bottom:12px">
+    <span class="badge ${!libraryCatFilter?'badge-active':'badge-pending'}"
+      style="cursor:pointer;font-weight:${!libraryCatFilter?'700':'400'}"
+      onclick="libraryCatFilter='';refreshLibraryResults()"
+      title="Show all categories">All (${allItems.length})</span>
+    ${cats.map(c=>`<span class="badge ${libraryCatFilter===c?'badge-active':'badge-pending'}"
+      style="cursor:pointer;font-weight:${libraryCatFilter===c?'700':'400'}"
+      onclick="libraryCatFilter=${JSON.stringify(c)};refreshLibraryResults()"
+      title="Show ${esc(c)} only">${esc(c)} (${allItems.filter(p=>p.category===c).length})</span>`).join('')}
+  </div>`:''}
+
+  <!-- Product grid -->
   <div class="doc-grid">
     ${items.length?items.map(p=>viewingOwn?`<div class="prod-card" style="cursor:pointer" onclick="openProductDetail('${p.id}','library')">
-      <img class="prod-thumb" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)}" onerror="this.style.display='none'">
+      ${p.image_path?`<img class="prod-thumb" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)}" onerror="this.style.display='none'">`:`<div class="prod-thumb-ph">📷 No photo yet</div>`}
       <div class="prod-body">
         <div style="display:flex;justify-content:space-between;gap:8px"><div style="font-weight:600;font-size:.9rem">${esc(p.name)}</div>${p.is_essential?`<span class="essential-tag">★</span>`:''}</div>
         <div style="font-size:.72rem;color:var(--muted)">${esc(p.category)}</div>
@@ -2160,7 +2189,7 @@ function renderLibraryResultsInner(myDept){
         <div style="font-size:.72rem;color:var(--primary);margin-top:2px">📖 View full page →</div>
       </div>
     </div>`:`<div class="prod-card">
-      <img class="prod-thumb" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)}" onerror="this.style.display='none'">
+      ${p.image_path?`<img class="prod-thumb" data-img-path="${esc(p.image_path)}" alt="${esc(p.name)}" onerror="this.style.display='none'">`:`<div class="prod-thumb-ph">📷 No photo yet</div>`}
       <div class="prod-body">
         <div style="font-weight:600;font-size:.9rem">${esc(p.name)}</div>
         <div style="font-size:.72rem;color:var(--muted)">${esc(p.category)} &middot; reference only</div>
