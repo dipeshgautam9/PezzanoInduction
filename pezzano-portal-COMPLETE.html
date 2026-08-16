@@ -1864,12 +1864,20 @@ async function deleteProductsWithoutPhotos(){
   });
   if(!targets.length){toast('No products without photos found — nothing to delete.');return;}
   if(!confirm(`Delete ${targets.length} product${targets.length===1?'':'s'} that have no photos${dept?` in ${dept}`:''}?\n\nProducts with photos will NOT be affected.\n\nThis cannot be undone.`))return;
+
+  // Delete in batches of 100 to avoid Supabase URL length limit (400 error on large IN lists)
   const ids=targets.map(p=>p.id);
-  const{error}=await sb.from('product_photos').delete().in('id',ids);
-  if(error){toast('Delete error: '+error.message);return;}
-  logAudit('Bulk delete no-photo products',`Deleted ${ids.length} products without photos${dept?` in ${dept}`:''}`);
+  const BATCH=100;
+  let failed=0;
+  for(let i=0;i<ids.length;i+=BATCH){
+    const chunk=ids.slice(i,i+BATCH);
+    const{error}=await sb.from('product_photos').delete().in('id',chunk);
+    if(error){console.error('Batch delete error:',error.message);failed+=chunk.length;}
+  }
+  logAudit('Bulk delete no-photo products',`Deleted ${ids.length-failed} products without photos${dept?` in ${dept}`:''}`);
   await loadProductPhotos();renderView();
-  toast(`✓ Deleted ${ids.length} no-photo product${ids.length===1?'':'s'}. Products with photos were kept.`);
+  if(failed>0){toast(`⚠ Deleted ${ids.length-failed} products. ${failed} could not be deleted — try again.`);}
+  else{toast(`✓ Deleted ${ids.length} no-photo product${ids.length===1?'':'s'}. Products with photos were kept.`);}
 }
 function editProduct(id){
   const p=productPhotos.find(x=>x.id===id);if(!p)return;
