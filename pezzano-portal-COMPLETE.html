@@ -1823,35 +1823,78 @@ function renderBulkImportPreview(){
 }
 async function saveBulkImport(){
   const btn=document.getElementById('bi_btn');btn.disabled=true;btn.textContent='Importing…';
+  const msgEl=document.getElementById('bi_msg');
   const rows=bulkImportRows.filter(r=>!r.errors.length);
   if(!rows.length){showMsg('bi_msg','No valid rows to import.','error');btn.disabled=false;btn.textContent='Import Products';return;}
-  // Get the current highest sort_order so new imports always append after existing products
+
   const maxExisting=productPhotos.length?Math.max(0,...productPhotos.map(p=>p.sort_order||0)):0;
-  // Build payload: for upsert we include image_path:'' only for NEW rows (no existing match).
-  // Existing rows keep their photos — we only update category/description/keywords/sort_order.
-  const payload=rows.map((r,i)=>{
+
+  // Split rows into updates (product already exists) and inserts (brand new).
+  // We do this manually because the table has no unique constraint on (name, department),
+  // so .upsert(onConflict:...) would fail. Manual split avoids that entirely.
+  const toUpdate=[];
+  const toInsert=[];
+  rows.forEach((r,i)=>{
     const existing=productPhotos.find(p=>p.name===r.name&&p.department===r.department);
-    return{
-      name:r.name,department:r.department,category:r.category,
-      description:r.description||null,keywords:r.keywords||null,
-      // Preserve existing photos; only set empty for brand-new rows
-      image_path:existing?existing.image_path:'',
-      reject_image_path:existing?existing.reject_image_path:null,
-      reject_note:existing?existing.reject_note:null,
-      is_essential:r.essential,
-      sort_order:existing?existing.sort_order:maxExisting+i+1,
-      uploaded_by:existing?existing.uploaded_by:profile.id,
-      updated_by:profile.id,updated_at:new Date().toISOString()
-    };
+    if(existing){
+      toUpdate.push({
+        id:existing.id,
+        category:r.category,
+        description:r.description||null,
+        keywords:r.keywords||null,
+        is_essential:r.essential,
+        // Preserve existing photos and sort order
+        image_path:existing.image_path,
+        reject_image_path:existing.reject_image_path,
+        reject_note:existing.reject_note,
+        sort_order:existing.sort_order,
+        updated_by:profile.id,
+        updated_at:new Date().toISOString()
+      });
+    }else{
+      toInsert.push({
+        name:r.name,department:r.department,category:r.category,
+        description:r.description||null,keywords:r.keywords||null,
+        image_path:'',reject_image_path:null,reject_note:null,
+        is_essential:r.essential,
+        sort_order:maxExisting+toInsert.length+1,
+        uploaded_by:profile.id,updated_by:profile.id,
+        updated_at:new Date().toISOString()
+      });
+    }
   });
-  // Upsert: if a product with the same name+department already exists, update it in place
-  // (preserving any existing photos). New products are inserted. This prevents duplicates
-  // when the same list is imported more than once.
-  const{error}=await sb.from('product_photos').upsert(payload,{onConflict:'name,department',ignoreDuplicates:false});
-  if(error){showMsg('bi_msg','Import error: '+error.message,'error');btn.disabled=false;btn.textContent='Import Products';return;}
+
+  // Update existing products in batches of 50 (one per row via .eq id filter)
+  let updateErrors=0;
+  for(const p of toUpdate){
+    const{error}=await sb.from('product_photos').update({
+      category:p.category,description:p.description,keywords:p.keywords,
+      is_essential:p.is_essential,updated_by:p.updated_by,updated_at:p.updated_at
+    }).eq('id',p.id);
+    if(error){console.error('Update error for id',p.id,error.message);updateErrors++;}
+  }
+
+  // Insert new products in batches of 100
+  let insertErrors=0;
+  const BATCH=100;
+  for(let i=0;i<toInsert.length;i+=BATCH){
+    const chunk=toInsert.slice(i,i+BATCH);
+    const{error}=await sb.from('product_photos').insert(chunk);
+    if(error){console.error('Insert batch error:',error.message);insertErrors+=chunk.length;}
+  }
+
+  if(updateErrors||insertErrors){
+    showMsg('bi_msg',`Import partially failed — ${updateErrors+insertErrors} row(s) could not be saved. Check the console for details.`,'error');
+    btn.disabled=false;btn.textContent='Import Products';
+    await loadProductPhotos();renderView();
+    return;
+  }
+
   await loadProductPhotos();closeModal();
-  logAudit('Products bulk imported',`${payload.length} product${payload.length===1?'':'s'} upserted via file`);
-  toast(`✓ Imported ${payload.length} product${payload.length===1?'':'s'}. Existing products were updated in place. Add photos anytime from Edit Product.`);renderView();
+  const updated=toUpdate.length,inserted=toInsert.length;
+  logAudit('Products bulk imported',`${inserted} inserted, ${updated} updated via file`);
+  toast(`✓ Done — ${inserted} new product${inserted===1?'':'s'} added, ${updated} existing updated. Photos preserved.`);
+  renderView();
 }
 
 // Delete products that have no reference photo AND no reject photo — i.e. blank placeholder rows.
