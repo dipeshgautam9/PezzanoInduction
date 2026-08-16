@@ -1823,77 +1823,46 @@ function renderBulkImportPreview(){
 }
 async function saveBulkImport(){
   const btn=document.getElementById('bi_btn');btn.disabled=true;btn.textContent='Importing…';
-  const msgEl=document.getElementById('bi_msg');
   const rows=bulkImportRows.filter(r=>!r.errors.length);
   if(!rows.length){showMsg('bi_msg','No valid rows to import.','error');btn.disabled=false;btn.textContent='Import Products';return;}
 
   const maxExisting=productPhotos.length?Math.max(0,...productPhotos.map(p=>p.sort_order||0)):0;
+  let newSortCounter=0;
 
-  // Split rows into updates (product already exists) and inserts (brand new).
-  // We do this manually because the table has no unique constraint on (name, department),
-  // so .upsert(onConflict:...) would fail. Manual split avoids that entirely.
-  const toUpdate=[];
-  const toInsert=[];
-  rows.forEach((r,i)=>{
+  const payload=rows.map(r=>{
     const existing=productPhotos.find(p=>p.name===r.name&&p.department===r.department);
-    if(existing){
-      toUpdate.push({
-        id:existing.id,
-        category:r.category,
-        description:r.description||null,
-        keywords:r.keywords||null,
-        is_essential:r.essential,
-        // Preserve existing photos and sort order
-        image_path:existing.image_path,
-        reject_image_path:existing.reject_image_path,
-        reject_note:existing.reject_note,
-        sort_order:existing.sort_order,
-        updated_by:profile.id,
-        updated_at:new Date().toISOString()
-      });
-    }else{
-      toInsert.push({
-        name:r.name,department:r.department,category:r.category,
-        description:r.description||null,keywords:r.keywords||null,
-        image_path:'',reject_image_path:null,reject_note:null,
-        is_essential:r.essential,
-        sort_order:maxExisting+toInsert.length+1,
-        uploaded_by:profile.id,updated_by:profile.id,
-        updated_at:new Date().toISOString()
-      });
-    }
+    return{
+      name:r.name,department:r.department,category:r.category,
+      description:r.description||null,keywords:r.keywords||null,
+      // Preserve existing photos — only blank for brand-new rows
+      image_path:existing?existing.image_path:'',
+      reject_image_path:existing?(existing.reject_image_path||null):null,
+      reject_note:existing?(existing.reject_note||null):null,
+      is_essential:r.essential,
+      sort_order:existing?existing.sort_order:maxExisting+(++newSortCounter),
+      uploaded_by:existing?existing.uploaded_by:profile.id,
+      updated_by:profile.id,updated_at:new Date().toISOString()
+    };
   });
 
-  // Update existing products in batches of 50 (one per row via .eq id filter)
-  let updateErrors=0;
-  for(const p of toUpdate){
-    const{error}=await sb.from('product_photos').update({
-      category:p.category,description:p.description,keywords:p.keywords,
-      is_essential:p.is_essential,updated_by:p.updated_by,updated_at:p.updated_at
-    }).eq('id',p.id);
-    if(error){console.error('Update error for id',p.id,error.message);updateErrors++;}
-  }
-
-  // Insert new products in batches of 100
-  let insertErrors=0;
+  // Upsert in batches of 100 — constraint product_photos_name_dept_unique must exist in Supabase
   const BATCH=100;
-  for(let i=0;i<toInsert.length;i+=BATCH){
-    const chunk=toInsert.slice(i,i+BATCH);
-    const{error}=await sb.from('product_photos').insert(chunk);
-    if(error){console.error('Insert batch error:',error.message);insertErrors+=chunk.length;}
+  let errors=0;
+  for(let i=0;i<payload.length;i+=BATCH){
+    const chunk=payload.slice(i,i+BATCH);
+    const{error}=await sb.from('product_photos').upsert(chunk,{onConflict:'name,department',ignoreDuplicates:false});
+    if(error){console.error('Upsert batch error:',error.message);errors+=chunk.length;}
   }
 
-  if(updateErrors||insertErrors){
-    showMsg('bi_msg',`Import partially failed — ${updateErrors+insertErrors} row(s) could not be saved. Check the console for details.`,'error');
+  if(errors){
+    showMsg('bi_msg',`Import partially failed — ${errors} row(s) could not be saved. Check the browser console for details.`,'error');
     btn.disabled=false;btn.textContent='Import Products';
-    await loadProductPhotos();renderView();
-    return;
+    await loadProductPhotos();renderView();return;
   }
 
   await loadProductPhotos();closeModal();
-  const updated=toUpdate.length,inserted=toInsert.length;
-  logAudit('Products bulk imported',`${inserted} inserted, ${updated} updated via file`);
-  toast(`✓ Done — ${inserted} new product${inserted===1?'':'s'} added, ${updated} existing updated. Photos preserved.`);
+  logAudit('Products bulk imported',`${payload.length} product${payload.length===1?'':'s'} upserted via file`);
+  toast(`✓ Done — ${payload.length} product${payload.length===1?'':'s'} imported. Existing photos preserved.`);
   renderView();
 }
 
