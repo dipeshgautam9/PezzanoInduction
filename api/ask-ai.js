@@ -2,9 +2,12 @@
 // Answers quality standard questions using Pezzano product data as context.
 
 const GEMINI_MODELS = [
+  'gemini-2.0-flash-001',
   'gemini-2.0-flash',
+  'gemini-1.5-flash-002',
+  'gemini-1.5-flash-001',
   'gemini-1.5-flash',
-  'gemini-1.5-flash-latest',
+  'gemini-1.5-pro',
 ];
 
 export default async function handler(req, res) {
