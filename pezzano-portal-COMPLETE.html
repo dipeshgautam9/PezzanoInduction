@@ -2174,7 +2174,7 @@ function renderLibraryResultsInner(myDept){
       title="Show all categories">All (${allItems.length})</span>
     ${cats.map(c=>`<span class="badge ${libraryCatFilter===c?'badge-active':'badge-pending'}"
       style="cursor:pointer;font-weight:${libraryCatFilter===c?'700':'400'}"
-      onclick="libraryCatFilter=${JSON.stringify(c)};refreshLibraryResults()"
+      onclick="libraryCatFilter='${c.replace(/'/g,"\\'")}';refreshLibraryResults()"
       title="Show ${esc(c)} only">${esc(c)} (${allItems.filter(p=>p.category===c).length})</span>`).join('')}
   </div>`:''}
 
@@ -2306,7 +2306,7 @@ function fileToBase64(file){
 }
 async function performAIPhotoCheck(file,p,resultElId){
   const resultEl=document.getElementById(resultElId);
-  if(resultEl)resultEl.innerHTML=`<div style="font-size:.82rem;color:var(--muted)">🤖 Checking photo…</div>`;
+  if(resultEl)resultEl.innerHTML=`<div style="font-size:.82rem;color:var(--muted)">🤖 Comparing against reference library…</div>`;
   try{
     const staffPhoto=await fileToBase64(file);
     let referenceGoodUrl=null,referenceRejectUrl=null;
@@ -2318,7 +2318,7 @@ async function performAIPhotoCheck(file,p,resultElId){
       body:JSON.stringify({
         staffPhoto,
         product:{name:p.name,department:p.department,category:p.category,description:p.description,reject_note:p.reject_note,keywords:p.keywords},
-        referenceGoodUrl,referenceRejectUrl
+        referenceGoodUrl,referenceRejectUrl,requestSimilarity:true
       })
     });
     const data=await resp.json();
@@ -2326,22 +2326,44 @@ async function performAIPhotoCheck(file,p,resultElId){
       if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:8px 12px">${esc(data.error||"Couldn't check that photo — please try again.")}</div>`;
       return;
     }
-    renderPhotoCheckResult(resultElId,data);
+    renderPhotoCheckResult(resultElId,data,p.name);
   }catch(e){
     if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:8px 12px">Couldn't reach the AI Assistant — check your connection and try again.</div>`;
   }
 }
-function renderPhotoCheckResult(resultElId,data){
+function renderPhotoCheckResult(resultElId,data,productName){
   const resultEl=document.getElementById(resultElId);if(!resultEl)return;
   const verdict=String(data.verdict||'').toLowerCase();
   const style=verdict==='pass'
-    ?{bg:'rgba(74,222,128,.1)',border:'rgba(74,222,128,.3)',color:'var(--success)',icon:'✅',label:'Looks acceptable'}
+    ?{bg:'rgba(74,222,128,.08)',border:'rgba(74,222,128,.3)',color:'var(--success)',barColor:'#4ade80',icon:'✅',label:'Acceptable quality'}
     :verdict==='fail'
-    ?{bg:'rgba(248,113,113,.1)',border:'rgba(248,113,113,.3)',color:'var(--error)',icon:'❌',label:'Does not match standard'}
-    :{bg:'rgba(251,191,36,.1)',border:'rgba(251,191,36,.3)',color:'var(--warning)',icon:'⚠',label:'Uncertain — check manually'};
-  resultEl.innerHTML=`<div style="background:${style.bg};border:1px solid ${style.border};border-radius:9px;padding:10px 14px">
-    <div style="font-weight:600;color:${style.color};font-size:.88rem;margin-bottom:4px">${style.icon} ${esc(style.label)}${typeof data.confidence==='number'?` &middot; ${Math.round(data.confidence*100)}% confidence`:''}</div>
-    ${data.explanation?`<div style="font-size:.82rem;color:var(--text);white-space:pre-wrap">${esc(data.explanation)}</div>`:''}
+    ?{bg:'rgba(248,113,113,.08)',border:'rgba(248,113,113,.3)',color:'var(--error)',barColor:'#f87171',icon:'❌',label:'Does not meet standard'}
+    :{bg:'rgba(251,191,36,.08)',border:'rgba(251,191,36,.3)',color:'var(--warning)',barColor:'#fbbf24',icon:'⚠️',label:'Uncertain — check manually'};
+
+  const similarity=typeof data.similarity==='number'?Math.min(100,Math.max(0,Math.round(data.similarity))):null;
+  const confidence=typeof data.confidence==='number'?Math.min(100,Math.max(0,Math.round(data.confidence*100))):null;
+  const simColor=similarity===null?style.barColor:similarity>=75?'#4ade80':similarity>=50?'#fbbf24':'#f87171';
+  const breakdown=Array.isArray(data.breakdown)?data.breakdown.filter(b=>b&&typeof b.label==='string'&&typeof b.ok==='boolean').slice(0,5):[];
+
+  resultEl.innerHTML=`<div style="background:${style.bg};border:1px solid ${style.border};border-radius:12px;padding:14px 16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+      <div style="font-size:.95rem;font-weight:700;color:${style.color}">${style.icon} ${esc(style.label)}</div>
+      ${productName?`<div style="font-size:.72rem;color:var(--muted);background:var(--surface3);padding:3px 9px;border-radius:999px">${esc(productName)}</div>`:''}
+    </div>
+    ${similarity!==null?`<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:4px"><span>Similarity to reference</span><strong style="color:${simColor}">${similarity}%</strong></div>
+      <div style="height:8px;background:var(--surface3);border-radius:999px;overflow:hidden"><div style="height:100%;width:${similarity}%;background:${simColor};border-radius:999px;transition:width .5s ease"></div></div>
+    </div>`:''}
+    ${confidence!==null?`<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:4px"><span>AI confidence</span><strong style="color:var(--text)">${confidence}%</strong></div>
+      <div style="height:6px;background:var(--surface3);border-radius:999px;overflow:hidden"><div style="height:100%;width:${confidence}%;background:linear-gradient(90deg,var(--primary),#0077a8);border-radius:999px;transition:width .5s ease"></div></div>
+    </div>`:''}
+    ${breakdown.length?`<div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:5px">
+      ${breakdown.map(b=>`<div style="display:inline-flex;align-items:center;gap:4px;font-size:.75rem;background:var(--surface3);border-radius:7px;padding:4px 9px">
+        <span style="color:${b.ok?'var(--success)':'var(--error)'}">${b.ok?'✓':'✗'}</span><span>${esc(b.label)}</span>
+      </div>`).join('')}
+    </div>`:''}
+    ${data.explanation?`<div style="font-size:.82rem;color:var(--text);line-height:1.55;white-space:pre-wrap;border-top:1px solid ${style.border};padding-top:10px;margin-top:2px">${esc(data.explanation)}</div>`:''}
   </div>`;
 }
 // Dashboard-specific wiring: photo is taken/chosen first, product is auto-identified from it.
@@ -2406,9 +2428,9 @@ async function runDashAIPhotoCheck(productId){
   }
 }
 
-// Text-only quality check when no reference photo is available yet.
 async function performTextOnlyPhotoCheck(file,p,resultElId){
   const resultEl=document.getElementById(resultElId);
+  if(resultEl)resultEl.innerHTML=`<div style="font-size:.82rem;color:var(--muted)">🤖 Checking against quality criteria…</div>`;
   try{
     const staffPhoto=await fileToBase64(file);
     const resp=await fetch('/api/check-photo',{
@@ -2416,7 +2438,7 @@ async function performTextOnlyPhotoCheck(file,p,resultElId){
       body:JSON.stringify({
         staffPhoto,
         product:{name:p.name,department:p.department,category:p.category,description:p.description,reject_note:p.reject_note,keywords:p.keywords},
-        referenceGoodUrl:null,referenceRejectUrl:null,textOnlyMode:true
+        referenceGoodUrl:null,referenceRejectUrl:null,textOnlyMode:true,requestSimilarity:true
       })
     });
     const data=await resp.json();
@@ -2424,7 +2446,7 @@ async function performTextOnlyPhotoCheck(file,p,resultElId){
       if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">${esc(data.error||"Couldn't check that photo — please try again.")}</div>`;
       return;
     }
-    renderPhotoCheckResult(resultElId,data);
+    renderPhotoCheckResult(resultElId,data,p.name);
   }catch(e){
     if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">Couldn't reach the AI service — check your connection and try again.</div>`;
   }
