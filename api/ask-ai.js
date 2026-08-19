@@ -1,20 +1,9 @@
 // api/ask-ai.js
-// Answers quality standard questions using Pezzano product data as context.
-
-const GEMINI_MODELS = [
-  'gemini-2.0-flash-001',
-  'gemini-2.0-flash',
-  'gemini-1.5-flash-002',
-  'gemini-1.5-flash-001',
-  'gemini-1.5-flash',
-  'gemini-1.5-pro',
-];
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY is not set.' });
+  if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY is not set in Vercel environment variables.' });
 
   const { question, products } = req.body || {};
   if (!question?.trim()) return res.status(400).json({ error: 'A question is required.' });
@@ -36,57 +25,84 @@ ${productContext}
 
 RULES:
 - Answer in plain, simple English — this is a busy warehouse floor.
-- Be direct. Don't pad. 1–3 sentences is usually enough.
+- Be direct. 1–3 sentences is usually enough.
 - If the answer is clearly "no, reject it", say so firmly.
-- If you're unsure or it's a borderline case, say to escalate to the supervisor.
+- If unsure or borderline, say to escalate to the supervisor.
 - Only use the product data above — don't invent Pezzano-specific policies.
 
 QUESTION: ${question.trim()}`;
 
+  const MODELS = [
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-001',
+    'gemini-2.0-flash-lite',
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-001',
+    'gemini-1.5-flash-002',
+    'gemini-1.5-flash-8b',
+    'gemini-1.5-pro',
+    'gemini-1.5-pro-001',
+    'gemini-1.5-pro-002',
+  ];
+
   async function callGemini() {
-    for (const model of GEMINI_MODELS) {
+    const errors = [];
+    for (const model of MODELS) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
       let r;
       try {
-        r = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ role: 'user', parts: [{ text: prompt }] }],
-              generationConfig: { temperature: 0.2, maxOutputTokens: 300 }
-            }),
-            signal: AbortSignal.timeout(20000)
-          }
-        );
-      } catch (e) { console.error(`ask-ai fetch error (${model}):`, e?.message); continue; }
-      if (r.status === 404) { console.warn(`Model not found: ${model}`); continue; }
-      console.log(`ask-ai using model: ${model} — HTTP ${r.status}`);
-      return r;
+        r = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.2, maxOutputTokens: 300 }
+          }),
+          signal: AbortSignal.timeout(20000)
+        });
+      } catch (e) {
+        errors.push(`${model}: ${e?.message}`);
+        continue;
+      }
+
+      if (r.status === 404) { errors.push(`${model}: 404`); continue; }
+      if (r.status === 429) { errors.push(`${model}: 429 quota`); continue; }
+
+      console.log(`ask-ai: using model ${model}, HTTP ${r.status}`);
+      return { response: r, model };
     }
-    return null;
+    console.error('ask-ai: ALL models failed. Key prefix:', apiKey.substring(0, 8), '| Errors:', errors.join(' | '));
+    return { response: null };
   }
 
   try {
-    const geminiRes = await callGemini();
-    if (!geminiRes) return res.status(502).json({ error: 'No Gemini model available — check that your GEMINI_API_KEY is valid.' });
+    const { response: geminiRes, model } = await callGemini();
+
+    if (!geminiRes) {
+      return res.status(502).json({
+        error: `AI service unavailable — tried ${MODELS.length} models, all failed. Check that your GEMINI_API_KEY in Vercel is a valid Google AI Studio key (starts with "AIza") from aistudio.google.com.`
+      });
+    }
 
     if (!geminiRes.ok) {
       const errText = await geminiRes.text();
-      console.error(`ask-ai Gemini HTTP ${geminiRes.status}:`, errText.substring(0, 400));
+      console.error(`ask-ai: HTTP ${geminiRes.status} from ${model}:`, errText.substring(0, 400));
+      if (geminiRes.status === 403) return res.status(502).json({ error: 'API key does not have permission. Check your key at aistudio.google.com.' });
       if (geminiRes.status === 429) return res.status(502).json({ error: 'AI service is busy — wait a moment and try again.' });
-      if (geminiRes.status === 403) return res.status(502).json({ error: 'API key does not have permission. Check your Google AI Studio key.' });
       return res.status(502).json({ error: `AI service error (${geminiRes.status}). Please try again.` });
     }
 
     const data = await geminiRes.json();
     const answer = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
-    if (!answer) return res.status(502).json({ error: 'AI returned an empty response. Please try again.' });
+    if (!answer) {
+      console.error('ask-ai: empty response from', model, JSON.stringify(data).substring(0, 300));
+      return res.status(502).json({ error: 'AI returned an empty response. Please try again.' });
+    }
 
     return res.status(200).json({ answer });
 
   } catch (err) {
-    console.error('ask-ai error:', err?.message || err);
+    console.error('ask-ai: unhandled error:', err?.message || err);
     return res.status(500).json({ error: 'Something went wrong. Please try again.' });
   }
 }
