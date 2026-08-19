@@ -2,10 +2,14 @@
 // Compares a staff photo against a product's reference photos using Gemini vision.
 
 // Try models in order — first non-404 response wins.
+// These are the current valid model IDs for Google AI Studio (generativelanguage.googleapis.com).
 const GEMINI_MODELS = [
+  'gemini-2.0-flash-001',
   'gemini-2.0-flash',
+  'gemini-1.5-flash-002',
+  'gemini-1.5-flash-001',
   'gemini-1.5-flash',
-  'gemini-1.5-flash-latest',
+  'gemini-1.5-pro',
 ];
 
 export default async function handler(req, res) {
