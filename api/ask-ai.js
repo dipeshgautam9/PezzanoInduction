@@ -1,108 +1,80 @@
-// api/ask-ai.js
+// api/ask-ai.js — Pezzano Quality Assistant
+// Works with both AIza and AQ. Gemini API keys
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY is not set in Vercel environment variables.' });
 
-  const { question, products } = req.body || {};
+  const { question, product, products } = req.body || {};
   if (!question?.trim()) return res.status(400).json({ error: 'A question is required.' });
 
-  const productContext = Array.isArray(products) && products.length
-    ? products.map(p =>
-        `• ${p.name} (${p.category || 'uncategorised'}, ${p.department || ''})\n` +
-        `  Accept: ${p.description || 'not recorded'}\n` +
-        `  Reject: ${p.reject_note || 'not recorded'}`
-      ).join('\n')
-    : 'No product data available.';
+  let productList = [];
+  if (Array.isArray(products) && products.length) productList = products.filter(p => p?.name);
+  else if (product?.name) productList = [product];
 
-  const prompt = `You are the Pezzano Quality Assistant — a practical, direct helper for warehouse floor staff at Pezzano Enterprises in Perth, WA.
+  const productBlock = productList.length
+    ? productList.map((p, i) => [
+        productList.length > 1 ? `--- Product ${i + 1}: ${p.name} ---` : `--- Product: ${p.name} ---`,
+        `Category: ${p.category || 'unknown'}`,
+        `Accept / good quality: ${p.description || 'not recorded'}`,
+        `Reject / fails standard: ${p.reject_note || 'not recorded'}`,
+        `Keywords: ${p.keywords || 'none'}`
+      ].join('\n')).join('\n\n')
+    : 'No specific product data matched — answer using general Pezzano warehouse quality principles if possible.';
 
-Your job: answer questions about produce quality standards, packing procedures, and what to do when a product looks questionable.
+  const systemPrompt = `You are the Pezzano Quality Assistant helping warehouse staff with quick quality decisions.
 
-PEZZANO PRODUCT REFERENCE DATA:
-${productContext}
+Use the product data below to answer the question directly and practically. Read the accept/reject criteria carefully and apply them to the question. Keep answers short and clear — this is read on a warehouse floor.
 
-RULES:
-- Answer in plain, simple English — this is a busy warehouse floor.
-- Be direct. 1–3 sentences is usually enough.
-- If the answer is clearly "no, reject it", say so firmly.
-- If unsure or borderline, say to escalate to the supervisor.
-- Only use the product data above — don't invent Pezzano-specific policies.
+Always end with: "This is an AI recommendation based on Pezzano standards. If you are unsure or the product has unusual defects, follow your department's escalation procedure."
 
-QUESTION: ${question.trim()}`;
+Product data:
+${productBlock}`;
 
+  // Try models in order — stops at first success
   const MODELS = [
+    'gemini-2.5-flash',
+    'gemini-2.5-flash-8b',
     'gemini-2.0-flash',
-    'gemini-2.0-flash-001',
-    'gemini-2.0-flash-lite',
-    'gemini-1.5-flash',
-    'gemini-1.5-flash-001',
-    'gemini-1.5-flash-002',
-    'gemini-1.5-flash-8b',
-    'gemini-1.5-pro',
-    'gemini-1.5-pro-001',
-    'gemini-1.5-pro-002',
+    'gemini-1.5-flash'
   ];
 
-  async function callGemini() {
-    const errors = [];
-    for (const model of MODELS) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      let r;
-      try {
-        r = await fetch(url, {
+  const errors = [];
+  for (const model of MODELS) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey   // works for both AIza and AQ. keys
+          },
           body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.2, maxOutputTokens: 300 }
-          }),
-          signal: AbortSignal.timeout(20000)
-        });
-      } catch (e) {
-        errors.push(`${model}: ${e?.message}`);
-        continue;
+            system_instruction: { parts: [{ text: systemPrompt }] },
+            contents: [{ role: 'user', parts: [{ text: question.trim() }] }],
+            generationConfig: { temperature: 0.2, maxOutputTokens: 400 }
+          })
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        errors.push(`${model}: ${response.status} ${data?.error?.message || ''}`);
+        continue; // try next model
       }
 
-      if (r.status === 404) { errors.push(`${model}: 404`); continue; }
-      if (r.status === 429) { errors.push(`${model}: 429 quota`); continue; }
+      const answer = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      if (!answer) { errors.push(`${model}: empty response`); continue; }
 
-      console.log(`ask-ai: using model ${model}, HTTP ${r.status}`);
-      return { response: r, model };
+      return res.status(200).json({ answer });
+    } catch (err) {
+      errors.push(`${model}: ${err.message}`);
     }
-    console.error('ask-ai: ALL models failed. Key prefix:', apiKey.substring(0, 8), '| Errors:', errors.join(' | '));
-    return { response: null };
   }
 
-  try {
-    const { response: geminiRes, model } = await callGemini();
-
-    if (!geminiRes) {
-      return res.status(502).json({
-        error: `AI service unavailable — tried ${MODELS.length} models, all failed. Check that your GEMINI_API_KEY in Vercel is a valid Google AI Studio key (starts with "AIza") from aistudio.google.com.`
-      });
-    }
-
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text();
-      console.error(`ask-ai: HTTP ${geminiRes.status} from ${model}:`, errText.substring(0, 400));
-      if (geminiRes.status === 403) return res.status(502).json({ error: 'API key does not have permission. Check your key at aistudio.google.com.' });
-      if (geminiRes.status === 429) return res.status(502).json({ error: 'AI service is busy — wait a moment and try again.' });
-      return res.status(502).json({ error: `AI service error (${geminiRes.status}). Please try again.` });
-    }
-
-    const data = await geminiRes.json();
-    const answer = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
-    if (!answer) {
-      console.error('ask-ai: empty response from', model, JSON.stringify(data).substring(0, 300));
-      return res.status(502).json({ error: 'AI returned an empty response. Please try again.' });
-    }
-
-    return res.status(200).json({ answer });
-
-  } catch (err) {
-    console.error('ask-ai: unhandled error:', err?.message || err);
-    return res.status(500).json({ error: 'Something went wrong. Please try again.' });
-  }
+  console.error('All Gemini models failed (ask-ai):', errors);
+  return res.status(502).json({ error: `AI service unavailable. Tried: ${errors.join(' | ')}` });
 }
