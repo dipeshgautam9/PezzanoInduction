@@ -1,94 +1,100 @@
-// api/identify-product.js
-// Identifies which product a staff photo shows from a list of candidates.
-// Uses Gemini vision — same GEMINI_API_KEY as ask-ai.js, no new secret needed.
+// api/identify-product.js — Product identification from photo
+// Searches the product library and returns the best name match
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY is not set.' });
 
   const { staffPhoto, candidates } = req.body || {};
   if (!staffPhoto) return res.status(400).json({ error: 'A photo is required.' });
-  if (!Array.isArray(candidates) || !candidates.length) return res.status(400).json({ error: 'No candidate products provided.' });
+  if (!Array.isArray(candidates) || !candidates.length) return res.status(400).json({ error: 'No candidates provided.' });
 
   function splitDataUrl(dataUrl) {
-    const match = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/.exec(dataUrl);
-    if (!match) return null;
-    return { mimeType: match[1], base64: match[2] };
+    const m = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/.exec(dataUrl);
+    return m ? { mimeType: m[1], base64: m[2] } : null;
   }
 
-  try {
-    const img = splitDataUrl(staffPhoto);
-    if (!img) return res.status(400).json({ error: 'Photo format not readable.' });
+  const img = splitDataUrl(staffPhoto);
+  if (!img) return res.status(400).json({ error: 'Photo format not readable.' });
 
-    const nameList = candidates.map((c, i) => `${i + 1}. ${c.name}${c.category ? ` (${c.category})` : ''}`).join('\n');
-    const prompt = `You are a produce and warehouse product identification expert. Look at this warehouse product photo carefully.
+  const nameList = candidates.map((c, i) => `${i + 1}. ${c.name}${c.category ? ` (${c.category})` : ''}`).join('\n');
 
-Here are the candidate products this could be (numbered list):
+  const prompt = `You are a produce and warehouse product identification expert working for an Australian wholesale produce company.
+
+Look at the photo carefully. Here are the products stored in this company's library that it could be:
 ${nameList}
 
-Identify which single product is shown in the photo. Use your knowledge of produce appearance, packaging, and warehouse items to make the best match.
+Identify which single product is shown in the photo. Use your knowledge of produce, packaging, and warehouse items.
 
-Important: if you can see a product in the photo that COULD match one of the candidates, make your best guess — even if the photo is not perfect quality. Only say "no match" if the photo is completely unrecognisable or shows something entirely different from all candidates.
+If you can see a product that COULD match one of the candidates, pick your best match — even if the photo quality is not perfect.
+Only say "no match" if the photo shows something completely unrelated to all candidates.
 
-Respond with STRICT JSON ONLY — no markdown, no explanation outside the JSON:
-{"match": true|false, "index": <1-based number from the list, or null if no match>, "confidence": 0.0-1.0, "reason": "one short phrase"}`;
+Respond with STRICT JSON only — no markdown, no explanation outside the JSON:
+{"match": true, "index": <1-based number from list>, "confidence": 0.0-1.0, "name": "<exact name from list>"}
+or if no match:
+{"match": false, "index": null, "confidence": 0.0, "name": null}`;
 
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [
-            { text: prompt },
-            { inline_data: { mime_type: img.mimeType, data: img.base64 } }
-          ]}],
-          generationConfig: { temperature: 0.05, maxOutputTokens: 200 }
-        })
-      }
-    );
+  const MODELS = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-1.5-flash'];
+  const errors = [];
 
-    if (!geminiRes.ok) {
-      // Try fallback model if primary fails
-      const errText = await geminiRes.text();
-      console.error('Gemini identify error:', errText);
-      return res.status(502).json({ error: 'AI service error. Please try again.' });
-    }
-
-    const data = await geminiRes.json();
-    let raw = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
-    raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '').trim();
-
-    let parsed;
-    try { parsed = JSON.parse(raw); }
-    catch (e) {
-      console.error('identify-product parse error:', raw);
-      // If we got text but can't parse, try a looser extract
-      const idxMatch = raw.match(/"index"\s*:\s*(\d+)/);
-      const confMatch = raw.match(/"confidence"\s*:\s*([\d.]+)/);
-      if (idxMatch) {
-        const idx = parseInt(idxMatch[1]) - 1;
-        const confidence = confMatch ? parseFloat(confMatch[1]) : 0.5;
-        if (idx >= 0 && idx < candidates.length) {
-          return res.status(200).json({ productId: candidates[idx].id, productName: candidates[idx].name, confidence });
+  for (const model of MODELS) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [
+              { text: prompt },
+              { inline_data: { mime_type: img.mimeType, data: img.base64 } }
+            ]}],
+            generationConfig: { temperature: 0.05, maxOutputTokens: 150 }
+          })
         }
-      }
-      return res.status(200).json({ productId: null });
-    }
+      );
 
-    const idx = typeof parsed.index === 'number' ? parsed.index - 1 : -1;
-    const confidence = typeof parsed.confidence === 'number' ? parsed.confidence : 0;
-    // Lower threshold to 0.35 — warehouse photos are often imperfect and we'd
-    // rather give a named result with a caveat than refuse to identify anything.
-    if (parsed.match && idx >= 0 && idx < candidates.length && confidence >= 0.35) {
-      return res.status(200).json({ productId: candidates[idx].id, productName: candidates[idx].name, confidence });
+      const responseText = await response.text();
+      if (!response.ok) {
+        let msg = response.status.toString();
+        try { msg += ' ' + JSON.parse(responseText)?.error?.message; } catch {}
+        errors.push(`${model}: ${msg}`);
+        continue;
+      }
+
+      const data = JSON.parse(responseText);
+      let raw = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+      raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '').trim();
+
+      let parsed;
+      try { parsed = JSON.parse(raw); }
+      catch {
+        // Try to extract index even if JSON is malformed
+        const idxMatch = raw.match(/"index"\s*:\s*(\d+)/);
+        const confMatch = raw.match(/"confidence"\s*:\s*([\d.]+)/);
+        if (idxMatch) {
+          const idx = parseInt(idxMatch[1]) - 1;
+          if (idx >= 0 && idx < candidates.length) {
+            return res.status(200).json({ productId: candidates[idx].id, productName: candidates[idx].name, confidence: confMatch ? parseFloat(confMatch[1]) : 0.5 });
+          }
+        }
+        errors.push(`${model}: JSON parse failed`);
+        continue;
+      }
+
+      const idx = typeof parsed.index === 'number' ? parsed.index - 1 : -1;
+      const confidence = typeof parsed.confidence === 'number' ? parsed.confidence : 0;
+
+      if (parsed.match && idx >= 0 && idx < candidates.length && confidence >= 0.3) {
+        return res.status(200).json({ productId: candidates[idx].id, productName: candidates[idx].name, confidence });
+      }
+      return res.status(200).json({ productId: null, confidence });
+    } catch (err) {
+      errors.push(`${model}: ${err.message}`);
     }
-    return res.status(200).json({ productId: null, confidence });
-  } catch (err) {
-    console.error('identify-product error:', err);
-    return res.status(500).json({ error: 'Something went wrong. Please try again.' });
   }
+
+  console.error('All models failed (identify-product):', errors);
+  return res.status(502).json({ error: `AI service unavailable: ${errors.slice(0,2).join(' | ')}` });
 }
