@@ -34,13 +34,7 @@ Product data:
 ${productBlock}`;
 
   // Try models in order — stops at first success
-  const MODELS = [
-    'gemini-3.6-flash',
-    'gemini-2.5-flash',
-    'gemini-2.5-flash-8b',
-    'gemini-2.0-flash',
-    'gemini-1.5-flash'
-  ];
+  const MODELS = ['gemini-3.6-flash','gemini-2.5-flash','gemini-1.5-flash'];
 
   const errors = [];
   for (const model of MODELS) {
