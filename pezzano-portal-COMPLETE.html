@@ -847,16 +847,19 @@ async function initApp(){
   if(isManager(profile))adminProductDept=isSysAdmin(profile)?DEPARTMENTS[0]:profile.department;
   document.getElementById('userLabel').textContent=`${profile.full_name} · ${profile.employee_code}`;
   showApp();
-  view='dashboard';
+  // Restore the last view the user was on before a refresh, defaulting to dashboard
+  const savedView=sessionStorage.getItem('pz_view');
+  view=savedView&&savedView!=='login'?savedView:'dashboard';
   renderView();
 }
 
 function showLogin(){document.getElementById('loginScreen').classList.remove('hidden');document.getElementById('appScreen').classList.add('hidden');showSignIn();}
 function showApp(){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('appScreen').classList.remove('hidden');}
-async function doSignOut(){await sb.auth.signOut();profile=null;allEmployees=[];moduleProgress={};knowledgeViewed=[];myDocs=[];allDocAlerts=[];adminViewDocs=[];adminViewEmpId=null;productPhotos=[];productConfirmed=[];productMedia=[];productDetailId=null;showLogin();}
+async function doSignOut(){await sb.auth.signOut();sessionStorage.removeItem('pz_view');profile=null;allEmployees=[];moduleProgress={};knowledgeViewed=[];myDocs=[];allDocAlerts=[];adminViewDocs=[];adminViewEmpId=null;productPhotos=[];productConfirmed=[];productMedia=[];productDetailId=null;showLogin();}
 
 // ── RENDER ROUTER ─────────────────────────────────────────────
 function renderView(){
+  sessionStorage.setItem('pz_view',view); // persist so refresh restores this view
   const app=document.getElementById('app');
   if(view==='dashboard')        app.innerHTML=renderDashboard();
   else if(view==='mgr')         app.innerHTML=renderManagerDashboard();
@@ -905,36 +908,19 @@ function renderDashboard(){
   ${productPhotos.length?`<div class="card" style="margin-bottom:16px">
     <input placeholder="🔍 Search any product... e.g. soft tomato, black banana, mould" style="width:100%;padding:12px 14px;font-size:.9rem;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text)" onkeydown="if(event.key==='Enter'&&this.value.trim()){librarySearchQuery=this.value;view='library';renderView();}">
   </div>`:''}
-  ${productPhotos.length?`<div class="card" style="margin-bottom:16px">
-    <div class="card-title" style="margin-bottom:6px">🤖 AI Quality Assistant</div>
-    <div style="font-size:.8rem;color:var(--muted);margin-bottom:10px">Ask anything about quality standards or procedures — e.g. "Can I pack a bruised apple?" or "Who do I escalate a reject to?" Get an instant answer before you go digging through the library.</div>
-    <div id="ai_chat_history_dashboard">${renderDashboardAIChatHistory()}</div>
-    <div style="display:flex;gap:8px;margin-top:10px">
-      <input id="ai_chat_input_dashboard" placeholder="Ask a question..." style="flex:1;padding:10px 13px;font-size:.85rem;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();askDashboardAI()}">
-      <button class="btn btn-primary" id="ai_chat_send_dashboard" style="font-size:.85rem" onclick="askDashboardAI()">Ask</button>
+ ${productPhotos.filter(pp=>pp.department===profile.department&&pp.image_path).length?`<div class="card" style="margin-bottom:16px">
+    <div class="card-title" style="margin-bottom:6px">📸 What Product Is This?</div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:12px">Don't know the product name? Take or upload a photo — the AI will search our product library and tell you what it is.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <div class="upload-drop" onclick="document.getElementById('pc_file_gallery').click()" style="flex:1;min-width:140px">🖼️ Upload a photo</div>
+      <div class="upload-drop" onclick="document.getElementById('pc_file_camera').click()" style="flex:1;min-width:140px">📷 Take a photo</div>
     </div>
-    <div style="font-size:.68rem;color:var(--faint);margin-top:8px;line-height:1.4">This is an AI recommendation based on Pezzano standards. If you are unsure, follow your department's escalation procedure.</div>
-  </div>`:''}
- ${(()=>{const checkable=productPhotos.filter(pp=>pp.department===profile.department);return checkable.length?`<div class="card" style="margin-bottom:16px">
-    <div class="card-title" style="margin-bottom:6px">📸 AI Photo Check</div>
-    <div style="font-size:.8rem;color:var(--muted);margin-bottom:12px">Pick the product, then take or upload a photo — the AI checks it against Pezzano's quality standard for that product.</div>
-    <div style="margin-bottom:10px">
-      <input id="pc_search_box" placeholder="🔍 Type product name to find it..." oninput="filterPhotoCheckProducts(this.value)" style="width:100%;padding:10px 13px;font-size:.88rem;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);margin-bottom:8px">
-      <select id="pc_dash_product" size="4" onchange="onPhotoCheckProductSelected()" style="width:100%;padding:6px 10px;font-size:.85rem;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);min-height:100px">
-        ${checkable.map(pp=>`<option value="${esc(pp.id)}">${esc(pp.name)}</option>`).join('')}
-      </select>
-    </div>
-    <div id="pc_selected_label" style="font-size:.82rem;color:var(--muted);margin-bottom:8px">No product selected — pick one above first.</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;display:none" id="pc_upload_area">
-      <div class="upload-drop" onclick="document.getElementById('pc_file_gallery').click()" style="flex:1;min-width:160px">🖼️ Upload from gallery</div>
-      <div class="upload-drop" onclick="document.getElementById('pc_file_camera').click()" style="flex:1;min-width:160px">📷 Take a photo now</div>
-    </div>
-    <input type="file" id="pc_file_gallery" accept="image/*" style="display:none" onchange="handleDashPhotoCheckFile(this)">
-    <input type="file" id="pc_file_camera" accept="image/*" capture="environment" style="display:none" onchange="handleDashPhotoCheckFile(this)">
-    <div id="pc_preview_dashboard" style="margin-top:10px"></div>
+    <input type="file" id="pc_file_gallery" accept="image/*" style="display:none" onchange="handleProductIdentifyFile(this)">
+    <input type="file" id="pc_file_camera" accept="image/*" capture="environment" style="display:none" onchange="handleProductIdentifyFile(this)">
+    <div id="pc_preview_dashboard" style="margin-top:4px"></div>
     <div id="pc_result_dashboard" style="margin-top:10px"></div>
-    <div style="font-size:.68rem;color:var(--faint);margin-top:8px;line-height:1.4">This is an AI recommendation based on Pezzano standards. If you are unsure or the product has unusual defects, follow your department's escalation procedure.</div>
-  </div>`:'';})()}
+  </div>`:''}
+
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">My Details</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;font-size:.83rem">
@@ -2293,9 +2279,9 @@ function renderProductDetail(){
   </div>`;
 }
 
-// ── AI Photo Check — compares a staff-taken photo against a product's reference
-// good/reject images. Lives on the dashboard (product picked via dropdown, not
-// tied to a single product page). Nothing here is persisted or saved.
+// ── PRODUCT IDENTIFICATION FROM PHOTO ─────────────────────────
+// Staff take/upload a photo and the AI searches the product photo
+// library to identify what the product is and return its name.
 function fileToBase64(file){
   return new Promise((resolve,reject)=>{
     const reader=new FileReader();
@@ -2304,183 +2290,73 @@ function fileToBase64(file){
     reader.readAsDataURL(file);
   });
 }
-async function performAIPhotoCheck(file,p,resultElId){
-  const resultEl=document.getElementById(resultElId);
-  if(resultEl)resultEl.innerHTML=`<div style="font-size:.82rem;color:var(--muted)">🤖 Checking photo…</div>`;
-  try{
-    const staffPhoto=await fileToBase64(file);
-    let referenceGoodUrl=null,referenceRejectUrl=null;
-    if(p.image_path){const{data:goodSigned}=await sb.storage.from('product-photos').createSignedUrl(p.image_path,600);referenceGoodUrl=goodSigned?.signedUrl||null;}
-    if(p.reject_image_path){const{data:rejSigned}=await sb.storage.from('product-photos').createSignedUrl(p.reject_image_path,600);referenceRejectUrl=rejSigned?.signedUrl||null;}
-    const resp=await fetch('/api/check-photo',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        staffPhoto,
-        product:{name:p.name,department:p.department,category:p.category,description:p.description,reject_note:p.reject_note,keywords:p.keywords},
-        referenceGoodUrl,referenceRejectUrl
-      })
-    });
-    const data=await resp.json();
-    if(!resp.ok||!data.verdict){
-      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:8px 12px">${esc(data.error||"Couldn't check that photo — please try again.")}</div>`;
-      return;
-    }
-    renderPhotoCheckResult(resultElId,data);
-  }catch(e){
-    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:8px 12px">Couldn't reach the AI Assistant — check your connection and try again.</div>`;
-  }
-}
-function renderPhotoCheckResult(resultElId,data){
-  const resultEl=document.getElementById(resultElId);if(!resultEl)return;
-  const verdict=String(data.verdict||'').toLowerCase();
-  const style=verdict==='pass'
-    ?{bg:'rgba(74,222,128,.1)',border:'rgba(74,222,128,.3)',color:'var(--success)',icon:'✅',label:'Looks acceptable'}
-    :verdict==='fail'
-    ?{bg:'rgba(248,113,113,.1)',border:'rgba(248,113,113,.3)',color:'var(--error)',icon:'❌',label:'Does not match standard'}
-    :{bg:'rgba(251,191,36,.1)',border:'rgba(251,191,36,.3)',color:'var(--warning)',icon:'⚠',label:'Uncertain — check manually'};
-  resultEl.innerHTML=`<div style="background:${style.bg};border:1px solid ${style.border};border-radius:9px;padding:10px 14px">
-    <div style="font-weight:600;color:${style.color};font-size:.88rem;margin-bottom:4px">${style.icon} ${esc(style.label)}${typeof data.confidence==='number'?` &middot; ${Math.round(data.confidence*100)}% confidence`:''}</div>
-    ${data.explanation?`<div style="font-size:.82rem;color:var(--text);white-space:pre-wrap">${esc(data.explanation)}</div>`:''}
-  </div>`;
-}
-// Dashboard-specific wiring: photo is taken/chosen first, product is auto-identified from it.
-let dashPhotoCheckFile=null;
-let dashPhotoCheckProductId=null;
 
-// Filter the product list as the user types
-function filterPhotoCheckProducts(query){
-  const sel=document.getElementById('pc_dash_product');if(!sel)return;
-  const q=query.trim().toLowerCase();
-  Array.from(sel.options).forEach(opt=>{
-    opt.style.display=(!q||opt.text.toLowerCase().includes(q))?'':'none';
-  });
-}
-
-// Called when a product is selected from the list
-function onPhotoCheckProductSelected(){
-  const sel=document.getElementById('pc_dash_product');
-  const label=document.getElementById('pc_selected_label');
-  const uploadArea=document.getElementById('pc_upload_area');
-  const resultEl=document.getElementById('pc_result_dashboard');
-  const preview=document.getElementById('pc_preview_dashboard');
-  dashPhotoCheckProductId=sel?sel.value:'';
-  dashPhotoCheckFile=null;
-  if(preview)preview.innerHTML='';
-  if(resultEl)resultEl.innerHTML='';
-  if(!dashPhotoCheckProductId){
-    if(label)label.textContent='No product selected — pick one above first.';
-    if(uploadArea)uploadArea.style.display='none';
-    return;
-  }
-  const p=productPhotos.find(x=>x.id===dashPhotoCheckProductId);
-  if(!p)return;
-  if(label){
-    label.innerHTML=`<strong style="color:var(--primary)">${esc(p.name)}</strong> selected — now upload or take a photo of the batch.
-    ${p.image_path?'<span style="color:var(--success);font-size:.72rem;display:block;margin-top:2px">✓ Has reference photo — full visual comparison will run.</span>':'<span style="color:var(--warning);font-size:.72rem;display:block;margin-top:2px">⚠ No reference photo yet — AI will assess against quality criteria text only.</span>'}`;
-  }
-  if(uploadArea)uploadArea.style.display='flex';
-}
-
-function handleDashPhotoCheckFile(input){
+async function handleProductIdentifyFile(input){
   const f=input.files[0];if(!f)return;
-  if(!dashPhotoCheckProductId){toast('Please select a product first.');return;}
-  dashPhotoCheckFile=f;
   const preview=document.getElementById('pc_preview_dashboard');
+  const resultEl=document.getElementById('pc_result_dashboard');
   const url=URL.createObjectURL(f);
-  if(preview)preview.innerHTML=`<img src="${url}" style="width:120px;height:120px;object-fit:cover;border-radius:10px;border:1px solid var(--border);display:block;margin-bottom:8px">`;
-  const resultEl=document.getElementById('pc_result_dashboard');
-  if(resultEl)resultEl.innerHTML=`<div style="font-size:.82rem;color:var(--muted)">🤖 Checking your photo…</div>`;
-  runDashAIPhotoCheck(dashPhotoCheckProductId);
-}
+  if(preview)preview.innerHTML=`<img src="${url}" style="width:130px;height:130px;object-fit:cover;border-radius:10px;border:1px solid var(--border);display:block;margin-bottom:10px">`;
+  if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;color:var(--muted)">🔍 Searching product library…</div>`;
 
-async function runDashAIPhotoCheck(productId){
-  const p=productPhotos.find(x=>x.id===productId);
-  const resultEl=document.getElementById('pc_result_dashboard');
-  if(!p){if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:8px 12px">Pick a product first.</div>`;return;}
-  if(!dashPhotoCheckFile)return;
-  if(p.image_path){
-    await performAIPhotoCheck(dashPhotoCheckFile,p,'pc_result_dashboard');
-  }else{
-    await performTextOnlyPhotoCheck(dashPhotoCheckFile,p,'pc_result_dashboard');
-  }
-}
-
-// Text-only quality check when no reference photo is available yet.
-async function performTextOnlyPhotoCheck(file,p,resultElId){
-  const resultEl=document.getElementById(resultElId);
   try{
-    const staffPhoto=await fileToBase64(file);
-    const resp=await fetch('/api/check-photo',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        staffPhoto,
-        product:{name:p.name,department:p.department,category:p.category,description:p.description,reject_note:p.reject_note,keywords:p.keywords},
-        referenceGoodUrl:null,referenceRejectUrl:null,textOnlyMode:true
-      })
-    });
-    const data=await resp.json();
-    if(!resp.ok||!data.verdict){
-      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">${esc(data.error||"Couldn't check that photo — please try again.")}</div>`;
+    const staffPhoto=await fileToBase64(f);
+    // Build candidates: all products in this department that have a reference photo
+    const candidates=productPhotos
+      .filter(pp=>pp.department===profile.department&&pp.image_path)
+      .map(pp=>({id:pp.id,name:pp.name,category:pp.category}));
+
+    if(!candidates.length){
+      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);color:var(--warning);border-radius:9px;padding:10px 14px">No products with reference photos in your department yet. Add reference photos to products first.</div>`;
       return;
     }
-    renderPhotoCheckResult(resultElId,data);
-  }catch(e){
-    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">Couldn't reach the AI service — check your connection and try again.</div>`;
-  }
-}
 
-// ── DASHBOARD: general AI Quality Assistant (not tied to a single product) ──
-let dashboardAiChat=[];
-function renderDashboardAIChatHistory(){
-  if(!dashboardAiChat.length)return`<div style="font-size:.8rem;color:var(--faint)">No questions asked yet.</div>`;
-  return dashboardAiChat.map(m=>m.role==='user'
-    ?`<div style="margin-bottom:8px"><div style="font-size:.68rem;color:var(--muted);margin-bottom:2px">You asked</div><div style="font-size:.85rem;background:var(--surface2);border-radius:9px;padding:8px 12px;display:inline-block">${esc(m.text)}</div></div>`
-    :m.role==='error'
-    ?`<div style="margin-bottom:12px"><div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:8px 12px">${esc(m.text)}</div></div>`
-    :`<div style="margin-bottom:12px"><div style="font-size:.68rem;color:var(--muted);margin-bottom:2px">🤖 Pezzano Quality Assistant</div><div style="font-size:.85rem;background:rgba(0,180,216,.08);border:1px solid rgba(0,180,216,.2);border-radius:9px;padding:8px 12px;white-space:pre-wrap">${esc(m.text)}</div></div>`
-  ).join('');
-}
-async function askDashboardAI(){
-  const input=document.getElementById('ai_chat_input_dashboard');
-  const question=input?.value.trim();
-  if(!question)return;
-  dashboardAiChat.push({role:'user',text:question});
-  input.value='';
-  const btn=document.getElementById('ai_chat_send_dashboard');
-  if(btn){btn.disabled=true;btn.textContent='Thinking…';}
-  const histEl=document.getElementById('ai_chat_history_dashboard');
-  if(histEl){histEl.innerHTML=renderDashboardAIChatHistory()+`<div style="font-size:.8rem;color:var(--muted)">🤖 Thinking…</div>`;}
-  try{
-    // Retrieval: search all visible products for anything relevant to the question.
-    // If keyword search finds nothing, fall back to sending ALL products from the
-    // employee's own department — so the AI always has real data to reason from
-    // rather than saying "no information found."
-    const otherDepts=DEPARTMENTS.filter(d=>d!==profile.department&&!libraryHiddenDepts.includes(d));
-    const allVisible=productPhotos.filter(p=>p.department===profile.department||otherDepts.includes(p.department));
-    let matches=searchProducts(question,allVisible).slice(0,6).map(r=>r.p);
-    if(!matches.length){
-      // No keyword match — send the employee's own department products so the AI
-      // can still reason from real Pezzano data rather than giving a "no data" response.
-      matches=productPhotos.filter(p=>p.department===profile.department).slice(0,8);
-    }
-    const products=matches.map(p=>({name:p.name,department:p.department,category:p.category,description:p.description,reject_note:p.reject_note,keywords:p.keywords}));
-    const resp=await fetch('/api/ask-ai',{
+    const resp=await fetch('/api/identify-product',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({question,products})
+      body:JSON.stringify({staffPhoto,candidates})
     });
+
     const data=await resp.json();
-    if(!resp.ok||!data.answer){
-      dashboardAiChat.push({role:'error',text:data.error||"Couldn't get an answer — please try again."});
-    }else{
-      dashboardAiChat.push({role:'assistant',text:data.answer});
+    if(!resp.ok||!data){
+      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">${esc(data?.error||'Could not identify — please try again with a clearer photo.')}</div>`;
+      return;
     }
+
+    const match=data.productId?productPhotos.find(pp=>pp.id===data.productId):null;
+    if(!match){
+      if(resultEl)resultEl.innerHTML=`<div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:9px;padding:12px 14px">
+        <div style="font-weight:600;color:var(--warning);margin-bottom:4px">⚠ Couldn't identify this product</div>
+        <div style="font-size:.82rem;color:var(--muted)">The photo didn't closely match any product in your department's library. Try a clearer, better-lit photo of the label or the product itself.</div>
+      </div>`;
+      return;
+    }
+
+    const confPct=data.confidence?Math.round(data.confidence*100):null;
+    // Get a signed URL for the match's reference photo to show it
+    let refThumb='';
+    if(match.image_path){
+      try{
+        const{data:signed}=await sb.storage.from('product-photos').createSignedUrl(match.image_path,300);
+        if(signed?.signedUrl)refThumb=`<img src="${signed.signedUrl}" style="width:80px;height:60px;object-fit:cover;border-radius:7px;border:1px solid var(--border);flex-shrink:0">`;
+      }catch(e){}
+    }
+
+    if(resultEl)resultEl.innerHTML=`<div style="background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.3);border-radius:10px;padding:14px">
+      <div style="font-size:.72rem;color:var(--muted);margin-bottom:4px">Product identified</div>
+      <div style="display:flex;gap:12px;align-items:center">
+        ${refThumb}
+        <div>
+          <div style="font-size:1.1rem;font-weight:700;color:var(--text)">${esc(match.name)}</div>
+          <div style="font-size:.78rem;color:var(--muted)">${esc(match.category||'')}${match.department?' · '+esc(match.department):''}</div>
+          ${confPct?`<div style="font-size:.72rem;color:var(--success);margin-top:3px">${confPct}% match</div>`:''}
+        </div>
+      </div>
+      <button class="btn btn-ghost" style="font-size:.78rem;margin-top:10px" onclick="librarySearchQuery='${esc(match.name)}';view='library';renderView()">📖 View full product page →</button>
+    </div>`;
   }catch(e){
-    dashboardAiChat.push({role:'error',text:"Couldn't reach the AI Assistant — check your connection and try again."});
+    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">Connection error — check your internet and try again.</div>`;
   }
-  if(btn){btn.disabled=false;btn.textContent='Ask';}
-  if(histEl)histEl.innerHTML=renderDashboardAIChatHistory();
 }
 
 // ── INDUCTION FLOW ────────────────────────────────────────────
