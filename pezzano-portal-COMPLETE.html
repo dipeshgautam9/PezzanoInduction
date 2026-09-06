@@ -2367,7 +2367,7 @@ async function handleProductIdentifyFile(input){
     // Build candidates: all products in this department that have a reference photo
     const candidates=productPhotos
       .filter(pp=>pp.department===profile.department&&pp.image_path)
-      .map(pp=>({id:pp.id,name:pp.name,category:pp.category}));
+      .map(pp=>({id:pp.id,name:pp.name,category:pp.category,image_path:pp.image_path}));
 
     if(!candidates.length){
       if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);color:var(--warning);border-radius:9px;padding:10px 14px">No products with reference photos in your department yet. Add reference photos to products first.</div>`;
