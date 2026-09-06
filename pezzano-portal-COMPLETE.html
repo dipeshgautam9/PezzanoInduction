@@ -791,7 +791,23 @@ async function doResetPassword(){
   finally{setLoading('reset-btn',false,'Update Password');}
 }
 
-sb.auth.onAuthStateChange(async(event,session)=>{if(event==='PASSWORD_RECOVERY')showReset();});
+sb.auth.onAuthStateChange(async(event,session)=>{
+  if(event==='PASSWORD_RECOVERY'){showReset();return;}
+  // SIGNED_OUT fires both when we call signOut() ourselves and when Supabase can no longer
+  // refresh an expired/invalid session in the background. Either way, the session is gone —
+  // clear local state and return to login. This is the ONLY path that forces a login redirect;
+  // a valid/refreshable session never triggers this event, so normal use (including page
+  // refresh) never gets bounced to login.
+  if(event==='SIGNED_OUT'){
+    const loginScreen=document.getElementById('loginScreen');
+    if(loginScreen&&loginScreen.classList.contains('hidden')){
+      sessionStorage.removeItem('pz_view');sessionStorage.removeItem('pz_nav');
+      profile=null;allEmployees=[];moduleProgress={};knowledgeViewed=[];myDocs=[];allDocAlerts=[];
+      adminViewDocs=[];adminViewEmpId=null;productPhotos=[];productConfirmed=[];productMedia=[];productDetailId=null;
+      showLogin();
+    }
+  }
+});
 
 (async()=>{
   const hash=new URLSearchParams(window.location.hash.replace('#',''));
@@ -847,19 +863,52 @@ async function initApp(){
   if(isManager(profile))adminProductDept=isSysAdmin(profile)?DEPARTMENTS[0]:profile.department;
   document.getElementById('userLabel').textContent=`${profile.full_name} · ${profile.employee_code}`;
   showApp();
-  // Restore the last view the user was on before a refresh, defaulting to dashboard
+  // Restore the exact screen the user was on before a refresh — not just the view "kind",
+  // but the module/question, product, employee, or filter it was showing — defaulting to
+  // the dashboard when there's nothing saved (first login) or the saved state doesn't hold up.
   const savedView=sessionStorage.getItem('pz_view');
-  view=savedView&&savedView!=='login'?savedView:'dashboard';
+  let nav={};
+  try{nav=JSON.parse(sessionStorage.getItem('pz_nav')||'{}');}catch(e){nav={};}
+  view=savedView&&savedView!=='login'&&KNOWN_VIEWS.includes(savedView)?savedView:'dashboard';
+  activeModule=Number.isInteger(nav.activeModule)?nav.activeModule:0;
+  activeQuestion=Number.isInteger(nav.activeQuestion)?nav.activeQuestion:0;
+  activeKbTopic=nav.activeKbTopic||'welcome';
+  productDetailId=nav.productDetailId||null;
+  productDetailFrom=nav.productDetailFrom||'library';
+  adminProductDept=nav.adminProductDept||adminProductDept;
+  libraryDeptFilter=nav.libraryDeptFilter||'mine';
+  librarySearchQuery=nav.librarySearchQuery||'';
+  mgrProductSearch=nav.mgrProductSearch||'';
+  // 'empDocs' needs a specific employee's documents loaded from the DB before it can render —
+  // fetch those first so the restored screen shows real data instead of a "not found" fallback.
+  if(view==='empDocs'&&nav.adminViewEmpId&&isSysAdmin(profile)){
+    try{await loadEmployeeDocs(nav.adminViewEmpId);}catch(e){view='mgr';}
+  }else if(view==='empDocs'){
+    view='mgr'; // lost context or no longer permitted — land somewhere valid rather than guessing
+  }
   renderView();
 }
 
 function showLogin(){document.getElementById('loginScreen').classList.remove('hidden');document.getElementById('appScreen').classList.add('hidden');showSignIn();}
 function showApp(){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('appScreen').classList.remove('hidden');}
-async function doSignOut(){await sb.auth.signOut();sessionStorage.removeItem('pz_view');profile=null;allEmployees=[];moduleProgress={};knowledgeViewed=[];myDocs=[];allDocAlerts=[];adminViewDocs=[];adminViewEmpId=null;productPhotos=[];productConfirmed=[];productMedia=[];productDetailId=null;showLogin();}
+async function doSignOut(){await sb.auth.signOut();sessionStorage.removeItem('pz_view');sessionStorage.removeItem('pz_nav');profile=null;allEmployees=[];moduleProgress={};knowledgeViewed=[];myDocs=[];allDocAlerts=[];adminViewDocs=[];adminViewEmpId=null;productPhotos=[];productConfirmed=[];productMedia=[];productDetailId=null;showLogin();}
 
 // ── RENDER ROUTER ─────────────────────────────────────────────
+const KNOWN_VIEWS=['dashboard','mgr','kb','productGate','module','decl','done','docs','docsAlerts','empDocs','products','library','productDetail'];
+function persistNavContext(){
+  // Persist the view name AND the extra bits of state each screen actually needs, so a
+  // refresh restores the exact screen the user was on — not just the right "kind" of screen.
+  sessionStorage.setItem('pz_view',view);
+  sessionStorage.setItem('pz_nav',JSON.stringify({
+    activeModule,activeQuestion,activeKbTopic,
+    productDetailId,productDetailFrom,
+    adminViewEmpId,adminProductDept,
+    libraryDeptFilter,librarySearchQuery,mgrProductSearch
+  }));
+}
 function renderView(){
-  sessionStorage.setItem('pz_view',view); // persist so refresh restores this view
+  if(!KNOWN_VIEWS.includes(view))view='dashboard'; // guard against a stale/unknown view name
+  persistNavContext();
   const app=document.getElementById('app');
   if(view==='dashboard')        app.innerHTML=renderDashboard();
   else if(view==='mgr')         app.innerHTML=renderManagerDashboard();
@@ -874,6 +923,7 @@ function renderView(){
   else if(view==='products')    app.innerHTML=renderProductManager();
   else if(view==='library')     app.innerHTML=renderProductLibrary();
   else if(view==='productDetail') app.innerHTML=renderProductDetail();
+  else                          app.innerHTML=renderDashboard(); // last-resort fallback — never leave a blank screen
   hydrateProductThumbs();
   hydrateProductVideos();
 }
@@ -919,6 +969,7 @@ function renderDashboard(){
     <input type="file" id="pc_file_camera" accept="image/*" capture="environment" style="display:none" onchange="handleProductIdentifyFile(this)">
     <div id="pc_preview_dashboard" style="margin-top:4px"></div>
     <div id="pc_result_dashboard" style="margin-top:10px"></div>
+    <button id="pc_retry_btn" class="btn btn-ghost hidden" style="font-size:.78rem;margin-top:8px" onclick="clearProductIdentify()">🔄 Try another photo</button>
   </div>`:''}
 
   <div class="card" style="margin-bottom:16px">
@@ -2291,13 +2342,25 @@ function fileToBase64(file){
   });
 }
 
+function clearProductIdentify(){
+  const preview=document.getElementById('pc_preview_dashboard');
+  const resultEl=document.getElementById('pc_result_dashboard');
+  const retryBtn=document.getElementById('pc_retry_btn');
+  if(preview)preview.innerHTML='';
+  if(resultEl)resultEl.innerHTML='';
+  if(retryBtn)retryBtn.classList.add('hidden');
+  const g=document.getElementById('pc_file_gallery'),c=document.getElementById('pc_file_camera');
+  if(g)g.value='';if(c)c.value='';
+}
 async function handleProductIdentifyFile(input){
   const f=input.files[0];if(!f)return;
   const preview=document.getElementById('pc_preview_dashboard');
   const resultEl=document.getElementById('pc_result_dashboard');
+  const retryBtn=document.getElementById('pc_retry_btn');
   const url=URL.createObjectURL(f);
   if(preview)preview.innerHTML=`<img src="${url}" style="width:130px;height:130px;object-fit:cover;border-radius:10px;border:1px solid var(--border);display:block;margin-bottom:10px">`;
   if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;color:var(--muted)">🔍 Searching product library…</div>`;
+  if(retryBtn)retryBtn.classList.add('hidden'); // hide while a search is in flight; shown again once we land on a final result
 
   try{
     const staffPhoto=await fileToBase64(f);
@@ -2356,6 +2419,8 @@ async function handleProductIdentifyFile(input){
     </div>`;
   }catch(e){
     if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">Connection error — check your internet and try again.</div>`;
+  }finally{
+    if(retryBtn)retryBtn.classList.remove('hidden'); // always offer retry once we've landed on a final state
   }
 }
 
