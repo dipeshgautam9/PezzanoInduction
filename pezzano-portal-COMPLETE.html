@@ -2374,15 +2374,36 @@ async function handleProductIdentifyFile(input){
       return;
     }
 
-    const resp=await fetch('/api/identify-product',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({staffPhoto,candidates})
-    });
+    let resp;
+    try{
+      resp=await fetch('/api/identify-product',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({staffPhoto,candidates})
+      });
+    }catch(networkErr){
+      // fetch() only throws for a genuine network-level failure (offline, DNS, CORS block,
+      // or — very commonly when this file is opened directly as file:// or served as a
+      // static site with no serverless functions — there's simply nothing at that URL to
+      // connect to at all).
+      console.error('Photo identify: network error calling /api/identify-product',networkErr);
+      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">Couldn't reach the identification service — check your internet connection, or that this app is deployed with the /api/identify-product function running (not just opened as a static file).</div>`;
+      return;
+    }
 
-    const data=await resp.json();
+    const raw=await resp.text();
+    let data=null;
+    try{data=raw?JSON.parse(raw):null;}catch(parseErr){
+      // The endpoint responded, but not with JSON — e.g. a 404 "Not Found" HTML page because
+      // /api/identify-product isn't deployed, or a 500 error page from the server itself.
+      console.error('Photo identify: non-JSON response',resp.status,raw?.slice(0,500));
+      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">The identification service returned an unexpected response (HTTP ${resp.status}). It's likely the /api/identify-product function isn't deployed here yet — check the server logs, or open the browser console for details.</div>`;
+      return;
+    }
+
     if(!resp.ok||!data){
-      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">${esc(data?.error||'Could not identify — please try again with a clearer photo.')}</div>`;
+      console.error('Photo identify: API error',resp.status,data);
+      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">${esc(data?.error||`Could not identify (HTTP ${resp.status}) — please try again with a clearer photo.`)}</div>`;
       return;
     }
 
@@ -2418,7 +2439,8 @@ async function handleProductIdentifyFile(input){
       <button class="btn btn-ghost" style="font-size:.78rem;margin-top:10px" onclick="librarySearchQuery='${esc(match.name)}';view='library';renderView()">📖 View full product page →</button>
     </div>`;
   }catch(e){
-    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">Connection error — check your internet and try again.</div>`;
+    console.error('Photo identify: unexpected error',e);
+    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">Something went wrong reading or preparing that photo. Try a different file, or check the browser console for details.</div>`;
   }finally{
     if(retryBtn)retryBtn.classList.remove('hidden'); // always offer retry once we've landed on a final state
   }
