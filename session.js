@@ -1,82 +1,100 @@
-// ============================================================
-// session.js — include this on EVERY page before other scripts
-// Handles auth state, session guard, and shared Supabase client
-// ============================================================
+// session.js — Corrected session and employee-profile helpers
+// Uses Supabase client and the live schema: employees(id, auth_id, employee_code, full_name, role, ...)
 
-const SUPABASE_URL     = 'https://jookdsjvbticdgvxagyt.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_1emkeuRvXdsF6S-yyxcUeQ_BdUBJ5PF';
+const SUPABASE_URL = window.SUPABASE_URL || "https://jookdsjvbticdgvxagyt.supabase.co";
+const SUPABASE_KEY = window.SUPABASE_PUBLISHABLE_KEY || "sb_publishable_1emkeuRvXdsF6S-yyxcUeQ_BdUBJ5PF";
 
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,          // stores JWT in localStorage securely
-    detectSessionInUrl: true
+// Simple Supabase client wrapper (assumes @supabase/supabase-js is loaded globally as `supabase`)
+function getSupabaseClient() {
+  if (window.supabase && window.supabase.createClient) {
+    return window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   }
-});
-
-// ── Auth state cache ──────────────────────────────────────────
-let _session   = null;
-let _profile   = null;   // employees row
-
-async function getSession() {
-  if (_session) return _session;
-  const { data } = await sb.auth.getSession();
-  _session = data.session;
-  return _session;
+  throw new Error("Supabase JS client not loaded. Include the Supabase script before session.js.");
 }
 
-async function getProfile() {
-  if (_profile) return _profile;
-  const session = await getSession();
-  if (!session) return null;
-  const { data, error } = await sb
-    .from('employees')
-    .select('*')
-    .eq('auth_id', session.user.id)
-    .single();
-  if (!error) _profile = data;
-  return _profile;
+// Session storage keys
+const SESSION_KEY = "pezzano_session";
+const EMPLOYEE_CACHE_KEY = "pezzano_employee_cache";
+
+function saveSession(session) {
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
 }
 
-// ── Guards ───────────────────────────────────────────────────
-// Call on protected pages — redirects to login if not signed in
-async function requireAuth() {
-  const session = await getSession();
-  if (!session) { window.location.href = 'login.html'; return null; }
-  return session;
-}
-
-// Call on manager-only pages
-async function requireManager() {
-  const profile = await getProfile();
-  if (!profile || !['locationManager','sysAdmin'].includes(profile.role)) {
-    alert('Access denied.');
-    window.location.href = 'dashboard.html';
+function loadSession() {
+  const raw = localStorage.getItem(SESSION_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
     return null;
   }
-  return profile;
 }
 
-// ── Sign out ─────────────────────────────────────────────────
-async function signOut() {
-  await sb.auth.signOut();
-  _session = null; _profile = null;
-  window.location.href = 'login.html';
+function clearSession() {
+  localStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(EMPLOYEE_CACHE_KEY);
 }
 
-// ── Helpers ──────────────────────────────────────────────────
-function isManager(profile)   { return profile && ['locationManager','sysAdmin'].includes(profile.role); }
-function isSysAdmin(profile)  { return profile && profile.role === 'sysAdmin'; }
-function fmtDate(d)           { return d ? new Date(d).toLocaleDateString('en-AU') : '—'; }
-function esc(v)               { return String(v ?? '').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])); }
+// Fetch current employee profile from employees table using auth.users link
+async function fetchCurrentEmployee() {
+  const client = getSupabaseClient();
+  const { data: { user }, error: authError } = await client.auth.getUser();
+  if (authError || !user) {
+    clearSession();
+    return null;
+  }
 
-// ── Audit helper ─────────────────────────────────────────────
-async function audit(targetId, action, detail, oldVal = null, newVal = null) {
-  await sb.rpc('write_audit', {
-    p_target_id: targetId,
-    p_action:    action,
-    p_detail:    detail,
-    p_old_value: oldVal ? JSON.stringify(oldVal) : null,
-    p_new_value: newVal ? JSON.stringify(newVal) : null
-  });
+  // employees.auth_id is uuid nullable unique, linked to auth.users.id
+  const { data: rows, error } = await client
+    .from("employees")
+    .select("id, auth_id, employee_code, full_name, phone, age, work_location, department, position, role, start_date, induction_date, completion_status, completion_date, progress_pct, email")
+    .eq("auth_id", user.id)
+    .limit(1);
+
+  if (error || !rows || rows.length === 0) {
+    // Fallback: no employee row yet; caller may create one
+    return null;
+  }
+
+  const employee = rows[0];
+  localStorage.setItem(EMPLOYEE_CACHE_KEY, JSON.stringify(employee));
+  return employee;
+}
+
+function getCachedEmployee() {
+  const raw = localStorage.getItem(EMPLOYEE_CACHE_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+// Check role-based access using employees.role enum: 'employee' | 'locationManager' | 'sysAdmin'
+function hasRole(requiredRoles) {
+  const employee = getCachedEmployee();
+  if (!employee || !employee.role) return false;
+  if (Array.isArray(requiredRoles)) {
+    return requiredRoles.includes(employee.role);
+  }
+  return employee.role === requiredRoles;
+}
+
+// Initialize session on page load
+async function initSession() {
+  const session = loadSession();
+  const employee = await fetchCurrentEmployee();
+  return { session, employee };
+}
+
+// Export for browser usage
+if (typeof window !== "undefined") {
+  window.saveSession = saveSession;
+  window.loadSession = loadSession;
+  window.clearSession = clearSession;
+  window.fetchCurrentEmployee = fetchCurrentEmployee;
+  window.getCachedEmployee = getCachedEmployee;
+  window.hasRole = hasRole;
+  window.initSession = initSession;
 }

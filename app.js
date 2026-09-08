@@ -1,492 +1,256 @@
-const config = window.PEZZANO_CONFIG || {};
-const page = document.body.dataset.page;
-const isConfigured =
-  config.supabaseUrl &&
-  config.supabaseAnonKey &&
-  !config.supabaseUrl.includes('YOUR-PROJECT-REF') &&
-  !config.supabaseAnonKey.includes('YOUR-SUPABASE');
+// app.js — Corrected application logic for Pezzano Induction
+// Live schema tables: employees, module_progress, product_photos, product_confirmations, product_media, employee_documents, departments, positions, audit_logs
 
-const supabase = isConfigured && window.supabase?.createClient
-  ? window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true
-      }
-    })
-  : null;
+const SUPABASE_URL = window.SUPABASE_URL || "https://jookdsjvbticdgvxagyt.supabase.co";
+const SUPABASE_KEY = window.SUPABASE_PUBLISHABLE_KEY || "sb_publishable_1emkeuRvXdsF6S-yyxcUeQ_BdUBJ5PF";
 
-let session = null;
-let currentUser = null;
-let currentProfile = null;
-let currentInduction = null;
-
-const $ = (selector) => document.querySelector(selector);
-
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
-}
-
-function formatDate(value) {
-  if (!value) return 'Not set';
-  return new Intl.DateTimeFormat('en-AU', {
-    dateStyle: 'medium',
-    timeStyle: value.includes('T') ? 'short' : undefined
-  }).format(new Date(value));
-}
-
-function friendlyRole(role) {
-  return {
-    employee: 'Employee',
-    location_manager: 'Location Manager',
-    sys_admin: 'System Administrator'
-  }[role] || 'Employee';
-}
-
-function friendlyStatus(status) {
-  return String(status || 'not_started').replaceAll('_', ' ');
-}
-
-function showMessage(selector, message, type = '') {
-  const node = $(selector);
-  if (!node) return;
-  node.textContent = message;
-  node.className = `notice ${type}`.trim();
-  node.classList.remove('hidden');
-}
-
-function disableForms(reason) {
-  document.querySelectorAll('form input, form select, form button').forEach((element) => {
-    element.disabled = true;
-  });
-  showMessage(page === 'login' ? '#auth-message' : '#dashboard-message', reason, 'error');
-}
-
-function clearMessage(selector) {
-  const node = $(selector);
-  if (!node) return;
-  node.classList.add('hidden');
-  node.textContent = '';
-}
-
-function requireConfig() {
-  if (!window.supabase?.createClient) {
-    disableForms('Supabase client did not load. Check your internet connection or deploy through Netlify so the CDN script can load.');
-    return false;
+function getSupabaseClient() {
+  if (window.supabase && window.supabase.createClient) {
+    return window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   }
-
-  if (isConfigured) return true;
-  const message = 'Supabase is not configured yet. Open config.js and replace YOUR-PROJECT-REF and YOUR-SUPABASE-ANON-KEY with your real Supabase project values.';
-  disableForms(message);
-  return false;
+  throw new Error("Supabase JS client not loaded. Include the Supabase script before app.js.");
 }
 
-function isAdmin() {
-  return currentProfile && ['location_manager', 'sys_admin'].includes(currentProfile.role);
-}
+// ---------- Auth & Employee ----------
 
-function isSysAdmin() {
-  return currentProfile?.role === 'sys_admin';
-}
-
-async function getActiveSession() {
-  if (!requireConfig()) return null;
-  const { data, error } = await supabase.auth.getSession();
-  if (error) throw error;
-  session = data.session;
-  currentUser = data.session?.user || null;
-  return session;
-}
-
-async function initAuthWatcher() {
-  if (!requireConfig()) return;
-  supabase.auth.onAuthStateChange((event, nextSession) => {
-    session = nextSession;
-    currentUser = nextSession?.user || null;
-    if (event === 'SIGNED_OUT' && page !== 'login') {
-      window.location.href = './login.html';
-    }
-    if (event === 'SIGNED_IN' && page === 'login') {
-      window.location.href = './dashboard.html';
+async function signUpEmployee({ employee_code, full_name, email, password, department, position, work_location }) {
+  const client = getSupabaseClient();
+  // Create auth user
+  const { data: authData, error: authError } = await client.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { employee_code, full_name }
     }
   });
+  if (authError || !authData?.user) throw authError || new Error("Signup failed");
+
+  // Create employee row linked via auth_id
+  const { error: empError } = await client.from("employees").insert({
+    auth_id: authData.user.id,
+    employee_code,
+    full_name,
+    email,
+    department: department || "General",
+    position: position || "Team Member",
+    work_location: work_location || "Canning Vale",
+    role: "employee",
+    completion_status: "pending",
+    progress_pct: 0
+  });
+  if (empError) {
+    // Optionally delete auth user or leave orphan; here we just throw
+    throw empError;
+  }
+  return authData.user;
 }
 
-async function initLoginPage() {
-  await initAuthWatcher();
-  if (!requireConfig()) return;
+async function signIn(email, password) {
+  const client = getSupabaseClient();
+  const { data, error } = await client.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  return data;
+}
 
-  const existing = await getActiveSession();
+async function signOut() {
+  const client = getSupabaseClient();
+  await client.auth.signOut();
+  window.clearSession?.();
+}
+
+// ---------- Modules & Progress ----------
+
+async function getModuleProgress(employeeId) {
+  const client = getSupabaseClient();
+  const { data, error } = await client
+    .from("module_progress")
+    .select("id, employee_id, module_id, answers, completed, completed_at, created_at, updated_at")
+    .eq("employee_id", employeeId);
+  if (error) throw error;
+  return data || [];
+}
+
+async function saveModuleAnswer({ employee_id, module_id, answers }) {
+  const client = getSupabaseClient();
+  // Upsert: if exists update answers, else insert
+  const { data: existing } = await client
+    .from("module_progress")
+    .select("id")
+    .eq("employee_id", employee_id)
+    .eq("module_id", module_id)
+    .limit(1)
+    .single();
+
   if (existing) {
-    window.location.replace('./dashboard.html');
-    return;
-  }
-
-  $('#login-form').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    clearMessage('#auth-message');
-    const form = new FormData(event.currentTarget);
-    const email = form.get('email').trim();
-    const password = form.get('password');
-
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      showMessage('#auth-message', error.message, 'error');
-      return;
-    }
-
-    window.location.href = './dashboard.html';
-  });
-
-  $('#signup-form').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    clearMessage('#auth-message');
-    const form = new FormData(event.currentTarget);
-    const email = form.get('email').trim();
-    const password = form.get('password');
-    const full_name = form.get('full_name').trim();
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/login.html`,
-        data: { full_name }
-      }
-    });
-
-    if (error) {
-      showMessage('#auth-message', error.message, 'error');
-      return;
-    }
-
-    event.currentTarget.reset();
-    showMessage('#auth-message', 'Account created. Check your email if confirmation is enabled, then sign in.', 'success');
-  });
-
-  $('#reset-password').addEventListener('click', async () => {
-    const email = $('#login-email').value.trim();
-    if (!email) {
-      showMessage('#auth-message', 'Enter your email first, then click reset password.', 'error');
-      return;
-    }
-
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password.html`
-    });
-
-    if (error) {
-      showMessage('#auth-message', error.message, 'error');
-      return;
-    }
-
-    showMessage('#auth-message', 'Password reset email sent.', 'success');
-  });
-}
-
-async function loadProfile() {
-  const { data, error } = await supabase
-    .from('employees')
-    .select('*')
-    .eq('auth_id', currentUser.id)
-    .maybeSingle();
-
-  if (error) throw error;
-  currentProfile = data;
-  return data;
-}
-
-async function loadInduction() {
-  if (!currentProfile) return null;
-
-  const { data, error } = await supabase
-    .from('induction_records')
-    .select('*')
-    .eq('employee_uuid', currentProfile.id)
-    .maybeSingle();
-
-  if (error) throw error;
-  currentInduction = data;
-  return data;
-}
-
-async function ensureInduction() {
-  if (currentInduction || !currentProfile) return currentInduction;
-
-  const { data, error } = await supabase
-    .from('induction_records')
-    .insert({ employee_uuid: currentProfile.id })
-    .select('*')
-    .single();
-
-  if (error) throw error;
-  currentInduction = data;
-  return data;
-}
-
-function renderProfile() {
-  const card = $('#profile-card');
-  if (!currentProfile) {
-    card.innerHTML = `
-      <div class="notice">
-        Your Auth account exists, but no employee profile is linked yet.
-        Ask a manager to create or approve your employee record using ${escapeHtml(currentUser.email)}.
-      </div>
-    `;
-    return;
-  }
-
-  $('#session-label').textContent = `${currentProfile.full_name} · ${friendlyRole(currentProfile.role)}`;
-  card.innerHTML = `
-    <div class="profile-row"><span>Employee ID</span><strong>${escapeHtml(currentProfile.employee_id)}</strong></div>
-    <div class="profile-row"><span>Name</span><strong>${escapeHtml(currentProfile.full_name)}</strong></div>
-    <div class="profile-row"><span>Email</span><strong>${escapeHtml(currentProfile.email)}</strong></div>
-    <div class="profile-row"><span>Phone</span><strong>${escapeHtml(currentProfile.phone || 'Not set')}</strong></div>
-    <div class="profile-row"><span>Department</span><strong>${escapeHtml(currentProfile.department)}</strong></div>
-    <div class="profile-row"><span>Position</span><strong>${escapeHtml(currentProfile.position)}</strong></div>
-    <div class="profile-row"><span>Portal role</span><strong>${friendlyRole(currentProfile.role)}</strong></div>
-    <div class="profile-row"><span>Status</span><strong><span class="status ${escapeHtml(currentProfile.status)}">${friendlyStatus(currentProfile.status)}</span></strong></div>
-  `;
-}
-
-function renderInduction() {
-  const card = $('#induction-card');
-  if (!currentProfile) {
-    card.innerHTML = '<p class="muted">Induction is unavailable until your employee profile is linked.</p>';
-    return;
-  }
-
-  const progress = currentInduction?.progress_percent || 0;
-  const status = currentInduction?.status || 'not_started';
-  card.innerHTML = `
-    <div class="button-row" style="justify-content:space-between;margin-bottom:14px">
-      <span class="status ${escapeHtml(status)}">${friendlyStatus(status)}</span>
-      <strong>${progress}%</strong>
-    </div>
-    <div class="progress-track" aria-label="Induction progress"><span style="width:${progress}%"></span></div>
-    <div class="profile-list">
-      <div class="profile-row"><span>Current module</span><strong>${escapeHtml(currentInduction?.current_module || 'Not started')}</strong></div>
-      <div class="profile-row"><span>Declaration</span><strong>${currentInduction?.declaration_accepted ? 'Accepted' : 'Not accepted'}</strong></div>
-      <div class="profile-row"><span>Completed</span><strong>${formatDate(currentInduction?.completed_at)}</strong></div>
-    </div>
-    <div class="button-row" style="margin-top:18px">
-      <button class="btn" id="start-induction" type="button">Start induction</button>
-      <button class="btn primary" id="complete-induction" type="button">Accept declaration and complete</button>
-    </div>
-  `;
-
-  $('#start-induction').addEventListener('click', markInductionStarted);
-  $('#complete-induction').addEventListener('click', completeInduction);
-}
-
-async function markInductionStarted() {
-  clearMessage('#dashboard-message');
-  const record = await ensureInduction();
-  const { data, error } = await supabase
-    .from('induction_records')
-    .update({
-      status: 'in_progress',
-      progress_percent: Math.max(record.progress_percent || 0, 10),
-      current_module: 'Warehouse safety induction'
-    })
-    .eq('id', record.id)
-    .select('*')
-    .single();
-
-  if (error) {
-    showMessage('#dashboard-message', error.message, 'error');
-    return;
-  }
-
-  currentInduction = data;
-  renderInduction();
-  showMessage('#dashboard-message', 'Induction progress saved.', 'success');
-}
-
-async function completeInduction() {
-  clearMessage('#dashboard-message');
-  if (!window.confirm('Confirm that you have completed the induction and accept the declaration?')) return;
-
-  const record = await ensureInduction();
-  const now = new Date().toISOString();
-  const { data, error } = await supabase
-    .from('induction_records')
-    .update({
-      status: 'completed',
-      progress_percent: 100,
-      current_module: 'Completed',
-      declaration_accepted: true,
-      declaration_accepted_at: now,
-      completed_at: now
-    })
-    .eq('id', record.id)
-    .select('*')
-    .single();
-
-  if (error) {
-    showMessage('#dashboard-message', error.message, 'error');
-    return;
-  }
-
-  currentInduction = data;
-  renderInduction();
-  showMessage('#dashboard-message', 'Induction completed and audited.', 'success');
-}
-
-async function renderAdminPanel() {
-  if (!isAdmin()) return;
-
-  $('#admin-panel').classList.remove('hidden');
-  $('#audit-panel').classList.remove('hidden');
-
-  if (!isSysAdmin()) {
-    $('#employee-role').value = 'employee';
-    $('#employee-role').disabled = true;
-    $('#employee-role').title = 'Only System Administrators can grant elevated portal roles.';
-  }
-
-  $('#employee-form').addEventListener('submit', createEmployee);
-  await Promise.all([loadEmployeesTable(), loadAuditLogs()]);
-}
-
-async function createEmployee(event) {
-  event.preventDefault();
-  clearMessage('#dashboard-message');
-  const form = new FormData(event.currentTarget);
-  const payload = {
-    full_name: form.get('full_name').trim(),
-    email: form.get('email').trim(),
-    phone: form.get('phone').trim() || null,
-    department: form.get('department').trim(),
-    position: form.get('position').trim(),
-    role: isSysAdmin() ? form.get('role') : 'employee',
-    status: 'invited'
-  };
-
-  const { error } = await supabase.from('employees').insert(payload);
-  if (error) {
-    showMessage('#dashboard-message', error.message, 'error');
-    return;
-  }
-
-  event.currentTarget.reset();
-  $('#employee-department').value = 'Warehouse';
-  $('#employee-position').value = 'Employee';
-  showMessage('#dashboard-message', 'Employee record created. Ask the employee to complete first-time setup with the same email.', 'success');
-  await Promise.all([loadEmployeesTable(), loadAuditLogs()]);
-}
-
-async function loadEmployeesTable() {
-  const { data, error } = await supabase
-    .from('employees')
-    .select('id, employee_id, full_name, email, department, role, status, auth_id')
-    .order('employee_id', { ascending: true });
-
-  if (error) throw error;
-
-  $('#employees-table').innerHTML = data.map((employee) => `
-    <tr>
-      <td><strong>${escapeHtml(employee.employee_id)}</strong></td>
-      <td>${escapeHtml(employee.full_name)}</td>
-      <td>${escapeHtml(employee.email)}${employee.auth_id ? '' : '<br><span class="muted">Auth not linked</span>'}</td>
-      <td>${escapeHtml(employee.department)}</td>
-      <td>${friendlyRole(employee.role)}</td>
-      <td><span class="status ${escapeHtml(employee.status)}">${friendlyStatus(employee.status)}</span></td>
-      <td>
-        <div class="button-row">
-          <button class="btn" data-action="activate" data-id="${employee.id}" type="button">Activate</button>
-          <button class="btn" data-action="inactive" data-id="${employee.id}" type="button">Set inactive</button>
-          ${isSysAdmin() ? `<button class="btn danger" data-action="delete" data-id="${employee.id}" type="button">Delete</button>` : ''}
-        </div>
-      </td>
-    </tr>
-  `).join('');
-
-  $('#employees-table').querySelectorAll('button[data-action]').forEach((button) => {
-    button.addEventListener('click', () => handleEmployeeAction(button.dataset.action, button.dataset.id));
-  });
-}
-
-async function handleEmployeeAction(action, id) {
-  clearMessage('#dashboard-message');
-
-  if (action === 'delete') {
-    if (!window.confirm('Delete this employee record? This is restricted to System Administrators.')) return;
-    const { error } = await supabase.from('employees').delete().eq('id', id);
-    if (error) {
-      showMessage('#dashboard-message', error.message, 'error');
-      return;
-    }
+    const { data, error } = await client
+      .from("module_progress")
+      .update({ answers, updated_at: new Date().toISOString() })
+      .eq("id", existing.id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
   } else {
-    const status = action === 'activate' ? 'active' : 'inactive';
-    const { error } = await supabase.from('employees').update({ status }).eq('id', id);
-    if (error) {
-      showMessage('#dashboard-message', error.message, 'error');
-      return;
-    }
+    const { data, error } = await client
+      .from("module_progress")
+      .insert({ employee_id, module_id, answers, completed: false })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
   }
-
-  showMessage('#dashboard-message', 'Employee record updated.', 'success');
-  await Promise.all([loadEmployeesTable(), loadAuditLogs()]);
 }
 
-async function loadAuditLogs() {
-  const { data, error } = await supabase
-    .from('audit_logs')
-    .select('id, action, table_name, record_id, created_at')
-    .order('created_at', { ascending: false })
-    .limit(20);
-
+async function completeModule({ employee_id, module_id }) {
+  const client = getSupabaseClient();
+  const { data, error } = await client
+    .from("module_progress")
+    .upsert(
+      { employee_id, module_id, completed: true, completed_at: new Date().toISOString() },
+      { onConflict: "employee_id,module_id" }
+    )
+    .select()
+    .single();
   if (error) throw error;
-
-  $('#audit-list').innerHTML = data.length
-    ? data.map((item) => `
-        <article class="audit-item">
-          <strong>${escapeHtml(item.action)}</strong>
-          <span>${escapeHtml(item.table_name)} · ${escapeHtml(item.record_id || 'no record id')}</span>
-          <time datetime="${escapeHtml(item.created_at)}">${formatDate(item.created_at)}</time>
-        </article>
-      `).join('')
-    : '<p class="muted">No audit events yet.</p>';
+  return data;
 }
 
-async function initDashboardPage() {
-  await initAuthWatcher();
-  if (!requireConfig()) return;
+// ---------- Product Photos & Confirmations ----------
 
-  try {
-    const active = await getActiveSession();
-    if (!active) {
-      window.location.replace('./login.html');
-      return;
-    }
+async function getProductPhotos(filters = {}) {
+  const client = getSupabaseClient();
+  let q = client
+    .from("product_photos")
+    .select("id, name, department, category, description, image_path, reject_image_path, reject_note, is_essential, keywords, sort_order, created_at, updated_at");
 
-    $('#logout-button').addEventListener('click', async () => {
-      await supabase.auth.signOut();
-      window.location.href = './login.html';
-    });
+  if (filters.department) q = q.eq("department", filters.department);
+  if (filters.category) q = q.eq("category", filters.category);
+  if (typeof filters.is_essential === "boolean") q = q.eq("is_essential", filters.is_essential);
 
-    $('#refresh-dashboard').addEventListener('click', () => window.location.reload());
-
-    await loadProfile();
-    await loadInduction();
-    renderProfile();
-    renderInduction();
-    await renderAdminPanel();
-  } catch (error) {
-    showMessage('#dashboard-message', error.message, 'error');
-  }
+  const { data, error } = await q.order("sort_order", { ascending: true });
+  if (error) throw error;
+  return data || [];
 }
 
-if (page === 'login') {
-  initLoginPage();
+async function confirmProduct({ employee_id, product_id, correct = true }) {
+  const client = getSupabaseClient();
+  const { data, error } = await client
+    .from("product_confirmations")
+    .insert({ employee_id, product_id, correct, confirmed_at: new Date().toISOString() })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
 }
 
-if (page === 'dashboard') {
-  initDashboardPage();
+async function getProductMedia(productId) {
+  const client = getSupabaseClient();
+  const { data, error } = await client
+    .from("product_media")
+    .select("id, product_id, media_type, file_path, sort_order, uploaded_by, created_at")
+    .eq("product_id", productId)
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+// ---------- Employee Documents ----------
+
+async function uploadEmployeeDocument({ employee_id, doc_type, doc_subtype, doc_number, expiry_date, file_name, file_path, notes }) {
+  const client = getSupabaseClient();
+  const { data, error } = await client
+    .from("employee_documents")
+    .insert({
+      employee_id,
+      doc_type,
+      doc_subtype,
+      doc_number,
+      expiry_date,
+      file_name,
+      file_path,
+      notes
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+async function getEmployeeDocuments(employee_id) {
+  const client = getSupabaseClient();
+  const { data, error } = await client
+    .from("employee_documents")
+    .select("id, employee_id, doc_type, doc_subtype, doc_number, expiry_date, file_name, file_path, notes, uploaded_at, uploaded_by")
+    .eq("employee_id", employee_id);
+  if (error) throw error;
+  return data || [];
+}
+
+// ---------- Departments & Positions ----------
+
+async function getDepartments() {
+  const client = getSupabaseClient();
+  const { data, error } = await client
+    .from("departments")
+    .select("id, name, visible_in_library, created_at")
+    .eq("visible_in_library", true)
+    .order("name", { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+async function getPositions() {
+  const client = getSupabaseClient();
+  const { data, error } = await client
+    .from("positions")
+    .select("id, name, created_at")
+    .order("name", { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+// ---------- Audit Logs ----------
+
+async function logAudit({ actor_id, actor_name, actor_role, target_id, action, detail, old_value, new_value }) {
+  const client = getSupabaseClient();
+  const { data, error } = await client
+    .from("audit_logs")
+    .insert({ actor_id, actor_name, actor_role, target_id, action, detail, old_value, new_value })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// ---------- Helpers ----------
+
+async function updateEmployeeProgress(employee_id, progress_pct, knowledge_viewed = []) {
+  const client = getSupabaseClient();
+  const { data, error } = await client
+    .from("employees")
+    .update({ progress_pct, knowledge_viewed, updated_at: new Date().toISOString() })
+    .eq("id", employee_id)
+    .select("id, progress_pct, knowledge_viewed, completion_status")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// Expose to window for HTML usage
+if (typeof window !== "undefined") {
+  window.signUpEmployee = signUpEmployee;
+  window.signIn = signIn;
+  window.signOut = signOut;
+  window.getModuleProgress = getModuleProgress;
+  window.saveModuleAnswer = saveModuleAnswer;
+  window.completeModule = completeModule;
+  window.getProductPhotos = getProductPhotos;
+  window.confirmProduct = confirmProduct;
+  window.getProductMedia = getProductMedia;
+  window.uploadEmployeeDocument = uploadEmployeeDocument;
+  window.getEmployeeDocuments = getEmployeeDocuments;
+  window.getDepartments = getDepartments;
+  window.getPositions = getPositions;
+  window.logAudit = logAudit;
+  window.updateEmployeeProgress = updateEmployeeProgress;
 }
