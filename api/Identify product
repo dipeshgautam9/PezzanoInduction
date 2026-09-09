@@ -21,6 +21,14 @@ import { createClient } from '@supabase/supabase-js';
 // department, so this should rarely bite).
 const MAX_IMAGE_CANDIDATES = 40;
 
+// How confident Gemini needs to be before we call it a match. The AI's self-reported
+// confidence tends to run conservative even on genuinely correct matches, so 0.3 was
+// rejecting some real matches. Since the UI already requires the worker to confirm the
+// result (it's a suggestion, not an automatic action), erring toward showing more
+// candidate matches — and letting a human reject a wrong one — is safer here than
+// erring toward "couldn't identify."
+const MATCH_THRESHOLD = 0.18;
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -144,7 +152,14 @@ or if no match:
       const idx = typeof parsed.index === 'number' ? parsed.index - 1 : -1;
       const confidence = typeof parsed.confidence === 'number' ? parsed.confidence : 0;
 
-      if (parsed.match && idx >= 0 && idx < withImages.length && confidence >= 0.3) {
+      // Log every outcome — including rejected/low-confidence ones — to the Vercel Runtime
+      // Logs so a "couldn't identify" result can be diagnosed later: was it a genuine
+      // no-match, or a correct guess that just fell under the threshold?
+      console.log('identify-product result:', {
+        model, matched: parsed.match, guessedName: idx >= 0 ? withImages[idx]?.name : null, confidence
+      });
+
+      if (parsed.match && idx >= 0 && idx < withImages.length && confidence >= MATCH_THRESHOLD) {
         return res.status(200).json({ productId: withImages[idx].id, productName: withImages[idx].name, confidence });
       }
       return res.status(200).json({ productId: null, confidence });
