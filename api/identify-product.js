@@ -1,0 +1,149 @@
+// api/identify-product.js — Product identification from photo
+//
+// Takes a staff-submitted photo plus a list of candidate products (each with the
+// the image_path of its stored reference photo in the `product-photos` bucket), downloads
+// the actual reference photos SERVER-SIDE (using the service-role key — never exposed
+// to the browser), and asks Gemini to compare the staff photo against those real photos.
+// This is genuine image-to-image matching, not a guess from product names alone.
+//
+// Required environment variables (set in Vercel → Project → Settings → Environment Variables):
+//   GEMINI_API_KEY            - already required
+//   SUPABASE_URL              - same project URL used by the front end
+//   SUPABASE_SERVICE_ROLE_KEY - service-role key (server-only, NEVER the anon key, NEVER shipped to the browser)
+
+import { createClient } from '@supabase/supabase-js';
+
+const MAX_IMAGE_CANDIDATES = 40;
+const MATCH_THRESHOLD = 0.18;
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY is not set.' });
+
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceKey) {
+    return res.status(500).json({ error: 'SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not set on the server.' });
+  }
+
+  const { staffPhoto, candidates } = req.body || {};
+  if (!staffPhoto) return res.status(400).json({ error: 'A photo is required.' });
+  if (!Array.isArray(candidates) || !candidates.length) return res.status(400).json({ error: 'No candidates provided.' });
+
+  function splitDataUrl(dataUrl) {
+    const m = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/.exec(dataUrl);
+    return m ? { mimeType: m[1], base64: m[2] } : null;
+  }
+
+  const staffImg = splitDataUrl(staffPhoto);
+  if (!staffImg) return res.status(400).json({ error: 'Photo format not readable.' });
+
+  const supabase = createClient(supabaseUrl, serviceKey);
+
+  const usable = candidates.filter(c => c && c.id && c.name && c.image_path).slice(0, MAX_IMAGE_CANDIDATES);
+  if (!usable.length) return res.status(400).json({ error: 'No candidates with a reference photo were provided.' });
+
+  const downloads = await Promise.all(usable.map(async (c) => {
+    try {
+      const { data, error } = await supabase.storage.from('product-photos').download(c.image_path);
+      if (error || !data) return null;
+      const arrayBuffer = await data.arrayBuffer();
+      const base64 = Buffer.from(arrayBuffer).toString('base64');
+      const mimeType = data.type && data.type.startsWith('image/') ? data.type : 'image/jpeg';
+      return { ...c, base64, mimeType };
+    } catch {
+      return null;
+    }
+  }));
+
+  const withImages = downloads.filter(Boolean);
+  if (!withImages.length) {
+    return res.status(502).json({ error: 'Could not load any reference photos from storage to compare against.' });
+  }
+
+  const introText = `You are a produce and warehouse product identification expert working for an Australian wholesale produce company.
+
+Below are reference photos of ${withImages.length} products from this company's product library, each labelled with a number and name. After the reference photos, there is one more photo labelled "PHOTO TO IDENTIFY" — that is what a warehouse worker just photographed.
+
+Compare the "PHOTO TO IDENTIFY" against the reference photos and decide which single reference product it matches — based on visual appearance (shape, colour, packaging, labelling), not just plausibility.
+
+If none of the reference photos plausibly match, say so.
+
+Respond with STRICT JSON only — no markdown, no explanation outside the JSON:
+{"match": true, "index": <1-based number from the reference list>, "confidence": 0.0-1.0, "name": "<exact name from the list>"}
+or if no match:
+{"match": false, "index": null, "confidence": 0.0, "name": null}`;
+
+  const parts = [{ text: introText }];
+  withImages.forEach((c, i) => {
+    parts.push({ text: `Reference ${i + 1}: ${c.name}${c.category ? ` (${c.category})` : ''}` });
+    parts.push({ inline_data: { mime_type: c.mimeType, data: c.base64 } });
+  });
+  parts.push({ text: 'PHOTO TO IDENTIFY:' });
+  parts.push({ inline_data: { mime_type: staffImg.mimeType, data: staffImg.base64 } });
+
+  const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+  const errors = [];
+
+  for (const model of MODELS) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts }],
+            generationConfig: { temperature: 0.05, maxOutputTokens: 150 }
+          })
+        }
+      );
+
+      const responseText = await response.text();
+      if (!response.ok) {
+        let msg = response.status.toString();
+        try { msg += ' ' + JSON.parse(responseText)?.error?.message; } catch {}
+        errors.push(`${model}: ${msg}`);
+        continue;
+      }
+
+      const data = JSON.parse(responseText);
+      let raw = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+      raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '').trim();
+
+      let parsed;
+      try { parsed = JSON.parse(raw); }
+      catch {
+        const idxMatch = raw.match(/"index"\s*:\s*(\d+)/);
+        const confMatch = raw.match(/"confidence"\s*:\s*([\d.]+)/);
+        if (idxMatch) {
+          const idx = parseInt(idxMatch[1]) - 1;
+          if (idx >= 0 && idx < withImages.length) {
+            return res.status(200).json({ productId: withImages[idx].id, productName: withImages[idx].name, confidence: confMatch ? parseFloat(confMatch[1]) : 0.5 });
+          }
+        }
+        errors.push(`${model}: JSON parse failed`);
+        continue;
+      }
+
+      const idx = typeof parsed.index === 'number' ? parsed.index - 1 : -1;
+      const confidence = typeof parsed.confidence === 'number' ? parsed.confidence : 0;
+
+      console.log('identify-product result:', {
+        model, matched: parsed.match, guessedName: idx >= 0 ? withImages[idx]?.name : null, confidence
+      });
+
+      if (parsed.match && idx >= 0 && idx < withImages.length && confidence >= MATCH_THRESHOLD) {
+        return res.status(200).json({ productId: withImages[idx].id, productName: withImages[idx].name, confidence });
+      }
+      return res.status(200).json({ productId: null, confidence });
+    } catch (err) {
+      errors.push(`${model}: ${err.message}`);
+    }
+  }
+
+  console.error('All models failed (identify-product):', errors);
+  return res.status(502).json({ error: `AI service unavailable: ${errors.slice(0, 2).join(' | ')}` });
+}
