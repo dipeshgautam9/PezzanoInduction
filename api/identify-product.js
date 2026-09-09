@@ -1,4 +1,4 @@
-// api/identify-product.js — simple product identification endpoint
+// api/identify-product.js — improved product identification endpoint
 // Uses Supabase client and the live schema: product_photos(id, name, department, category, description, image_path, keywords, sort_order)
 
 import { createClient } from '@supabase/supabase-js';
@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { imageUrl, query } = req.body || {};
+  const { imageUrl, fileName, department, category, query } = req.body || {};
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -19,10 +19,26 @@ export default async function handler(req, res) {
     .from('product_photos')
     .select('id, name, department, category, description, image_path, keywords, sort_order');
 
-  // If the caller sends a text query, filter by it
+  // Filter by department if provided
+  if (department) {
+    q = q.eq('department', department);
+  }
+
+  // Filter by category if provided
+  if (category) {
+    q = q.eq('category', category);
+  }
+
+  // Text search if query provided
   if (query && typeof query === 'string') {
     const term = `%${query}%`;
     q = q.or(`name.ilike.${term},description.ilike.${term},keywords.ilike.${term}`);
+  }
+
+  // If only fileName is given, try to match by name
+  if (fileName && !query) {
+    const term = `%${fileName}%`;
+    q = q.or(`name.ilike.${term},description.ilike.${term}`);
   }
 
   const { data, error } = await q.order('sort_order', { ascending: true }).limit(10);
