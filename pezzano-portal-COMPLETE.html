@@ -906,26 +906,83 @@ function persistNavContext(){
     libraryDeptFilter,librarySearchQuery,mgrProductSearch
   }));
 }
-function renderView(){
-  if(!KNOWN_VIEWS.includes(view))view='dashboard'; // guard against a stale/unknown view name
+// ── Facebook-style scroll memory ──────────────────────────────────────────
+// Every view gets its own saved scroll position.
+// When you navigate AWAY from a view, its scroll position is saved.
+// When you navigate BACK to a view you've already visited, scroll is restored exactly.
+// When you navigate to a view for the first time (or a fresh forward navigation), scroll to top.
+//
+// "back" is detected by checking if the target view is in our history stack.
+// Forward navigation pushes to the stack; back navigation pops from it.
+
+const _scrollPos = {};          // { viewKey: scrollY } — persists across renders in this session
+const _viewHistory = [];        // stack of view keys visited — used to detect forward vs back
+
+function _viewKey() {
+  // Include extra state so different instances of the same view (different products) get separate scroll positions
+  if (view === 'productDetail') return `productDetail:${productDetailId}`;
+  if (view === 'empDocs')       return `empDocs:${adminViewEmpId}`;
+  return view;
+}
+
+function _saveScroll(key) {
+  if (!key) return;
+  _scrollPos[key] = window.scrollY || document.documentElement.scrollTop || 0;
+}
+
+function _restoreScroll(key, isBack) {
+  const saved = _scrollPos[key];
+  if (isBack && saved > 0) {
+    // Use two rAFs: first lets the DOM paint, second ensures layout is complete
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      window.scrollTo({ top: saved, behavior: 'instant' });
+    }));
+  } else {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+}
+
+function renderView() {
+  if (!KNOWN_VIEWS.includes(view)) view = 'dashboard';
+
+  // Save scroll of the view we're LEAVING
+  const leavingKey = _viewHistory.length ? _viewHistory[_viewHistory.length - 1] : null;
+  _saveScroll(leavingKey);
+
+  // Detect whether we're going BACK (target view is already in history) or FORWARD
+  const targetKey = _viewKey();
+  const backIdx = _viewHistory.lastIndexOf(targetKey);
+  const isBack = backIdx !== -1;
+
+  if (isBack) {
+    // Pop history back to this view (same as browser back)
+    _viewHistory.splice(backIdx + 1);
+  } else {
+    // Forward navigation — push this view onto the stack
+    _viewHistory.push(targetKey);
+  }
+
   persistNavContext();
-  const app=document.getElementById('app');
-  if(view==='dashboard')        app.innerHTML=renderDashboard();
-  else if(view==='mgr')         app.innerHTML=renderManagerDashboard();
-  else if(view==='kb')          app.innerHTML=renderKnowledgeGate();
-  else if(view==='productGate') app.innerHTML=renderProductGate();
-  else if(view==='module')      app.innerHTML=renderModule();
-  else if(view==='decl')        app.innerHTML=renderDeclaration();
-  else if(view==='done')        app.innerHTML=renderCompletion();
-  else if(view==='docs')        app.innerHTML=renderDocsView();
-  else if(view==='docsAlerts')  app.innerHTML=renderDocsAlerts();
-  else if(view==='empDocs')     app.innerHTML=renderEmpDocsView();
-  else if(view==='products')    app.innerHTML=renderProductManager();
-  else if(view==='library')     app.innerHTML=renderProductLibrary();
-  else if(view==='productDetail') app.innerHTML=renderProductDetail();
-  else                          app.innerHTML=renderDashboard(); // last-resort fallback — never leave a blank screen
+
+  const app = document.getElementById('app');
+  if      (view === 'dashboard')    app.innerHTML = renderDashboard();
+  else if (view === 'mgr')          app.innerHTML = renderManagerDashboard();
+  else if (view === 'kb')           app.innerHTML = renderKnowledgeGate();
+  else if (view === 'productGate')  app.innerHTML = renderProductGate();
+  else if (view === 'module')       app.innerHTML = renderModule();
+  else if (view === 'decl')         app.innerHTML = renderDeclaration();
+  else if (view === 'done')         app.innerHTML = renderCompletion();
+  else if (view === 'docs')         app.innerHTML = renderDocsView();
+  else if (view === 'docsAlerts')   app.innerHTML = renderDocsAlerts();
+  else if (view === 'empDocs')      app.innerHTML = renderEmpDocsView();
+  else if (view === 'products')     app.innerHTML = renderProductManager();
+  else if (view === 'library')      app.innerHTML = renderProductLibrary();
+  else if (view === 'productDetail') app.innerHTML = renderProductDetail();
+  else                              app.innerHTML = renderDashboard();
+
   hydrateProductThumbs();
   hydrateProductVideos();
+  _restoreScroll(targetKey, isBack);
 }
 
 // ── EMPLOYEE / LOCATION MANAGER DASHBOARD ─────────────────────
@@ -2357,92 +2414,103 @@ async function handleProductIdentifyFile(input){
   const preview=document.getElementById('pc_preview_dashboard');
   const resultEl=document.getElementById('pc_result_dashboard');
   const retryBtn=document.getElementById('pc_retry_btn');
-  const url=URL.createObjectURL(f);
-  if(preview)preview.innerHTML=`<img src="${url}" style="width:130px;height:130px;object-fit:cover;border-radius:10px;border:1px solid var(--border);display:block;margin-bottom:10px">`;
-  if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;color:var(--muted)">🔍 Searching product library…</div>`;
-  if(retryBtn)retryBtn.classList.add('hidden'); // hide while a search is in flight; shown again once we land on a final result
+  const previewUrl=URL.createObjectURL(f);
+  if(preview)preview.innerHTML=`<img src="${previewUrl}" style="width:130px;height:130px;object-fit:cover;border-radius:10px;border:1px solid var(--border);display:block;margin-bottom:10px">`;
+  if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;color:var(--muted)">🔍 Fetching reference photos…</div>`;
+  if(retryBtn)retryBtn.classList.add('hidden');
 
   try{
-    const staffPhoto=await fileToBase64(f);
-    // Build candidates: all products in this department that have a reference photo
-    const candidates=productPhotos
-      .filter(pp=>pp.department===profile.department&&pp.image_path)
-      .map(pp=>({id:pp.id,name:pp.name,category:pp.category,image_path:pp.image_path}));
-
+    // All products in this department that have a reference photo
+    const candidates=productPhotos.filter(pp=>pp.department===profile.department&&pp.image_path);
     if(!candidates.length){
-      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);color:var(--warning);border-radius:9px;padding:10px 14px">No products with reference photos in your department yet. Add reference photos to products first.</div>`;
+      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);color:var(--warning);border-radius:9px;padding:10px 14px">No products with reference photos in your department yet. Add reference photos to products first from Edit Product.</div>`;
       return;
     }
 
-    let resp;
-    try{
-      resp=await fetch('/api/identify-product',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({staffPhoto,candidates})
-      });
-    }catch(networkErr){
-      // fetch() only throws for a genuine network-level failure (offline, DNS, CORS block,
-      // or — very commonly when this file is opened directly as file:// or served as a
-      // static site with no serverless functions — there's simply nothing at that URL to
-      // connect to at all).
-      console.error('Photo identify: network error calling /api/identify-product',networkErr);
-      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">Couldn't reach the identification service — check your internet connection, or that this app is deployed with the /api/identify-product function running (not just opened as a static file).</div>`;
+    // Generate signed URLs for ALL reference photos (600s expiry — enough for the round trip)
+    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;color:var(--muted)">🔍 Loading ${candidates.length} reference photos…</div>`;
+    const withUrls=await Promise.all(candidates.map(async pp=>{
+      try{
+        const{data}=await sb.storage.from('product-photos').createSignedUrl(pp.image_path,600);
+        return data?.signedUrl?{id:pp.id,name:pp.name,category:pp.category,referenceUrl:data.signedUrl}:null;
+      }catch{return null;}
+    }));
+    const validCandidates=withUrls.filter(Boolean);
+
+    if(!validCandidates.length){
+      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">Could not load reference photos. Check your connection and try again.</div>`;
       return;
     }
 
-    const raw=await resp.text();
-    let data=null;
-    try{data=raw?JSON.parse(raw):null;}catch(parseErr){
-      // The endpoint responded, but not with JSON — e.g. a 404 "Not Found" HTML page because
-      // /api/identify-product isn't deployed, or a 500 error page from the server itself.
-      console.error('Photo identify: non-JSON response',resp.status,raw?.slice(0,500));
-      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">The identification service returned an unexpected response (HTTP ${resp.status}). It's likely the /api/identify-product function isn't deployed here yet — check the server logs, or open the browser console for details.</div>`;
-      return;
-    }
+    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;color:var(--muted)">🤖 Comparing against ${validCandidates.length} products…</div>`;
 
-    if(!resp.ok||!data){
-      console.error('Photo identify: API error',resp.status,data);
-      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">${esc(data?.error||`Could not identify (HTTP ${resp.status}) — please try again with a clearer photo.`)}</div>`;
+    const staffPhoto=await fileToBase64(f);
+
+    // Send staff photo + all reference URLs to server
+    // Server fetches each reference image and does a real visual comparison
+    const resp=await fetch('/api/check-photo',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        staffPhoto,
+        identifyMode:true,
+        identifyCandidates:validCandidates  // includes referenceUrl for each
+      })
+    });
+
+    const data=await resp.json();
+    if(!resp.ok){
+      if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">${esc(data?.error||'Could not identify — please try again.')}</div>`;
       return;
     }
 
     const match=data.productId?productPhotos.find(pp=>pp.id===data.productId):null;
-    if(!match){
+    if(!match||!data.productId){
       if(resultEl)resultEl.innerHTML=`<div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:9px;padding:12px 14px">
-        <div style="font-weight:600;color:var(--warning);margin-bottom:4px">⚠ Couldn't identify this product</div>
-        <div style="font-size:.82rem;color:var(--muted)">The photo didn't closely match any product in your department's library. Try a clearer, better-lit photo of the label or the product itself.</div>
+        <div style="font-weight:600;color:var(--warning);margin-bottom:6px">⚠ Couldn't identify this product</div>
+        <div style="font-size:.82rem;color:var(--muted);margin-bottom:8px">The photo didn't closely match any product in the reference library. Try:</div>
+        <ul style="font-size:.8rem;color:var(--muted);margin:0;padding-left:18px;line-height:1.8">
+          <li>Better lighting — move near a window or bright light</li>
+          <li>Hold the product steady and fill the frame</li>
+          <li>Photograph the front/label side of the product</li>
+        </ul>
       </div>`;
       return;
     }
 
     const confPct=data.confidence?Math.round(data.confidence*100):null;
-    // Get a signed URL for the match's reference photo to show it
-    let refThumb='';
-    if(match.image_path){
-      try{
-        const{data:signed}=await sb.storage.from('product-photos').createSignedUrl(match.image_path,300);
-        if(signed?.signedUrl)refThumb=`<img src="${signed.signedUrl}" style="width:80px;height:60px;object-fit:cover;border-radius:7px;border:1px solid var(--border);flex-shrink:0">`;
-      }catch(e){}
-    }
+    // Show reference thumbnail from the signed URL we already have
+    const matchCandidate=validCandidates.find(c=>c.id===match.id);
+    const refThumb=matchCandidate?.referenceUrl
+      ?`<img src="${matchCandidate.referenceUrl}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--border);flex-shrink:0">`
+      :'';
 
     if(resultEl)resultEl.innerHTML=`<div style="background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.3);border-radius:10px;padding:14px">
-      <div style="font-size:.72rem;color:var(--muted);margin-bottom:4px">Product identified</div>
-      <div style="display:flex;gap:12px;align-items:center">
+      <div style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--success);margin-bottom:8px">✅ Product identified</div>
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px">
         ${refThumb}
         <div>
-          <div style="font-size:1.1rem;font-weight:700;color:var(--text)">${esc(match.name)}</div>
-          <div style="font-size:.78rem;color:var(--muted)">${esc(match.category||'')}${match.department?' · '+esc(match.department):''}</div>
-          ${confPct?`<div style="font-size:.72rem;color:var(--success);margin-top:3px">${confPct}% match</div>`:''}
+          <div style="font-size:1.05rem;font-weight:700;color:var(--text);line-height:1.3">${esc(match.name)}</div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:2px">${esc(match.category||'')}${match.department?' · '+esc(match.department):''}</div>
+          ${confPct?`<div style="font-size:.75rem;margin-top:4px">
+            <span style="color:var(--success);font-weight:600">${confPct}% match</span>
+            <div style="height:5px;width:120px;background:var(--surface3);border-radius:999px;margin-top:3px;overflow:hidden">
+              <div style="height:100%;width:${confPct}%;background:#4ade80;border-radius:999px"></div>
+            </div>
+          </div>`:''}
         </div>
       </div>
-      <button class="btn btn-ghost" style="font-size:.78rem;margin-top:10px" onclick="librarySearchQuery='${esc(match.name)}';view='library';renderView()">📖 View full product page →</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary" style="font-size:.78rem" onclick="openProductDetail('${match.id}','library')">📖 View full product page</button>
+        <button class="btn btn-ghost" style="font-size:.78rem" onclick="document.getElementById('pc_file_gallery_dash').click()">🔄 Try another photo</button>
+      </div>
     </div>`;
+
   }catch(e){
-    console.error('Photo identify: unexpected error',e);
-    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">Something went wrong reading or preparing that photo. Try a different file, or check the browser console for details.</div>`;
+    console.error('handleProductIdentifyFile error:',e);
+    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">Connection error — check your internet and try again.</div>`;
   }finally{
-    if(retryBtn)retryBtn.classList.remove('hidden'); // always offer retry once we've landed on a final state
+    if(retryBtn)retryBtn.classList.remove('hidden');
   }
 }
 
