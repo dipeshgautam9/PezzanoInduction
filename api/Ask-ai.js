@@ -1,4 +1,34 @@
 // api/ask-ai.js
+// Supports both key formats:
+//   AIzaSy... → API key (?key= query param)
+//   AQ.       → OAuth2 Bearer token (Authorization header)
+
+const MODELS = [
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-001',
+  'gemini-2.0-flash-lite',
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-001',
+  'gemini-1.5-flash-002',
+  'gemini-1.5-flash-8b',
+  'gemini-1.5-pro',
+  'gemini-1.5-pro-001',
+  'gemini-1.5-pro-002',
+];
+
+function geminiUrl(model, apiKey) {
+  if (apiKey.startsWith('AQ.') || apiKey.startsWith('ya29.')) {
+    return {
+      url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }
+    };
+  }
+  return {
+    url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    headers: { 'Content-Type': 'application/json' }
+  };
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -32,43 +62,26 @@ RULES:
 
 QUESTION: ${question.trim()}`;
 
-  const MODELS = [
-    'gemini-2.0-flash',
-    'gemini-2.0-flash-001',
-    'gemini-2.0-flash-lite',
-    'gemini-1.5-flash',
-    'gemini-1.5-flash-001',
-    'gemini-1.5-flash-002',
-    'gemini-1.5-flash-8b',
-    'gemini-1.5-pro',
-    'gemini-1.5-pro-001',
-    'gemini-1.5-pro-002',
-  ];
-
   async function callGemini() {
     const errors = [];
     for (const model of MODELS) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const { url, headers } = geminiUrl(model, apiKey);
       let r;
       try {
         r = await fetch(url, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
             generationConfig: { temperature: 0.2, maxOutputTokens: 300 }
           }),
           signal: AbortSignal.timeout(20000)
         });
-      } catch (e) {
-        errors.push(`${model}: ${e?.message}`);
-        continue;
-      }
-
+      } catch (e) { errors.push(`${model}: ${e?.message}`); continue; }
       if (r.status === 404) { errors.push(`${model}: 404`); continue; }
       if (r.status === 429) { errors.push(`${model}: 429 quota`); continue; }
-
-      console.log(`ask-ai: using model ${model}, HTTP ${r.status}`);
+      if (r.status === 401) { errors.push(`${model}: 401 auth`); continue; }
+      console.log(`ask-ai: using ${model} HTTP ${r.status} keyType=${apiKey.substring(0,3)}`);
       return { response: r, model };
     }
     console.error('ask-ai: ALL models failed. Key prefix:', apiKey.substring(0, 8), '| Errors:', errors.join(' | '));
@@ -80,7 +93,7 @@ QUESTION: ${question.trim()}`;
 
     if (!geminiRes) {
       return res.status(502).json({
-        error: `AI service unavailable — tried ${MODELS.length} models, all failed. Check that your GEMINI_API_KEY in Vercel is a valid Google AI Studio key (starts with "AIza") from aistudio.google.com.`
+        error: 'AI service unavailable — all models failed. Check Vercel function logs for details.'
       });
     }
 
