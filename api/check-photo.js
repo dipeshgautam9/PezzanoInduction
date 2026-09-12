@@ -2,6 +2,10 @@
 // Handles two modes:
 //   1. Quality check  — compares staff photo against reference good/reject photos
 //   2. Identify mode  — finds which product a staff photo matches from a candidate list
+//
+// Supports both key formats:
+//   AIzaSy... → Google AI Studio API key (query param ?key=)
+//   AQ.       → OAuth2 Bearer token     (Authorization: Bearer header)
 
 const MODELS = [
   'gemini-2.0-flash',
@@ -15,6 +19,22 @@ const MODELS = [
   'gemini-1.5-pro-001',
   'gemini-1.5-pro-002',
 ];
+
+// Build the correct URL and headers based on key type
+function geminiUrl(model, apiKey) {
+  if (apiKey.startsWith('AQ.') || apiKey.startsWith('ya29.')) {
+    // OAuth2 Bearer token — key goes in Authorization header, not URL
+    return {
+      url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }
+    };
+  }
+  // Standard API key — goes in query string
+  return {
+    url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    headers: { 'Content-Type': 'application/json' }
+  };
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -82,6 +102,31 @@ export default async function handler(req, res) {
       if (r.status === 404) { errors.push(`${model}: 404`); continue; }
       if (r.status === 429) { errors.push(`${model}: 429 quota`); continue; }
       console.log(`check-photo: using ${model} HTTP ${r.status}`);
+      return { response: r, model };
+    }
+    console.error('check-photo: ALL models failed. Key prefix:', apiKey.substring(0, 8), '| Errors:', errors.join(' | '));
+    return { response: null };
+  }
+  async function callGemini(parts, maxTokens = 400) {
+    const errors = [];
+    for (const model of MODELS) {
+      const { url, headers } = geminiUrl(model, apiKey);
+      let r;
+      try {
+        r = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts }],
+            generationConfig: { temperature: 0.1, maxOutputTokens: maxTokens }
+          }),
+          signal: AbortSignal.timeout(25000)
+        });
+      } catch (e) { errors.push(`${model}: ${e?.message}`); continue; }
+      if (r.status === 404) { errors.push(`${model}: 404`); continue; }
+      if (r.status === 429) { errors.push(`${model}: 429 quota`); continue; }
+      if (r.status === 401) { errors.push(`${model}: 401 auth`); continue; }
+      console.log(`check-photo: using ${model} HTTP ${r.status} keyType=${apiKey.substring(0,3)}`);
       return { response: r, model };
     }
     console.error('check-photo: ALL models failed. Key prefix:', apiKey.substring(0, 8), '| Errors:', errors.join(' | '));
