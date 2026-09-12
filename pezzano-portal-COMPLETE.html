@@ -2414,9 +2414,11 @@ async function handleProductIdentifyFile(input){
   const preview=document.getElementById('pc_preview_dashboard');
   const resultEl=document.getElementById('pc_result_dashboard');
   const retryBtn=document.getElementById('pc_retry_btn');
+
+  // Show preview immediately
   const previewUrl=URL.createObjectURL(f);
   if(preview)preview.innerHTML=`<img src="${previewUrl}" style="width:130px;height:130px;object-fit:cover;border-radius:10px;border:1px solid var(--border);display:block;margin-bottom:10px">`;
-  if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;color:var(--muted)">🔍 Fetching reference photos…</div>`;
+  if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;color:var(--muted)">⏳ Step 1 of 2 — working out the product category…</div>`;
   if(retryBtn)retryBtn.classList.add('hidden');
 
   try{
@@ -2427,12 +2429,11 @@ async function handleProductIdentifyFile(input){
       return;
     }
 
-    // Generate signed URLs for ALL reference photos (600s expiry — enough for the round trip)
-    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;color:var(--muted)">🔍 Loading ${candidates.length} reference photos…</div>`;
+    // Generate signed URLs for ALL reference photos upfront (cheap — no images downloaded yet)
     const withUrls=await Promise.all(candidates.map(async pp=>{
       try{
         const{data}=await sb.storage.from('product-photos').createSignedUrl(pp.image_path,600);
-        return data?.signedUrl?{id:pp.id,name:pp.name,category:pp.category,referenceUrl:data.signedUrl}:null;
+        return data?.signedUrl?{id:pp.id,name:pp.name,category:pp.category||'Other',referenceUrl:data.signedUrl}:null;
       }catch{return null;}
     }));
     const validCandidates=withUrls.filter(Boolean);
@@ -2442,19 +2443,19 @@ async function handleProductIdentifyFile(input){
       return;
     }
 
-    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;color:var(--muted)">🤖 Comparing against ${validCandidates.length} products…</div>`;
-
     const staffPhoto=await fileToBase64(f);
 
-    // Send staff photo + all reference URLs to server
-    // Server fetches each reference image and does a real visual comparison
+    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;color:var(--muted)">🤖 Step 2 of 2 — visually matching against reference library…</div>`;
+
+    // Send to server — server does step 1 (category guess) + step 2 (visual match)
+    // within a single function call so it stays under Vercel's 30s limit
     const resp=await fetch('/api/check-photo',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         staffPhoto,
         identifyMode:true,
-        identifyCandidates:validCandidates  // includes referenceUrl for each
+        identifyCandidates:validCandidates
       })
     });
 
@@ -2471,15 +2472,14 @@ async function handleProductIdentifyFile(input){
         <div style="font-size:.82rem;color:var(--muted);margin-bottom:8px">The photo didn't closely match any product in the reference library. Try:</div>
         <ul style="font-size:.8rem;color:var(--muted);margin:0;padding-left:18px;line-height:1.8">
           <li>Better lighting — move near a window or bright light</li>
-          <li>Hold the product steady and fill the frame</li>
-          <li>Photograph the front/label side of the product</li>
+          <li>Fill the frame with the product</li>
+          <li>Photograph the front or label side</li>
         </ul>
       </div>`;
       return;
     }
 
     const confPct=data.confidence?Math.round(data.confidence*100):null;
-    // Show reference thumbnail from the signed URL we already have
     const matchCandidate=validCandidates.find(c=>c.id===match.id);
     const refThumb=matchCandidate?.referenceUrl
       ?`<img src="${matchCandidate.referenceUrl}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--border);flex-shrink:0">`
@@ -2492,7 +2492,7 @@ async function handleProductIdentifyFile(input){
         <div>
           <div style="font-size:1.05rem;font-weight:700;color:var(--text);line-height:1.3">${esc(match.name)}</div>
           <div style="font-size:.78rem;color:var(--muted);margin-top:2px">${esc(match.category||'')}${match.department?' · '+esc(match.department):''}</div>
-          ${confPct?`<div style="font-size:.75rem;margin-top:4px">
+          ${confPct?`<div style="font-size:.75rem;margin-top:6px">
             <span style="color:var(--success);font-weight:600">${confPct}% match</span>
             <div style="height:5px;width:120px;background:var(--surface3);border-radius:999px;margin-top:3px;overflow:hidden">
               <div style="height:100%;width:${confPct}%;background:#4ade80;border-radius:999px"></div>
@@ -2502,13 +2502,13 @@ async function handleProductIdentifyFile(input){
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-primary" style="font-size:.78rem" onclick="openProductDetail('${match.id}','library')">📖 View full product page</button>
-        <button class="btn btn-ghost" style="font-size:.78rem" onclick="document.getElementById('pc_file_gallery_dash').click()">🔄 Try another photo</button>
+        <button class="btn btn-ghost" style="font-size:.78rem" onclick="document.getElementById('pc_file_gallery_dash')?.click()||document.getElementById('pc_file_camera_dash')?.click()">🔄 Try another photo</button>
       </div>
     </div>`;
 
   }catch(e){
     console.error('handleProductIdentifyFile error:',e);
-    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">Connection error — check your internet and try again.</div>`;
+    if(resultEl)resultEl.innerHTML=`<div style="font-size:.85rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 14px">Something went wrong — check your internet and try again.<br><small style="opacity:.6">${e?.message||''}</small></div>`;
   }finally{
     if(retryBtn)retryBtn.classList.remove('hidden');
   }
